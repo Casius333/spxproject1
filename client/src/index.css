@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 7%;
+    --foreground: 0 0% 98%;
+    
+    --card: 240 10% 12%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 240 10% 12%;
+    --popover-foreground: 0 0% 98%;
+    
+    --primary: 264 60% 40%;
+    --primary-foreground: 0 0% 98%;
+    
+    --primary-light: 264 45% 47%;
+    --primary-dark: 264 60% 32%;
+    
+    --secondary: 36 100% 50%;
+    --secondary-foreground: 240 10% 3.9%;
+    
+    --secondary-light: 36 100% 60%;
+    --secondary-dark: 36 100% 45%;
+    
+    --accent: 192 100% 50%;
+    --accent-foreground: 0 0% 98%;
+    
+    --accent-light: 192 100% 60%;
+    --accent-dark: 192 100% 40%;
+    
+    --muted: 240 5% 18%;
+    --muted-foreground: 240 5% 65%;
+    
+    --dark: 240 10% 7%;
+    --dark-card: 240 10% 12%;
+    --dark-light: 240 10% 18%;
+    
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 240 5% 26%;
+    --input: 240 5% 26%;
+    --ring: 240 5% 65%;
+    
+    --radius: 0.5rem;
+  }
+  
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply font-sans antialiased bg-dark text-foreground;
+  }
+  
+  .font-heading {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+  }
+  
+  /* Scroll styling for category filters */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  /* Animations */
+  @keyframes spin-slow {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  @keyframes pulse-fast {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  
+  @keyframes bounce-slow {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+  
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
+  }
+  
+  .animate-pulse-fast {
+    animation: pulse-fast 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-bounce-slow {
+    animation: bounce-slow 2s infinite;
+  }
+  
+  /* Slot reel animations */
+  @keyframes spin-reel {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(-100%);
+    }
+  }
+  
+  .animate-reel {
+    animation: spin-reel 0.5s cubic-bezier(0.2, 0.6, 0.3, 1);
+  }
+}
