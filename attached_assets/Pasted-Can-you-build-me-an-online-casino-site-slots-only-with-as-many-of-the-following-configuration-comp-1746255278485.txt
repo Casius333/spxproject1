@@ -1,0 +1,34 @@
+Can you build me an online casino site (slots only) with as many of the following configuration components as possible. Anything that requires accounts or logins I will need to register and set up. Once you are finished I would like a simple checklist of what was able to be achieve and what was not. Here is the list:
+
+Internal Structure Casino Architecture Overview: Frontend Stack:
+React.js (Main UI framework)
+Styled Components (Styling)
+React Router (Routing)
+Formik & Yup (Form handling and validation)
+React OAuth (Google authentication)
+React T oastify (Notifications)
+Backend Services:
+Express.js/Fastify (Server framework)
+MongoDB (Database)
+Socket.IO (Real-time communications)
+JWT (Authentication)
+Nodemailer (Email services)
+Express Rate Limit (API rate limiting)
+Winston (Logging) Admin Panel Architecture Overview: Backend (Node.js/Express):
+Controller-based architecture with separation of concerns
+MongoDB (Primary database)
+Authentication using JWT (Access and refresh tokens)
+Email service integration
+File upload handling with Cloudinary Frontend (React):
+Component-based architecture
+Service layer for API communication
+Pagination implementation
+State management using React hooks
+Multi-Server Architecture The application is designed using a multi-server architecture for scalability and efficiency: Main Express Server: Port 5005 Socket.IO Server: Port 3001 BOG Game Server: Port 5003 Frontend React Server: Port 80 Notification Webhook Server: Port 8000
+Third-Party APIs and Services Gaming API: BlueOceanGaming (BOG) API:
+Provides slots, live games, and sportsbook functionalities.
+Production keys required for full access and error-free functionality. Payments: PassimPay API:
+Cryptocurrency payment processing. Poof API:
+Fiat payment gateway. Authentication/Security: Google reCAPTCHA: For bot prevention. JWT : For secure user authentication. Speakeasy: For two-factor authentication (2FA). Others: CoinGecko API: For real-time cryptocurrency rates. Admin Panel Third-Party Services: Cloudinary:
+Used for image storage and management.
+Configured in admin-controller.js .
