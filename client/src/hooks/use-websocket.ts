@@ -19,6 +19,10 @@ interface UseWebSocketReturn {
   disconnect: () => void;
 }
 
+// Create a singleton WebSocket instance to prevent multiple connections
+let globalWs: WebSocket | null = null;
+let connectionCount = 0;
+
 export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketReturn {
   const {
     onMessage,
@@ -31,52 +35,69 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
   } = options;
   
   const [lastMessage, setLastMessage] = useState<any>(null);
-  const [readyState, setReadyState] = useState<number>(WebSocket.CLOSED);
+  const [readyState, setReadyState] = useState<number>(globalWs?.readyState || WebSocket.CLOSED);
   
-  const socketRef = useRef<WebSocket | null>(null);
   const reconnectCountRef = useRef<number>(0);
   const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const hasConnectedRef = useRef<boolean>(false);
   
   const connect = useCallback(() => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) return;
-    
-    const ws = new WebSocket(getWebSocketUrl());
-    
-    ws.onopen = () => {
+    // Already connected, just register this component
+    if (globalWs && globalWs.readyState === WebSocket.OPEN) {
+      connectionCount++;
       setReadyState(WebSocket.OPEN);
-      reconnectCountRef.current = 0;
       if (onOpen) onOpen();
-    };
+      hasConnectedRef.current = true;
+      return;
+    }
     
-    ws.onmessage = (event) => {
+    // Connection in progress or already closed, create a new one
+    if (!globalWs || globalWs.readyState === WebSocket.CLOSED) {
       try {
-        const data = JSON.parse(event.data);
-        setLastMessage(data);
-        if (onMessage) onMessage(data);
-      } catch (err) {
-        setLastMessage(event.data);
-        if (onMessage) onMessage(event.data);
+        globalWs = new WebSocket(getWebSocketUrl());
+        connectionCount++;
+        
+        globalWs.onopen = () => {
+          setReadyState(WebSocket.OPEN);
+          reconnectCountRef.current = 0;
+          hasConnectedRef.current = true;
+          if (onOpen) onOpen();
+        };
+        
+        globalWs.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            setLastMessage(data);
+            if (onMessage) onMessage(data);
+          } catch (err) {
+            setLastMessage(event.data);
+            if (onMessage) onMessage(event.data);
+          }
+        };
+        
+        globalWs.onclose = () => {
+          setReadyState(WebSocket.CLOSED);
+          
+          // Only try to reconnect from one component instance
+          if (hasConnectedRef.current && reconnectCountRef.current < reconnectAttempts) {
+            reconnectTimerRef.current = setTimeout(() => {
+              reconnectCountRef.current += 1;
+              globalWs = null; // Clear the global reference for a fresh start
+              connect();
+            }, reconnectInterval);
+          }
+          
+          if (onClose) onClose();
+        };
+        
+        globalWs.onerror = (error) => {
+          if (onError) onError(error);
+        };
+      } catch (error) {
+        console.error('WebSocket connection error:', error);
+        if (onError) onError(error as Event);
       }
-    };
-    
-    ws.onclose = () => {
-      setReadyState(WebSocket.CLOSED);
-      
-      if (reconnectCountRef.current < reconnectAttempts) {
-        reconnectTimerRef.current = setTimeout(() => {
-          reconnectCountRef.current += 1;
-          connect();
-        }, reconnectInterval);
-      }
-      
-      if (onClose) onClose();
-    };
-    
-    ws.onerror = (error) => {
-      if (onError) onError(error);
-    };
-    
-    socketRef.current = ws;
+    }
   }, [onMessage, onOpen, onClose, onError, reconnectAttempts, reconnectInterval]);
   
   const disconnect = useCallback(() => {
@@ -85,16 +106,21 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       reconnectTimerRef.current = null;
     }
     
-    if (socketRef.current) {
-      socketRef.current.close();
-      socketRef.current = null;
+    hasConnectedRef.current = false;
+    connectionCount--;
+    
+    // Only close the global WebSocket if this is the last component using it
+    if (globalWs && connectionCount <= 0) {
+      globalWs.close();
+      globalWs = null;
+      connectionCount = 0;
     }
   }, []);
   
   const sendMessage = useCallback((data: any) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
+    if (globalWs?.readyState === WebSocket.OPEN) {
       const message = typeof data === 'string' ? data : JSON.stringify(data);
-      socketRef.current.send(message);
+      globalWs.send(message);
     }
   }, []);
   
