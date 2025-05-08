@@ -9,6 +9,9 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
+  role: text("role").default("user").notNull(), // user, admin, moderator
+  status: text("status").default("active").notNull(), // active, suspended, banned
+  lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
@@ -34,12 +37,16 @@ export const games = pgTable("games", {
   isPopular: boolean("is_popular").default(false),
   isNew: boolean("is_new").default(false),
   isJackpot: boolean("is_jackpot").default(false),
+  isActive: boolean("is_active").default(true).notNull(),
+  category: text("category"), // String representation for filtering (e.g., "slots", "table", "live")
   jackpotAmount: decimal("jackpot_amount", { precision: 12, scale: 2 }),
   rtp: decimal("rtp", { precision: 5, scale: 2 }),
   volatility: text("volatility"),
   minBet: decimal("min_bet", { precision: 10, scale: 2 }).default("0.5"),
   maxBet: decimal("max_bet", { precision: 10, scale: 2 }).default("100"),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  playCount: integer("play_count").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
 // User balance table
