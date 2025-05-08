@@ -1,6 +1,8 @@
 import { useAuth } from "@/hooks/use-auth";
+import { useAuthModal } from "@/App";
 import { Loader2 } from "lucide-react";
-import { Redirect, Route } from "wouter";
+import { Route } from "wouter";
+import { useEffect } from "react";
 
 interface ProtectedRouteProps {
   path: string;
@@ -9,6 +11,14 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ path, component: Component }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
+  const { openAuthModal } = useAuthModal();
+  
+  useEffect(() => {
+    // If user is not authenticated and not loading, open the auth modal
+    if (!isLoading && !user) {
+      openAuthModal('login');
+    }
+  }, [user, isLoading, openAuthModal]);
 
   return (
     <Route path={path}>
@@ -16,10 +26,8 @@ export function ProtectedRoute({ path, component: Component }: ProtectedRoutePro
         <div className="flex items-center justify-center min-h-screen">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      ) : user ? (
-        <Component />
       ) : (
-        <Redirect to="/auth" />
+        <Component />
       )}
     </Route>
   );
