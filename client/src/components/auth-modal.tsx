@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Login form schema
@@ -88,17 +87,20 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
     registerMutation.mutate(registerData);
   }
 
+  // Log when the modal should be opening
+  console.log("Auth modal rendering with isOpen:", isOpen);
+  
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md p-0 overflow-hidden bg-dark-card relative" aria-describedby="auth-modal-description">
+      <DialogContent className="max-w-md p-0 overflow-hidden bg-dark-card relative">
         {/* Decorative elements */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,theme(colors.primary.DEFAULT)/5,transparent_60%)] pointer-events-none"></div>
         <div className="absolute top-0 left-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
         <div className="absolute bottom-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
         
-        <DialogTitle className="sr-only">Authentication</DialogTitle>
-        <DialogDescription id="auth-modal-description" className="sr-only">
+        <DialogTitle>Authentication</DialogTitle>
+        <DialogDescription>
           Sign in to your account or create a new one
         </DialogDescription>
         <DialogClose asChild className="absolute right-4 top-4 z-10">
