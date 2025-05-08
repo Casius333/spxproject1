@@ -83,10 +83,7 @@ export function Header() {
                 size="sm"
                 variant="outline"
                 className="text-white border-primary hover:bg-primary/20"
-                onClick={() => {
-                  console.log("Register button clicked");
-                  openAuthModal('register');
-                }}
+                onClick={() => openAuthModal('register')}
               >
                 <UserPlus className="mr-1 h-4 w-4" />
                 <span>Register</span>
@@ -94,10 +91,7 @@ export function Header() {
               
               <Button 
                 className="bg-gradient-to-r from-accent to-accent-light hover:from-accent-light hover:to-accent transition-all duration-300 font-bold text-dark shadow-lg hover:shadow-accent/30"
-                onClick={() => {
-                  console.log("Sign In button clicked");
-                  openAuthModal('login');
-                }}
+                onClick={() => openAuthModal('login')}
               >
                 <LogIn className="mr-1 h-4 w-4" />
                 <span>Sign In</span>
