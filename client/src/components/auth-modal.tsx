@@ -5,13 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/use-auth";
 import { X, Loader2 } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogClose,
-} from "@/components/ui/dialog";
-import {
   Form,
   FormControl,
   FormDescription,
@@ -90,32 +83,45 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
   // Log when the modal should be opening
   console.log("Auth modal rendering with isOpen:", isOpen);
   
+  // If not open, don't render anything
+  if (!isOpen) {
+    return null;
+  }
+  
+  // Direct modal implementation using fixed positioning
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md p-0 overflow-hidden bg-dark-card relative">
+    <div className="fixed inset-0 bg-black/80 z-[9999] overflow-y-auto flex items-center justify-center">
+      <div className="relative bg-dark-card max-w-md w-full rounded-xl z-[10000] mx-auto my-8 shadow-xl p-6">
+        {/* Close button */}
+        <button 
+          onClick={onClose}
+          className="absolute right-4 top-4 z-10 cursor-pointer h-7 w-7 rounded-full flex items-center justify-center hover:bg-white/10"
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </button>
+        
         {/* Decorative elements */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,theme(colors.primary.DEFAULT)/5,transparent_60%)] pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none rounded-xl"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,theme(colors.primary.DEFAULT)/5,transparent_60%)] pointer-events-none rounded-xl"></div>
         <div className="absolute top-0 left-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
         <div className="absolute bottom-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
         
-        <DialogTitle>Authentication</DialogTitle>
-        <DialogDescription>
-          Sign in to your account or create a new one
-        </DialogDescription>
-        <DialogClose asChild className="absolute right-4 top-4 z-10">
-          <div className="cursor-pointer h-7 w-7 rounded-full flex items-center justify-center hover:bg-white/10">
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </div>
-        </DialogClose>
+        {/* Modal title */}
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold leading-none tracking-tight">Authentication</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Sign in to your account or create a new one
+          </p>
+        </div>
+        
         <Tabs 
           defaultValue={activeTab} 
           value={activeTab} 
           onValueChange={setActiveTab}
           className="w-full"
         >
-          <div className="px-6 pt-6 pb-4 bg-gradient-to-r from-primary/20 to-transparent">
+          <div className="px-0 pt-2 pb-4 bg-gradient-to-r from-primary/20 to-transparent">
             <TabsList className="grid w-full grid-cols-2 mb-0 rounded-lg border border-primary/30 shadow-lg overflow-hidden">
               <TabsTrigger 
                 value="login" 
@@ -143,8 +149,8 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
           </div>
 
           {/* Login Tab */}
-          <TabsContent value="login" className="px-6 pb-6 pt-2">
-            <div className="min-h-[500px]"> {/* Fixed height container */}
+          <TabsContent value="login" className="px-0 pb-6 pt-2">
+            <div className="min-h-[400px]"> {/* Fixed height container */}
               <h2 className="text-2xl text-white font-bold mb-6 mt-0">Welcome Back</h2>
               <Form {...loginForm}>
                 <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-6">
@@ -186,7 +192,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
                   />
                   
                   {/* Empty space to match register form height */}
-                  <div className="h-[100px]"></div>
+                  <div className="h-[50px]"></div>
                   
                   <Button 
                     type="submit" 
@@ -216,8 +222,8 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
           </TabsContent>
 
           {/* Register Tab */}
-          <TabsContent value="register" className="px-6 pb-6 pt-2">
-            <div className="min-h-[500px]"> {/* Fixed height container */}
+          <TabsContent value="register" className="px-0 pb-6 pt-2">
+            <div className="min-h-[400px]"> {/* Fixed height container */}
               <h2 className="text-2xl text-white font-bold mb-6 mt-0">Create Account</h2>
               <Form {...registerForm}>
                 <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-6">
@@ -267,7 +273,12 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
                       <FormItem>
                         <FormLabel>Confirm Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="Confirm your password" {...field} />
+                          <Input 
+                            type="password" 
+                            placeholder="Confirm your password" 
+                            className="bg-black/30 border-primary/30 focus:border-primary transition-colors duration-200"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -300,7 +311,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
             </div>
           </TabsContent>
         </Tabs>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
