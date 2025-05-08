@@ -68,15 +68,15 @@ export default function Game() {
         <div className="container mx-auto px-4 py-8">
           <div className="mb-6">
             <Link href="/">
-              <button className="flex items-center text-gray-400 hover:text-white transition-colors">
+              <div className="flex items-center text-gray-400 hover:text-white transition-colors cursor-pointer">
                 <ChevronLeft size={20} />
                 <span>Back to Games</span>
-              </button>
+              </div>
             </Link>
           </div>
           
-          <h1 className="text-3xl font-heading font-bold mb-2">{game.title}</h1>
-          <p className="text-gray-400 mb-6">by {game.provider}</p>
+          <h1 className="text-3xl font-heading font-bold mb-2">{game?.title || 'Cosmic Jackpot'}</h1>
+          <p className="text-gray-400 mb-6">by {game?.provider || 'Lucky Casino'}</p>
           
           <div className="mb-12">
             <SlotMachine />

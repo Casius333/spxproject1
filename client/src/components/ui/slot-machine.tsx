@@ -3,7 +3,8 @@ import { useSlotMachine, SYMBOLS } from '@/hooks/use-slot-machine';
 import { useBalanceContext } from '@/contexts/balance-context';
 import { formatCurrency } from '@/lib/utils';
 import { WinNotification } from '@/components/ui/win-notification';
-import { Volume2, HelpCircle, X, Minus, Plus, Coins, Flame, Trophy } from 'lucide-react';
+import { Volume2, HelpCircle, X, Minus, Plus, Coins, Flame, Trophy, Home, ArrowLeft } from 'lucide-react';
+import { Link } from 'wouter';
 
 export function SlotMachine() {
   const {
@@ -41,14 +42,17 @@ export function SlotMachine() {
           </div>
         </div>
         <div className="flex items-center space-x-3">
+          <Link href="/">
+            <div className="bg-dark/50 hover:bg-primary/70 rounded-full px-4 py-2 flex items-center justify-center transition-colors backdrop-blur-sm cursor-pointer">
+              <ArrowLeft className="text-white mr-1" size={16} />
+              <span className="text-white text-sm font-medium">Exit Game</span>
+            </div>
+          </Link>
           <button className="bg-dark/30 hover:bg-dark/50 rounded-full w-9 h-9 flex items-center justify-center transition-colors backdrop-blur-sm">
             <Volume2 className="text-white/80 hover:text-white" size={16} />
           </button>
           <button className="bg-dark/30 hover:bg-dark/50 rounded-full w-9 h-9 flex items-center justify-center transition-colors backdrop-blur-sm">
             <HelpCircle className="text-white/80 hover:text-white" size={16} />
-          </button>
-          <button className="bg-dark/30 hover:bg-dark/50 rounded-full w-9 h-9 flex items-center justify-center transition-colors backdrop-blur-sm">
-            <X className="text-white/80 hover:text-white" size={16} />
           </button>
         </div>
       </div>
@@ -128,7 +132,7 @@ export function SlotMachine() {
         </div>
         
         {/* Spin Button */}
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center">
           <button 
             onClick={spinReels}
             disabled={isSpinning || balance < betAmount}
@@ -142,12 +146,20 @@ export function SlotMachine() {
               shadow-lg hover:shadow-secondary/30
               disabled:opacity-50 disabled:cursor-not-allowed
               ${isSpinning ? 'cursor-not-allowed animate-pulse-fast' : 'animate-neon-glow'}
+              mb-6
             `}
           >
             {isSpinning ? 'SPINNING...' : 'SPIN'}
             {/* Spin shine effect */}
             <div className={`absolute top-0 left-0 w-full h-full bg-white/20 transform ${isSpinning ? 'scale-x-100 -skew-x-12' : 'scale-x-0'} transition-transform duration-500`}></div>
           </button>
+          
+          <Link href="/">
+            <div className="bg-dark/80 hover:bg-primary/30 py-3 px-6 rounded-lg flex items-center justify-center transition-colors cursor-pointer border border-primary/20">
+              <Home className="text-white mr-2" size={18} />
+              <span className="text-white text-sm font-medium">Back to Home</span>
+            </div>
+          </Link>
         </div>
       </div>
       
