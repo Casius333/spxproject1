@@ -4,46 +4,54 @@
 
 @layer base {
   :root {
-    --background: 240 10% 7%;
+    /* LuckyPunt inspired dark casino theme */
+    --background: 220 10% 10%;
     --foreground: 0 0% 98%;
     
-    --card: 240 10% 12%;
+    --card: 220 10% 15%;
     --card-foreground: 0 0% 98%;
     
-    --popover: 240 10% 12%;
+    --popover: 220 10% 15%;
     --popover-foreground: 0 0% 98%;
     
-    --primary: 264 60% 40%;
+    /* Neon purple accent */
+    --primary: 275 100% 60%;
     --primary-foreground: 0 0% 98%;
     
-    --primary-light: 264 45% 47%;
-    --primary-dark: 264 60% 32%;
+    --primary-light: 275 100% 70%;
+    --primary-dark: 275 100% 45%;
     
-    --secondary: 36 100% 50%;
-    --secondary-foreground: 240 10% 3.9%;
+    /* Gold/Yellow for highlighting wins */
+    --secondary: 45 100% 50%;
+    --secondary-foreground: 220 10% 10%;
     
-    --secondary-light: 36 100% 60%;
-    --secondary-dark: 36 100% 45%;
+    --secondary-light: 45 100% 65%;
+    --secondary-dark: 45 100% 40%;
     
-    --accent: 192 100% 50%;
+    /* Neon cyan for UI highlights */
+    --accent: 180 100% 50%;
     --accent-foreground: 0 0% 98%;
     
-    --accent-light: 192 100% 60%;
-    --accent-dark: 192 100% 40%;
+    --accent-light: 180 100% 65%;
+    --accent-dark: 180 100% 40%;
     
-    --muted: 240 5% 18%;
-    --muted-foreground: 240 5% 65%;
+    /* Muted colors for backgrounds */
+    --muted: 220 10% 20%;
+    --muted-foreground: 220 10% 70%;
     
-    --dark: 240 10% 7%;
-    --dark-card: 240 10% 12%;
-    --dark-light: 240 10% 18%;
+    /* Dark backgrounds for layering */
+    --dark: 220 10% 8%;
+    --dark-card: 220 10% 13%;
+    --dark-light: 220 10% 18%;
     
-    --destructive: 0 63% 31%;
+    /* For errors and warnings */
+    --destructive: 0 100% 50%;
     --destructive-foreground: 0 0% 98%;
     
-    --border: 240 5% 26%;
-    --input: 240 5% 26%;
-    --ring: 240 5% 65%;
+    /* UI element colors */
+    --border: 220 10% 20%;
+    --input: 220 10% 16%;
+    --ring: 275 100% 60%;
     
     --radius: 0.5rem;
   }
@@ -96,6 +104,41 @@
     }
   }
   
+  @keyframes neon-glow {
+    0%, 100% {
+      filter: drop-shadow(0 0 2px hsl(var(--primary))) 
+              drop-shadow(0 0 5px hsl(var(--primary-light)));
+    }
+    50% {
+      filter: drop-shadow(0 0 5px hsl(var(--primary))) 
+              drop-shadow(0 0 15px hsl(var(--primary-light))) 
+              drop-shadow(0 0 20px hsl(var(--primary-light)));
+    }
+  }
+  
+  @keyframes jackpot-flash {
+    0%, 100% {
+      color: hsl(var(--secondary));
+      text-shadow: 0 0 10px hsl(var(--secondary)), 0 0 20px hsl(var(--secondary));
+    }
+    50% {
+      color: hsl(var(--secondary-light));
+      text-shadow: 0 0 15px hsl(var(--secondary)), 0 0 25px hsl(var(--secondary)), 0 0 35px hsl(var(--secondary-light));
+    }
+  }
+  
+  @keyframes win-celebration {
+    0%, 100% {
+      transform: scale(1);
+    }
+    10%, 30%, 50%, 70%, 90% {
+      transform: scale(1.1);
+    }
+    20%, 40%, 60%, 80% {
+      transform: scale(0.95);
+    }
+  }
+  
   .animate-spin-slow {
     animation: spin-slow 3s linear infinite;
   }
@@ -106,6 +149,18 @@
   
   .animate-bounce-slow {
     animation: bounce-slow 2s infinite;
+  }
+  
+  .animate-neon-glow {
+    animation: neon-glow 2s ease-in-out infinite;
+  }
+  
+  .animate-jackpot-flash {
+    animation: jackpot-flash 1.5s ease-in-out infinite;
+  }
+  
+  .animate-win-celebration {
+    animation: win-celebration 1s ease-in-out;
   }
   
   /* Slot reel animations */
@@ -120,5 +175,41 @@
   
   .animate-reel {
     animation: spin-reel 0.5s cubic-bezier(0.2, 0.6, 0.3, 1);
+  }
+  
+  /* Casino-style neon border */
+  .neon-border {
+    position: relative;
+    border: 2px solid transparent;
+    border-radius: var(--radius);
+    background-clip: padding-box;
+  }
+  
+  .neon-border::after {
+    content: '';
+    position: absolute;
+    top: -2px; 
+    bottom: -2px;
+    left: -2px;
+    right: -2px;
+    background: linear-gradient(
+      45deg, 
+      hsl(var(--primary)) 0%, 
+      hsl(var(--accent)) 25%, 
+      hsl(var(--primary)) 50%, 
+      hsl(var(--accent)) 75%, 
+      hsl(var(--primary)) 100%
+    );
+    border-radius: calc(var(--radius) + 2px);
+    z-index: -1;
+    animation: neon-glow 3s ease-in-out infinite;
+  }
+  
+  /* Glass effect for cards */
+  .glass-effect {
+    background: rgba(20, 25, 40, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 }
