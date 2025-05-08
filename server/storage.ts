@@ -9,7 +9,7 @@ import {
   type UserBalance,
   type Transaction
 } from "@shared/schema";
-import { eq, desc, and, like, or } from "drizzle-orm";
+import { eq, desc, and, like, or, sql } from "drizzle-orm";
 
 // Generate a temporary user ID for session
 const getGuestUserId = (): string => {
@@ -27,8 +27,34 @@ export async function getAllCategories(): Promise<Category[]> {
 // Games
 export async function getAllGames(): Promise<Game[]> {
   try {
-    // Simplified query that avoids using potentially problematic columns
-    const result = await db.select().from(games).orderBy(desc(games.createdAt));
+    // Explicitly specify columns to avoid any potential column issues
+    const result = await db.select({
+      id: games.id,
+      title: games.title,
+      slug: games.slug,
+      description: games.description,
+      provider: games.provider,
+      image: games.image,
+      categoryId: games.categoryId,
+      isFeatured: games.isFeatured,
+      isPopular: games.isPopular,
+      isNew: games.isNew,
+      isJackpot: games.isJackpot,
+      // Add default value for isActive since it's missing in DB
+      isActive: sql`true`.as('is_active'),
+      category: games.category,
+      jackpotAmount: games.jackpotAmount,
+      rtp: games.rtp,
+      volatility: games.volatility,
+      minBet: games.minBet,
+      maxBet: games.maxBet,
+      playCount: games.playCount,
+      createdAt: games.createdAt,
+      updatedAt: games.updatedAt
+    })
+    .from(games)
+    .orderBy(desc(games.createdAt));
+    
     return result;
   } catch (error) {
     console.error('Error in getAllGames:', error);
@@ -39,13 +65,36 @@ export async function getAllGames(): Promise<Game[]> {
 
 export async function getGamesByCategory(categoryId: number): Promise<Game[]> {
   try {
-    return await db.query.games.findMany({
-      where: eq(games.categoryId, categoryId),
-      orderBy: desc(games.createdAt),
-      with: {
-        category: true,
-      },
-    });
+    // Use select instead of query to have more control over the columns
+    const result = await db.select({
+      id: games.id,
+      title: games.title,
+      slug: games.slug,
+      description: games.description,
+      provider: games.provider,
+      image: games.image,
+      categoryId: games.categoryId,
+      isFeatured: games.isFeatured,
+      isPopular: games.isPopular,
+      isNew: games.isNew,
+      isJackpot: games.isJackpot,
+      // Add default value for isActive since it's missing in DB
+      isActive: sql`true`.as('is_active'),
+      category: games.category,
+      jackpotAmount: games.jackpotAmount,
+      rtp: games.rtp,
+      volatility: games.volatility,
+      minBet: games.minBet,
+      maxBet: games.maxBet,
+      playCount: games.playCount,
+      createdAt: games.createdAt,
+      updatedAt: games.updatedAt
+    })
+    .from(games)
+    .where(eq(games.categoryId, categoryId))
+    .orderBy(desc(games.createdAt));
+    
+    return result;
   } catch (error) {
     console.error('Error in getGamesByCategory:', error);
     return [];
