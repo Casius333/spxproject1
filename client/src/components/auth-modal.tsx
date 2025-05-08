@@ -93,7 +93,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md p-0 overflow-hidden bg-dark-card">
+      <DialogContent className="max-w-md p-0 overflow-hidden bg-dark-card fixed" style={{ maxHeight: 'none', top: '50%', transform: 'translateY(-50%)' }}>
         <DialogClose className="absolute right-4 top-4 z-10">
           <Button variant="ghost" size="icon" className="rounded-full h-7 w-7 hover:bg-white/10">
             <X className="h-4 w-4" />
@@ -176,25 +176,24 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
                   )}
                 />
                 
-                {/* Confirm Password (only for register) */}
-                {mode === "register" && (
-                  <FormField
-                    control={form.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="Confirm your password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-
-                {/* Spacer for login mode to maintain consistent height */}
-                {mode === "login" && <div className="h-[84px]"></div>}
+                {/* Confirm Password section spacer */}
+                <div style={{ minHeight: '84px' }}>
+                  {mode === "register" && (
+                    <FormField
+                      control={form.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Confirm Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="Confirm your password" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
                 
                 <Button 
                   type="submit" 
