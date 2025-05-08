@@ -60,9 +60,9 @@ export function Header() {
           {/* Sign In / Admin Button */}
           <div className="flex items-center space-x-3">
             <Link href="/admin">
-              <a className="hidden md:inline-flex px-3 py-2 rounded-md text-white hover:text-primary font-medium transition-colors hover:bg-primary/10 text-sm">
+              <div className="hidden md:inline-flex px-3 py-2 rounded-md text-white hover:text-primary font-medium transition-colors hover:bg-primary/10 text-sm cursor-pointer">
                 Admin Panel
-              </a>
+              </div>
             </Link>
             
             <div className="relative">

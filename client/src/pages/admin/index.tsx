@@ -1,251 +1,203 @@
-import { useState } from 'react';
-import { Link, useLocation } from 'wouter';
+import { useState, useEffect } from 'react';
+import { useLocation, Link } from 'wouter';
+import { Users, Activity, Settings, BookOpen, Home, Layout, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  LayoutDashboard,
-  Users,
-  Database,
-  Settings,
-  CreditCard,
-  BarChart3,
-  HelpCircle,
-  LogOut,
-  Menu,
-  X,
-  Coins,
-  Gamepad2
-} from 'lucide-react';
 
-const ADMIN_NAV_ITEMS = [
-  { 
-    label: 'Dashboard', 
-    href: '/admin',
-    icon: <LayoutDashboard className="w-5 h-5" />
-  },
-  { 
-    label: 'Games', 
-    href: '/admin/games',
-    icon: <Gamepad2 className="w-5 h-5" />
-  },
-  { 
-    label: 'Users', 
-    href: '/admin/users',
-    icon: <Users className="w-5 h-5" />
-  },
-  { 
-    label: 'Transactions', 
-    href: '/admin/transactions',
-    icon: <CreditCard className="w-5 h-5" />
-  },
-  { 
-    label: 'Balance Management', 
-    href: '/admin/balance',
-    icon: <Coins className="w-5 h-5" />
-  },
-  { 
-    label: 'Statistics', 
-    href: '/admin/statistics',
-    icon: <BarChart3 className="w-5 h-5" />
-  },
-  { 
-    label: 'Database', 
-    href: '/admin/database',
-    icon: <Database className="w-5 h-5" />
-  },
-  { 
-    label: 'Settings', 
-    href: '/admin/settings',
-    icon: <Settings className="w-5 h-5" />
-  },
-];
-
-type AdminPageProps = {
-  children?: React.ReactNode;
-  title: string;
+type AdminLayoutProps = {
+  children: React.ReactNode;
+  title?: string;
 };
 
-export function AdminLayout({ children, title }: AdminPageProps) {
+export function AdminLayout({ children, title = 'Dashboard' }: AdminLayoutProps) {
   const [location] = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // Determine if an item is active
-  const isActiveLink = (href: string) => {
-    if (href === '/admin' && location === '/admin') {
-      return true;
-    }
-    return href !== '/admin' && location.startsWith(href);
-  };
-
+  
   return (
-    <div className="min-h-screen bg-dark text-white">
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/80 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-dark-card border-r border-primary/20 transform transition-transform duration-200 ease-in-out md:translate-x-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-      >
-        {/* Sidebar header */}
-        <div className="flex h-16 items-center justify-between px-4 border-b border-primary/20">
-          <Link href="/admin">
-            <a className="flex items-center">
-              <LayoutDashboard className="h-6 w-6 text-primary mr-2" />
-              <span className="font-heading font-bold text-xl">Admin Panel</span>
-            </a>
-          </Link>
-          <button
-            className="md:hidden"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <X className="h-5 w-5 text-gray-400" />
-          </button>
-        </div>
-
-        {/* Sidebar content */}
-        <div className="flex flex-col h-[calc(100%-4rem)] overflow-y-auto py-4">
-          <nav className="flex-1 px-2 space-y-1">
-            {ADMIN_NAV_ITEMS.map((item) => (
-              <Link key={item.href} href={item.href}>
-                <a
-                  className={cn(
-                    "flex items-center px-3 py-3 text-sm font-medium rounded-md transition-colors relative group",
-                    isActiveLink(item.href)
-                      ? "bg-primary/10 text-primary"
-                      : "text-gray-300 hover:bg-primary/5 hover:text-primary"
-                  )}
-                >
-                  <span className="mr-3 text-primary/80">{item.icon}</span>
-                  {item.label}
-                  {isActiveLink(item.href) && (
-                    <span className="absolute inset-y-0 left-0 w-1 bg-primary rounded-tr-md rounded-br-md" />
-                  )}
-                </a>
-              </Link>
-            ))}
-          </nav>
-
-          {/* Sidebar footer */}
-          <div className="px-2 mt-auto">
-            <div className="space-y-1">
-              <Link href="/admin/help">
-                <a className="flex items-center px-3 py-3 text-sm font-medium rounded-md text-gray-300 hover:bg-primary/5 hover:text-primary transition-colors">
-                  <HelpCircle className="mr-3 h-5 w-5 text-primary/80" />
-                  Help &amp; Support
-                </a>
-              </Link>
-              <Link href="/">
-                <a className="flex items-center px-3 py-3 text-sm font-medium rounded-md text-gray-300 hover:bg-primary/5 hover:text-primary transition-colors">
-                  <LogOut className="mr-3 h-5 w-5 text-primary/80" />
-                  Back to Casino
-                </a>
-              </Link>
-            </div>
+    <div className="min-h-screen bg-dark-card">
+      <div className="flex">
+        {/* Sidebar */}
+        <div className="hidden md:block w-64 border-r border-primary/20 min-h-screen bg-dark">
+          <div className="p-4 border-b border-primary/20">
+            <h1 className="text-2xl font-bold tracking-tight text-primary">
+              <span className="neon-text">Lucky</span>
+              <span className="text-accent">Punt</span> Admin
+            </h1>
           </div>
-        </div>
-      </aside>
-
-      {/* Main content */}
-      <div className={cn("md:pl-64 flex flex-col min-h-screen")}>
-        {/* Header */}
-        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-x-4 border-b border-primary/20 bg-dark px-4 shadow-sm">
-          <button
-            className="md:hidden"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="h-6 w-6 text-gray-400" />
-            <span className="sr-only">Open sidebar</span>
-          </button>
-
-          <div className="flex flex-1 items-center justify-between">
-            <h1 className="text-xl font-semibold">{title}</h1>
-            <div className="flex items-center gap-x-4">
-              <div className="hidden md:block text-sm text-gray-400">
-                Admin User
+          
+          <nav className="p-4 space-y-1">
+            <Link href="/admin">
+              <div className={cn(
+                "flex items-center px-3 py-3 text-sm font-medium rounded-md hover:bg-primary/10 transition-colors cursor-pointer",
+                location === "/admin" ? "text-primary bg-primary/10" : "text-gray-300 hover:text-primary"
+              )}>
+                <Layout className="h-5 w-5 mr-3" />
+                Dashboard
               </div>
+            </Link>
+            
+            <Link href="/admin/games">
+              <div className={cn(
+                "flex items-center px-3 py-3 text-sm font-medium rounded-md hover:bg-primary/10 transition-colors cursor-pointer",
+                location === "/admin/games" ? "text-primary bg-primary/10" : "text-gray-300 hover:text-primary"
+              )}>
+                <BookOpen className="h-5 w-5 mr-3" />
+                Games
+              </div>
+            </Link>
+            
+            <Link href="/admin/users">
+              <div className={cn(
+                "flex items-center px-3 py-3 text-sm font-medium rounded-md hover:bg-primary/10 transition-colors cursor-pointer",
+                location === "/admin/users" ? "text-primary bg-primary/10" : "text-gray-300 hover:text-primary"
+              )}>
+                <Users className="h-5 w-5 mr-3" />
+                Users
+              </div>
+            </Link>
+            
+            <Link href="/admin/settings">
+              <div className={cn(
+                "flex items-center px-3 py-3 text-sm font-medium rounded-md hover:bg-primary/10 transition-colors cursor-pointer",
+                location === "/admin/settings" ? "text-primary bg-primary/10" : "text-gray-300 hover:text-primary"
+              )}>
+                <Settings className="h-5 w-5 mr-3" />
+                Settings
+              </div>
+            </Link>
+            
+            <div className="pt-6 border-t border-primary/20 mt-6">
+              <Link href="/">
+                <div className="flex items-center px-3 py-3 text-sm font-medium rounded-md hover:bg-primary/10 transition-colors text-gray-300 hover:text-primary cursor-pointer">
+                  <Home className="h-5 w-5 mr-3" />
+                  Back to Site
+                </div>
+              </Link>
             </div>
-          </div>
-        </header>
-
-        {/* Page content */}
-        <main className="flex-1 p-6">
+          </nav>
+        </div>
+        
+        {/* Main Content */}
+        <div className="flex-1 p-6">
+          <header className="mb-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-white">{title}</h1>
+              
+              <Link href="/">
+                <div className="flex items-center text-gray-400 hover:text-primary cursor-pointer">
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  <span className="text-sm">Back to site</span>
+                </div>
+              </Link>
+            </div>
+          </header>
+          
           {children}
-        </main>
+        </div>
       </div>
     </div>
   );
 }
 
 export default function AdminDashboard() {
+  // Mock stats for demonstration
+  const stats = [
+    { title: 'Total Users', value: '568', change: '+12%', icon: <Users className="h-6 w-6 text-primary" /> },
+    { title: 'Active Games', value: '47', change: '+4%', icon: <BookOpen className="h-6 w-6 text-primary" /> },
+    { title: 'Daily Revenue', value: '$5,245', change: '+18%', icon: <Activity className="h-6 w-6 text-primary" /> },
+  ];
+  
   return (
-    <AdminLayout title="Dashboard">
-      <div className="rounded-lg border border-primary/20 bg-dark-card shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Welcome to the Admin Dashboard</h2>
-        <p className="text-gray-400 mb-6">Manage your casino application from this central dashboard.</p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Summary Cards */}
-          <div className="bg-dark p-4 rounded-lg border border-primary/20 shadow">
+    <AdminLayout>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {stats.map((stat, index) => (
+          <div key={index} className="bg-dark rounded-lg border border-primary/20 shadow p-6">
             <div className="flex items-center justify-between">
-              <h3 className="font-medium text-gray-400">Total Users</h3>
-              <Users className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-gray-400 text-sm">{stat.title}</p>
+                <p className="text-2xl font-bold text-white mt-1">{stat.value}</p>
+                <div className="mt-2 flex items-center text-green-500">
+                  <span className="text-xs">{stat.change} this week</span>
+                </div>
+              </div>
+              <div className="p-3 bg-dark-card rounded-lg">
+                {stat.icon}
+              </div>
             </div>
-            <p className="text-2xl font-bold mt-2">1,234</p>
           </div>
-          
-          <div className="bg-dark p-4 rounded-lg border border-primary/20 shadow">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-gray-400">Total Games</h3>
-              <Gamepad2 className="h-5 w-5 text-primary" />
-            </div>
-            <p className="text-2xl font-bold mt-2">56</p>
-          </div>
-          
-          <div className="bg-dark p-4 rounded-lg border border-primary/20 shadow">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-gray-400">Transactions</h3>
-              <CreditCard className="h-5 w-5 text-primary" />
-            </div>
-            <p className="text-2xl font-bold mt-2">4,321</p>
-          </div>
-          
-          <div className="bg-dark p-4 rounded-lg border border-primary/20 shadow">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-gray-400">Revenue</h3>
-              <Coins className="h-5 w-5 text-primary" />
-            </div>
-            <p className="text-2xl font-bold mt-2">$12,345</p>
+        ))}
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="rounded-lg border border-primary/20 bg-dark shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Recent Transactions</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-primary/20">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">User</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Type</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Amount</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-primary/10">
+                  <td className="px-4 py-3 text-sm">player123</td>
+                  <td className="px-4 py-3 text-sm"><span className="text-red-400">Bet</span></td>
+                  <td className="px-4 py-3 text-sm">$25.00</td>
+                  <td className="px-4 py-3 text-sm text-gray-400">Just now</td>
+                </tr>
+                <tr className="border-b border-primary/10">
+                  <td className="px-4 py-3 text-sm">highroller</td>
+                  <td className="px-4 py-3 text-sm"><span className="text-green-400">Win</span></td>
+                  <td className="px-4 py-3 text-sm">$120.00</td>
+                  <td className="px-4 py-3 text-sm text-gray-400">5 mins ago</td>
+                </tr>
+                <tr className="border-b border-primary/10">
+                  <td className="px-4 py-3 text-sm">newuser42</td>
+                  <td className="px-4 py-3 text-sm"><span className="text-blue-400">Deposit</span></td>
+                  <td className="px-4 py-3 text-sm">$100.00</td>
+                  <td className="px-4 py-3 text-sm text-gray-400">15 mins ago</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
         
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link href="/admin/games">
-              <a className="bg-primary/10 hover:bg-primary/20 text-primary p-4 rounded-lg transition-colors flex items-center">
-                <Gamepad2 className="h-5 w-5 mr-3" />
-                Manage Games
-              </a>
-            </Link>
-            <Link href="/admin/users">
-              <a className="bg-primary/10 hover:bg-primary/20 text-primary p-4 rounded-lg transition-colors flex items-center">
-                <Users className="h-5 w-5 mr-3" />
-                Manage Users
-              </a>
-            </Link>
-            <Link href="/admin/transactions">
-              <a className="bg-primary/10 hover:bg-primary/20 text-primary p-4 rounded-lg transition-colors flex items-center">
-                <CreditCard className="h-5 w-5 mr-3" />
-                View Transactions
-              </a>
-            </Link>
+        <div className="rounded-lg border border-primary/20 bg-dark shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Popular Games</h2>
+          <div className="space-y-4">
+            <div className="flex items-center p-3 hover:bg-dark-card rounded-lg transition-colors">
+              <img src="https://placehold.co/100x100/2a2a2a/purple?text=Game+1" alt="Game" className="w-12 h-12 rounded mr-4" />
+              <div className="flex-1">
+                <h3 className="font-medium">Lucky Spin</h3>
+                <p className="text-sm text-gray-400">2,453 plays this week</p>
+              </div>
+              <div className="text-right">
+                <span className="text-green-400">+18%</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center p-3 hover:bg-dark-card rounded-lg transition-colors">
+              <img src="https://placehold.co/100x100/2a2a2a/purple?text=Game+2" alt="Game" className="w-12 h-12 rounded mr-4" />
+              <div className="flex-1">
+                <h3 className="font-medium">Diamond Rush</h3>
+                <p className="text-sm text-gray-400">1,872 plays this week</p>
+              </div>
+              <div className="text-right">
+                <span className="text-green-400">+12%</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center p-3 hover:bg-dark-card rounded-lg transition-colors">
+              <img src="https://placehold.co/100x100/2a2a2a/purple?text=Game+3" alt="Game" className="w-12 h-12 rounded mr-4" />
+              <div className="flex-1">
+                <h3 className="font-medium">Gold Vault</h3>
+                <p className="text-sm text-gray-400">1,245 plays this week</p>
+              </div>
+              <div className="text-right">
+                <span className="text-red-400">-3%</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -9,6 +9,8 @@ import Home from "@/pages/home";
 import Game from "@/pages/game";
 import NotFound from "@/pages/not-found";
 import AdminDashboard from "@/pages/admin";
+import AdminGames from "@/pages/admin/games";
+import AdminUsers from "@/pages/admin/users";
 
 // Main application routes
 function Router() {
@@ -25,7 +27,8 @@ function Router() {
       
       {/* Admin routes */}
       <Route path="/admin" component={AdminDashboard} />
-      <Route path="/admin/:page" component={AdminDashboard} />
+      <Route path="/admin/games" component={AdminGames} />
+      <Route path="/admin/users" component={AdminUsers} />
       
       {/* 404 fallback */}
       <Route component={NotFound} />

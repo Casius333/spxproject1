@@ -62,26 +62,26 @@ export function SidebarNav({ className }: SidebarNavProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed top-16 bottom-0 z-30 flex flex-col transition-all duration-300 bg-dark border-r border-primary/20 shadow-lg",
+          "fixed top-16 bottom-0 z-30 flex flex-col transition-all duration-300 rounded-tr-lg rounded-br-lg overflow-hidden",
           isMobile
             ? isMobileOpen
               ? "left-0 w-64"
               : "-left-72 w-72"
             : isCollapsed
-              ? "w-16 md:left-0"
-              : "w-60 md:left-0",
+              ? "w-16 left-4"
+              : "w-60 left-4",
           className
         )}
       >
         {/* Sidebar Content */}
-        <div className="flex flex-col h-full overflow-y-auto glass-effect backdrop-blur-sm">
+        <div className="flex flex-col h-full overflow-y-auto bg-dark/90 glass-effect backdrop-blur-sm shadow-xl border border-primary/20">
           {/* Navigation Links */}
           <nav className="space-y-1 p-2 py-4">
             {NAV_ITEMS.map((item) => (
               <Link key={item.href} href={item.href}>
-                <a
+                <div
                   className={cn(
-                    "flex items-center px-3 py-3 text-sm font-medium rounded-md hover:bg-primary/10 transition-colors relative group",
+                    "flex items-center px-3 py-3 text-sm font-medium rounded-md hover:bg-primary/10 transition-colors relative group cursor-pointer",
                     isActiveLink(item.href)
                       ? "text-primary bg-primary/10"
                       : "text-white hover:text-primary"
@@ -100,28 +100,28 @@ export function SidebarNav({ className }: SidebarNavProps) {
                   {isActiveLink(item.href) && (
                     <span className="absolute inset-y-0 left-0 w-1 bg-primary rounded-tr-md rounded-br-md animate-pulse-fast" />
                   )}
-                </a>
+                </div>
               </Link>
             ))}
           </nav>
 
-          {/* Collapse button (desktop only) */}
+          {/* Collapse toggle button (desktop only) */}
           {!isMobile && (
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="absolute top-3 -right-3 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center shadow-md hover:bg-primary-light transition-colors"
+              className="absolute top-3 right-3 w-8 h-8 rounded-md bg-dark-card text-primary border border-primary/30 flex items-center justify-center shadow-md hover:bg-primary/10 transition-colors"
             >
-              {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+              {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
             </button>
           )}
         </div>
       </aside>
 
-      {/* Content Offset - adds margin to push content away from sidebar */}
+      {/* Empty spacing for content layout */}
       {!isMobile && (
         <div className={cn(
           "transition-all duration-300", 
-          isCollapsed ? "ml-16" : "ml-60"
+          isCollapsed ? "ml-24" : "ml-68"
         )}></div>
       )}
     </>
