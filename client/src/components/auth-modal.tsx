@@ -100,7 +100,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
             <span className="sr-only">Close</span>
           </Button>
         </DialogClose>
-        <DialogHeader className="p-6 pb-2"></DialogHeader>
+        <DialogHeader className="p-4 pb-0"></DialogHeader>
         
         <Tabs 
           defaultValue={activeTab} 
@@ -108,14 +108,14 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
           onValueChange={setActiveTab}
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-2 mb-4 px-6">
+          <TabsList className="grid w-full grid-cols-2 mb-2 mt-0 px-6">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="register">Register</TabsTrigger>
           </TabsList>
 
           {/* Login Tab */}
-          <TabsContent value="login" className="px-6 pb-6">
-            <DialogTitle className="text-2xl text-white mb-2">Welcome Back</DialogTitle>
+          <TabsContent value="login" className="px-6 pb-6 pt-0">
+            <DialogTitle className="text-2xl text-white mb-2 mt-0">Welcome Back</DialogTitle>
             <DialogDescription className="mb-6">
               Sign in to your account to continue playing
             </DialogDescription>
@@ -167,8 +167,8 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
           </TabsContent>
 
           {/* Register Tab */}
-          <TabsContent value="register" className="px-6 pb-6">
-            <DialogTitle className="text-2xl text-white mb-2">Create Account</DialogTitle>
+          <TabsContent value="register" className="px-6 pb-6 pt-0">
+            <DialogTitle className="text-2xl text-white mb-2 mt-0">Create Account</DialogTitle>
             <DialogDescription className="mb-6">
               Register for a new account to start playing
             </DialogDescription>
