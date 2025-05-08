@@ -11,31 +11,29 @@ export function Header() {
   return (
     <header className="bg-dark border-b border-primary/20 sticky top-0 z-50 shadow-lg">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        {/* Logo */}
-        <div className="flex items-center">
+        {/* Left spacer */}
+        <div className="w-32"></div>
+
+        {/* Centered Logo */}
+        <div className="flex items-center justify-center">
           <Link href="/" className="flex items-center group">
-            <Dice5 className="text-primary text-3xl mr-2 animate-neon-glow" />
-            <span className="font-heading font-bold text-2xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent group-hover:animate-neon-glow">
+            <Dice5 className="text-primary text-3xl mr-2" />
+            <span className="font-heading font-bold text-2xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               LUCKY SPIN
             </span>
           </Link>
         </div>
 
-        {/* Search Bar (Future Implementation) */}
-        <div className="hidden md:flex items-center flex-1 max-w-md mx-auto">
-          {/* Search can be added here later */}
-        </div>
-
         {/* User Controls */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 w-32 justify-end">
           {/* Balance Display */}
           <div 
-            className="relative group neon-border"
+            className="relative group"
             onMouseEnter={() => setIsBalanceHovered(true)}
             onMouseLeave={() => setIsBalanceHovered(false)}
           >
             <div className="px-4 py-2 rounded-lg flex items-center bg-opacity-20 backdrop-blur-sm bg-dark-card">
-              <Coins className="text-secondary mr-2 w-5 h-5 animate-pulse-fast" />
+              <Coins className="text-secondary mr-2 w-5 h-5" />
               <span className="font-bold text-white">
                 {isLoading ? "$-.--" : formatCurrency(balance)}
               </span>
@@ -57,20 +55,12 @@ export function Header() {
             </div>
           </div>
 
-          {/* Sign In / Admin Button */}
-          <div className="flex items-center space-x-3">
-            <Link href="/admin">
-              <div className="hidden md:inline-flex px-3 py-2 rounded-md text-white hover:text-primary font-medium transition-colors hover:bg-primary/10 text-sm cursor-pointer">
-                Admin Panel
-              </div>
-            </Link>
-            
-            <div className="relative">
-              <button className="bg-gradient-to-r from-accent to-accent-light hover:from-accent-light hover:to-accent transition-all duration-300 px-5 py-2 rounded-lg font-bold text-dark shadow-lg hover:shadow-accent/30">
-                <span className="hidden md:inline">SIGN IN</span>
-                <User className="md:hidden w-5 h-5" />
-              </button>
-            </div>
+          {/* Sign In Button */}
+          <div className="relative">
+            <button className="bg-gradient-to-r from-accent to-accent-light hover:from-accent-light hover:to-accent transition-all duration-300 px-5 py-2 rounded-lg font-bold text-dark shadow-lg hover:shadow-accent/30">
+              <span className="hidden md:inline">SIGN IN</span>
+              <User className="md:hidden w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>
