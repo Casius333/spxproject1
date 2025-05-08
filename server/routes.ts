@@ -3,8 +3,12 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { gamesController } from "./controllers/games";
 import { balanceController } from "./controllers/balance";
+import { setupAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication
+  setupAuth(app);
+  
   const httpServer = createServer(app);
   
   // Setup WebSocket server
