@@ -1,5 +1,5 @@
-import { Pool } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 import config from "../config";
 
@@ -29,6 +29,19 @@ if (!connectionString) {
   );
 }
 
+// Configure the database connection pool
+const poolConfig = {
+  connectionString,
+  max: 10, // Max number of clients in the pool
+  idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
+  ssl: connectionString.includes('supabase') ? { rejectUnauthorized: false } : false
+};
+
 // Create database connection pool
-export const pool = new Pool({ connectionString });
-export const db = drizzle({ client: pool, schema });
+export const pool = new Pool(poolConfig);
+export const db = drizzle(pool, { schema });
+
+// Add event handlers for connection issues
+pool.on('error', (err) => {
+  console.error('Unexpected database error:', err);
+});
