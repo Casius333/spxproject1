@@ -27,35 +27,10 @@ export async function getAllCategories(): Promise<Category[]> {
 // Games
 export async function getAllGames(): Promise<Game[]> {
   try {
-    // Explicitly specify columns to avoid any potential column issues
-    const result = await db.select({
-      id: games.id,
-      title: games.title,
-      slug: games.slug,
-      description: games.description,
-      provider: games.provider,
-      image: games.image,
-      categoryId: games.categoryId,
-      isFeatured: games.isFeatured,
-      isPopular: games.isPopular,
-      isNew: games.isNew,
-      isJackpot: games.isJackpot,
-      // Add default value for isActive since it's missing in DB
-      isActive: sql`true`.as('is_active'),
-      category: games.category,
-      jackpotAmount: games.jackpotAmount,
-      rtp: games.rtp,
-      volatility: games.volatility,
-      minBet: games.minBet,
-      maxBet: games.maxBet,
-      playCount: games.playCount,
-      createdAt: games.createdAt,
-      updatedAt: games.updatedAt
-    })
-    .from(games)
-    .orderBy(desc(games.createdAt));
-    
-    return result;
+    // Use the safer query API instead of select
+    return await db.query.games.findMany({
+      orderBy: desc(games.createdAt),
+    });
   } catch (error) {
     console.error('Error in getAllGames:', error);
     // Return empty array on error instead of crashing
@@ -65,36 +40,11 @@ export async function getAllGames(): Promise<Game[]> {
 
 export async function getGamesByCategory(categoryId: number): Promise<Game[]> {
   try {
-    // Use select instead of query to have more control over the columns
-    const result = await db.select({
-      id: games.id,
-      title: games.title,
-      slug: games.slug,
-      description: games.description,
-      provider: games.provider,
-      image: games.image,
-      categoryId: games.categoryId,
-      isFeatured: games.isFeatured,
-      isPopular: games.isPopular,
-      isNew: games.isNew,
-      isJackpot: games.isJackpot,
-      // Add default value for isActive since it's missing in DB
-      isActive: sql`true`.as('is_active'),
-      category: games.category,
-      jackpotAmount: games.jackpotAmount,
-      rtp: games.rtp,
-      volatility: games.volatility,
-      minBet: games.minBet,
-      maxBet: games.maxBet,
-      playCount: games.playCount,
-      createdAt: games.createdAt,
-      updatedAt: games.updatedAt
-    })
-    .from(games)
-    .where(eq(games.categoryId, categoryId))
-    .orderBy(desc(games.createdAt));
-    
-    return result;
+    // Use the safer query API instead of select
+    return await db.query.games.findMany({
+      where: eq(games.categoryId, categoryId),
+      orderBy: desc(games.createdAt),
+    });
   } catch (error) {
     console.error('Error in getGamesByCategory:', error);
     return [];
