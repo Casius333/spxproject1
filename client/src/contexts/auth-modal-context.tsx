@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode, useState } from 'react';
+import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import AuthModal from '@/components/auth-modal';
 
 // Auth modal context
@@ -20,12 +20,19 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalTab, setAuthModalTab] = useState<'login' | 'register'>('login');
 
+  // Debug log for auth modal state changes
+  useEffect(() => {
+    console.log("Auth modal state changed:", isAuthModalOpen);
+  }, [isAuthModalOpen]);
+
   const openAuthModal = (defaultTab: 'login' | 'register' = 'login') => {
+    console.log("openAuthModal called with tab:", defaultTab);
     setAuthModalTab(defaultTab);
     setIsAuthModalOpen(true);
   };
 
   const closeAuthModal = () => {
+    console.log("closeAuthModal called");
     setIsAuthModalOpen(false);
   };
 
