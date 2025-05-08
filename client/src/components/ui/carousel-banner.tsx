@@ -78,19 +78,7 @@ export function CarouselBanner() {
         ))}
       </div>
       
-      {/* Navigation arrows */}
-      <button 
-        onClick={prevSlide}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-3 rounded-full transition-colors duration-300 focus:outline-none"
-      >
-        <ChevronLeft size={20} />
-      </button>
-      <button 
-        onClick={nextSlide}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-3 rounded-full transition-colors duration-300 focus:outline-none"
-      >
-        <ChevronRight size={20} />
-      </button>
+      {/* Navigation arrows removed as requested */}
       
       {/* Indicators */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-3">
