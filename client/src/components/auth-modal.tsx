@@ -34,7 +34,6 @@ const loginSchema = z.object({
 
 // Registration form schema
 const registerSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string(),
@@ -73,7 +72,6 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
   const registerForm = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      username: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -93,7 +91,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md p-0 overflow-hidden bg-dark-card">
+      <DialogContent className="max-w-md p-0 overflow-hidden bg-dark-card" style={{ display: 'flex', flexDirection: 'column' }}>
         <DialogClose className="absolute right-4 top-4 z-10">
           <Button variant="ghost" size="icon" className="rounded-full h-7 w-7 hover:bg-white/10">
             <X className="h-4 w-4" />
@@ -114,7 +112,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
           </TabsList>
 
           {/* Login Tab */}
-          <TabsContent value="login" className="px-6 pb-6 pt-0">
+          <TabsContent value="login" className="px-6 pb-6 pt-0" style={{ minHeight: '480px' }}>
             <DialogTitle className="text-2xl text-white mb-2 mt-0">Welcome Back</DialogTitle>
             <DialogDescription className="mb-6">
               Sign in to your account to continue playing
@@ -167,26 +165,14 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
           </TabsContent>
 
           {/* Register Tab */}
-          <TabsContent value="register" className="px-6 pb-6 pt-0">
+          <TabsContent value="register" className="px-6 pb-6 pt-0" style={{ minHeight: '480px' }}>
             <DialogTitle className="text-2xl text-white mb-2 mt-0">Create Account</DialogTitle>
             <DialogDescription className="mb-6">
               Register for a new account to start playing
             </DialogDescription>
             <Form {...registerForm}>
               <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-6">
-                <FormField
-                  control={registerForm.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Username</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Choose a username" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+
                 <FormField
                   control={registerForm.control}
                   name="email"

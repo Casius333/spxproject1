@@ -121,23 +121,17 @@ export function setupAuth(app: Express) {
   // Registration endpoint
   app.post("/api/register", async (req: Request, res: Response) => {
     try {
-      const { username, email, password } = req.body;
+      const { email, password } = req.body;
 
       // Basic validation
-      if (!username || !email || !password) {
+      if (!email || !password) {
         return res.status(400).json({
-          message: "Username, email, and password are required",
+          message: "Email and password are required",
         });
       }
-
-      // Check if user already exists
-      const existingUser = await db.query.users.findFirst({
-        where: eq(users.username, username),
-      });
-
-      if (existingUser) {
-        return res.status(400).json({ message: "Username already exists" });
-      }
+      
+      // Generate username from email
+      const username = email.split('@')[0] + Math.floor(Math.random() * 10000);
 
       // Check if email already exists
       const existingEmail = await db.query.users.findFirst({
