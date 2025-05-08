@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
-import { useAuthModal } from "@/App";
+import { useAuthModal } from "@/contexts/auth-modal-context";
 import { Loader2 } from "lucide-react";
 import { Route } from "wouter";
 import { useEffect } from "react";

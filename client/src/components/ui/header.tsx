@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useBalanceContext } from '@/contexts/balance-context';
 import { useAuth } from '@/hooks/use-auth';
-import { useAuthModal } from '@/App';
+import { useAuthModal } from '@/contexts/auth-modal-context';
 import { formatCurrency } from '@/lib/utils';
 import { Dice5, Coins, ChevronDown, LogIn, UserPlus } from 'lucide-react';
 import { GiTopHat } from 'react-icons/gi';

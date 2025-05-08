@@ -1,35 +1,19 @@
-import { useState, createContext, useContext } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { BalanceProvider } from "@/contexts/balance-context";
 import { AuthProvider } from "@/hooks/use-auth";
+import { AuthModalProvider } from "@/contexts/auth-modal-context";
 import { Header } from "@/components/ui/header";
 import { SidebarNav } from "@/components/ui/sidebar-nav";
 import { ProtectedRoute } from "@/lib/protected-route";
-import AuthModal from "@/components/auth-modal";
 import Home from "@/pages/home";
 import Game from "@/pages/game";
 import NotFound from "@/pages/not-found";
 import AdminDashboard from "@/pages/admin";
 import AdminGames from "@/pages/admin/games";
 import AdminUsers from "@/pages/admin/users";
-
-// Auth modal context
-interface AuthModalContextType {
-  openAuthModal: (defaultTab?: 'login' | 'register') => void;
-  closeAuthModal: () => void;
-  isAuthModalOpen: boolean;
-}
-
-export const AuthModalContext = createContext<AuthModalContextType>({
-  openAuthModal: () => {},
-  closeAuthModal: () => {},
-  isAuthModalOpen: false,
-});
-
-export const useAuthModal = () => useContext(AuthModalContext);
 
 // Main application routes
 function Router() {
@@ -78,38 +62,17 @@ function MainLayout({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authModalTab, setAuthModalTab] = useState<'login' | 'register'>('login');
-
-  const openAuthModal = (defaultTab: 'login' | 'register' = 'login') => {
-    setAuthModalTab(defaultTab);
-    setIsAuthModalOpen(true);
-  };
-
-  const closeAuthModal = () => {
-    setIsAuthModalOpen(false);
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AuthModalContext.Provider value={{ 
-          openAuthModal, 
-          closeAuthModal, 
-          isAuthModalOpen 
-        }}>
+        <AuthModalProvider>
           <BalanceProvider initialBalance={1250}>
             <MainLayout>
               <Router />
             </MainLayout>
-            <AuthModal 
-              isOpen={isAuthModalOpen} 
-              onClose={closeAuthModal} 
-              defaultTab={authModalTab} 
-            />
             <Toaster />
           </BalanceProvider>
-        </AuthModalContext.Provider>
+        </AuthModalProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
