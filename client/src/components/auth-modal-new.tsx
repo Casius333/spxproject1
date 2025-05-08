@@ -44,12 +44,12 @@ const authSchema = z.object({
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultTab?: 'login' | 'register';
+  defaultMode?: 'login' | 'register';
 }
 
-export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalProps) {
   const { user, loginMutation, registerMutation } = useAuth();
-  const [mode, setMode] = useState<'login' | 'register'>(defaultTab as 'login' | 'register');
+  const [mode, setMode] = useState<'login' | 'register'>(defaultMode);
 
   // Close the modal if user successfully logs in
   useEffect(() => {
@@ -65,7 +65,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
       email: "",
       password: "",
       confirmPassword: "",
-      mode: defaultTab as 'login' | 'register',
+      mode: defaultMode,
     },
   });
 
