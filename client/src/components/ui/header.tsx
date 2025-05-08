@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'wouter';
 import { useBalanceContext } from '@/contexts/balance-context';
 import { formatCurrency } from '@/lib/utils';
-import { Dice5, User, Menu } from 'lucide-react';
+import { Dice5, User, Menu, Coins, ChevronDown } from 'lucide-react';
 
 const MENU_ITEMS = [
   { label: 'Slots', href: '/' },
@@ -17,27 +17,30 @@ export function Header() {
   const { balance, isLoading } = useBalanceContext();
 
   return (
-    <header className="bg-dark-light border-b border-gray-800 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+    <header className="bg-dark border-b border-primary/20 sticky top-0 z-50 shadow-lg">
+      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        {/* Logo */}
         <div className="flex items-center">
-          <Link href="/" className="flex items-center">
-            <Dice5 className="text-secondary text-3xl mr-2" />
-            <span className="font-heading font-bold text-2xl bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
-              SpinVerse
+          <Link href="/" className="flex items-center group">
+            <Dice5 className="text-primary text-3xl mr-2 animate-neon-glow" />
+            <span className="font-heading font-bold text-2xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent group-hover:animate-neon-glow">
+              LUCKY SPIN
             </span>
           </Link>
         </div>
 
-        <div className="hidden md:flex items-center space-x-6">
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center space-x-8">
           <nav>
-            <ul className="flex space-x-4">
+            <ul className="flex space-x-6">
               {MENU_ITEMS.map((item, index) => (
                 <li key={index}>
                   <Link 
                     href={item.href}
-                    className="hover:text-secondary transition-colors py-2 border-b-2 border-transparent hover:border-secondary"
+                    className="text-white hover:text-primary transition-colors font-medium py-2 border-b-2 border-transparent hover:border-primary text-base relative group"
                   >
                     {item.label}
+                    <span className="absolute left-0 bottom-0 w-full h-0.5 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out"></span>
                   </Link>
                 </li>
               ))}
@@ -45,45 +48,48 @@ export function Header() {
           </nav>
         </div>
 
+        {/* User Controls */}
         <div className="flex items-center space-x-4">
+          {/* Balance Display */}
           <div 
-            className="relative group"
+            className="relative group neon-border"
             onMouseEnter={() => setIsBalanceHovered(true)}
             onMouseLeave={() => setIsBalanceHovered(false)}
           >
-            <div className="bg-dark-card px-4 py-2 rounded-lg flex items-center border border-gray-700">
-              <svg className="text-secondary mr-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6h18M3 12h18M3 18h18" />
-              </svg>
-              <span className="font-semibold">
+            <div className="px-4 py-2 rounded-lg flex items-center bg-opacity-20 backdrop-blur-sm bg-dark-card">
+              <Coins className="text-secondary mr-2 w-5 h-5 animate-pulse-fast" />
+              <span className="font-bold text-white">
                 {isLoading ? "$-.--" : formatCurrency(balance)}
               </span>
+              <ChevronDown className="ml-1 w-4 h-4 text-muted-foreground" />
             </div>
             
-            <div className={`absolute right-0 mt-2 w-48 bg-dark-card rounded-lg shadow-lg border border-gray-700 transition-all duration-200 ${
-              isBalanceHovered ? 'opacity-100 visible' : 'opacity-0 invisible'
+            <div className={`absolute right-0 mt-2 w-56 bg-dark-card rounded-lg shadow-xl border border-primary/30 transition-all duration-200 glass-effect ${
+              isBalanceHovered ? 'opacity-100 visible transform scale-100' : 'opacity-0 invisible transform scale-95'
             }`}>
-              <div className="p-3">
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-400">Available:</span>
-                  <span className="font-semibold">{formatCurrency(balance)}</span>
+              <div className="p-4">
+                <div className="flex justify-between mb-3">
+                  <span className="text-muted-foreground">Available Balance:</span>
+                  <span className="font-bold text-white">{formatCurrency(balance)}</span>
                 </div>
-                <button className="w-full bg-secondary hover:bg-secondary-light text-white rounded py-1.5 text-sm font-medium transition-colors">
-                  Deposit
+                <button className="w-full bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary text-white rounded-md py-2 text-sm font-bold transition-all duration-300 hover:shadow-lg hover:shadow-primary/30">
+                  DEPOSIT NOW
                 </button>
               </div>
             </div>
           </div>
 
+          {/* Sign In Button */}
           <div className="relative">
-            <button className="bg-primary hover:bg-primary-light transition-colors px-4 py-2 rounded-lg font-medium">
-              <span className="hidden md:inline">Sign In</span>
+            <button className="bg-gradient-to-r from-accent to-accent-light hover:from-accent-light hover:to-accent transition-all duration-300 px-5 py-2 rounded-lg font-bold text-dark shadow-lg hover:shadow-accent/30">
+              <span className="hidden md:inline">SIGN IN</span>
               <User className="md:hidden w-5 h-5" />
             </button>
           </div>
 
+          {/* Mobile Menu Toggle */}
           <button 
-            className="md:hidden text-2xl" 
+            className="md:hidden text-2xl text-white hover:text-primary transition-colors" 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             <Menu className="w-6 h-6" />
@@ -92,14 +98,14 @@ export function Header() {
       </div>
 
       {/* Mobile Menu */}
-      <div className={`md:hidden ${isMobileMenuOpen ? 'block' : 'hidden'} bg-dark-light border-t border-gray-800`}>
+      <div className={`md:hidden ${isMobileMenuOpen ? 'block' : 'hidden'} bg-dark-card border-t border-primary/20 glass-effect`}>
         <nav className="container mx-auto px-4 py-3">
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {MENU_ITEMS.map((item, index) => (
               <li key={index}>
                 <Link 
                   href={item.href}
-                  className="block py-2 px-3 hover:bg-dark-card rounded transition-colors"
+                  className="block py-3 px-4 hover:bg-primary/10 rounded-md transition-colors text-white hover:text-primary"
                 >
                   {item.label}
                 </Link>

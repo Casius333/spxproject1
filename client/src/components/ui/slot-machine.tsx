@@ -3,7 +3,7 @@ import { useSlotMachine, SYMBOLS } from '@/hooks/use-slot-machine';
 import { useBalanceContext } from '@/contexts/balance-context';
 import { formatCurrency } from '@/lib/utils';
 import { WinNotification } from '@/components/ui/win-notification';
-import { Volume2, HelpCircle, X, Minus, Plus } from 'lucide-react';
+import { Volume2, HelpCircle, X, Minus, Plus, Coins, Flame, Trophy } from 'lucide-react';
 
 export function SlotMachine() {
   const {
@@ -30,38 +30,53 @@ export function SlotMachine() {
   };
   
   return (
-    <div className="max-w-4xl mx-auto bg-dark-card rounded-xl border border-gray-800 shadow-lg overflow-hidden">
-      <div className="bg-gradient-to-r from-primary to-primary-dark py-4 px-6 flex justify-between items-center">
+    <div className="max-w-5xl mx-auto neon-border bg-dark-card rounded-xl shadow-2xl overflow-hidden">
+      {/* Game Header */}
+      <div className="bg-gradient-to-r from-primary-dark to-primary py-4 px-6 flex justify-between items-center">
         <div>
-          <h3 className="font-heading font-bold text-xl">Cosmic Fortune</h3>
-          <p className="text-xs text-gray-300">by SpinVerse Studios</p>
+          <h3 className="font-heading font-bold text-2xl text-white animate-neon-glow">COSMIC JACKPOT</h3>
+          <div className="flex items-center mt-1">
+            <Flame className="w-4 h-4 text-secondary mr-1" />
+            <p className="text-xs text-muted-foreground">96.5% RTP | High Volatility</p>
+          </div>
         </div>
         <div className="flex items-center space-x-3">
-          <button className="bg-dark-card hover:bg-dark-light rounded-full w-8 h-8 flex items-center justify-center transition-colors">
-            <Volume2 className="text-gray-300" size={16} />
+          <button className="bg-dark/30 hover:bg-dark/50 rounded-full w-9 h-9 flex items-center justify-center transition-colors backdrop-blur-sm">
+            <Volume2 className="text-white/80 hover:text-white" size={16} />
           </button>
-          <button className="bg-dark-card hover:bg-dark-light rounded-full w-8 h-8 flex items-center justify-center transition-colors">
-            <HelpCircle className="text-gray-300" size={16} />
+          <button className="bg-dark/30 hover:bg-dark/50 rounded-full w-9 h-9 flex items-center justify-center transition-colors backdrop-blur-sm">
+            <HelpCircle className="text-white/80 hover:text-white" size={16} />
           </button>
-          <button className="bg-dark-card hover:bg-dark-light rounded-full w-8 h-8 flex items-center justify-center transition-colors">
-            <X className="text-gray-300" size={16} />
+          <button className="bg-dark/30 hover:bg-dark/50 rounded-full w-9 h-9 flex items-center justify-center transition-colors backdrop-blur-sm">
+            <X className="text-white/80 hover:text-white" size={16} />
           </button>
         </div>
       </div>
       
-      <div className="p-6">
-        <div className="bg-dark rounded-lg p-4 mb-6">
-          <div className="grid grid-cols-5 gap-2 h-48">
-            {/* Slot reels */}
+      <div className="p-8 bg-gradient-to-b from-dark to-dark-card">
+        {/* Jackpot Display */}
+        <div className="flex justify-center mb-4">
+          <div className="bg-dark-light/50 px-6 py-2 rounded-full backdrop-blur-sm flex items-center shadow-lg">
+            <Trophy className="text-secondary animate-pulse-fast mr-2" size={18} />
+            <span className="text-secondary font-bold animate-jackpot-flash">JACKPOT: $25,000.00</span>
+          </div>
+        </div>
+
+        {/* Slot Reels */}
+        <div className="glass-effect rounded-lg p-6 mb-8 shadow-inner backdrop-blur">
+          <div className="grid grid-cols-5 gap-3 h-60">
             {reelState.map((reel, reelIndex) => (
-              <div key={reelIndex} className="relative overflow-hidden bg-dark-light rounded-md border border-gray-700">
-                <div className={`absolute inset-0 flex flex-col items-center pt-12 ${isSpinning ? 'animate-reel' : ''}`}>
+              <div 
+                key={reelIndex} 
+                className="relative overflow-hidden bg-dark-light/80 rounded-lg shadow-lg border-t border-primary/20 border-b border-primary/20"
+              >
+                <div className={`absolute inset-0 flex flex-col items-center pt-16 ${isSpinning ? 'animate-reel' : ''}`}>
                   {reel.map((symbol, symbolIndex) => (
                     <img 
                       key={symbolIndex} 
                       src={symbol.image} 
                       alt={symbol.name} 
-                      className="w-16 h-16 mb-4 object-contain"
+                      className="w-20 h-20 mb-4 object-contain drop-shadow-lg"
                     />
                   ))}
                 </div>
@@ -70,48 +85,73 @@ export function SlotMachine() {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-dark rounded-lg p-4 flex flex-col items-center justify-center">
-            <p className="text-gray-400 text-sm mb-1">Balance</p>
-            <p className="text-xl font-semibold">{formatCurrency(balance)}</p>
+        {/* Game Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Balance Display */}
+          <div className="bg-dark/60 glass-effect rounded-xl p-4 flex flex-col items-center justify-center shadow-lg">
+            <p className="text-muted-foreground text-sm mb-1">BALANCE</p>
+            <div className="flex items-center">
+              <Coins className="text-secondary mr-2 w-5 h-5" />
+              <p className="text-xl font-bold text-white">{formatCurrency(balance)}</p>
+            </div>
           </div>
-          <div className="bg-dark rounded-lg p-4 flex flex-col items-center justify-center">
-            <p className="text-gray-400 text-sm mb-1">Bet Amount</p>
+          
+          {/* Bet Amount Control */}
+          <div className="bg-dark/60 glass-effect rounded-xl p-4 flex flex-col items-center justify-center shadow-lg">
+            <p className="text-muted-foreground text-sm mb-1">BET AMOUNT</p>
             <div className="flex items-center">
               <button 
                 onClick={decreaseBet}
                 disabled={isSpinning}
-                className="bg-dark-light hover:bg-gray-700 w-8 h-8 rounded flex items-center justify-center transition-colors disabled:opacity-50"
+                className="bg-primary/30 hover:bg-primary/50 w-9 h-9 rounded-md flex items-center justify-center transition-colors disabled:opacity-50 backdrop-blur-sm"
               >
-                <Minus className="text-sm" size={14} />
+                <Minus className="text-white" size={16} />
               </button>
-              <p className="mx-4 text-xl font-semibold">{formatCurrency(betAmount)}</p>
+              <p className="mx-5 text-xl font-bold text-white">{formatCurrency(betAmount)}</p>
               <button 
                 onClick={increaseBet}
                 disabled={isSpinning}
-                className="bg-dark-light hover:bg-gray-700 w-8 h-8 rounded flex items-center justify-center transition-colors disabled:opacity-50"
+                className="bg-primary/30 hover:bg-primary/50 w-9 h-9 rounded-md flex items-center justify-center transition-colors disabled:opacity-50 backdrop-blur-sm"
               >
-                <Plus className="text-sm" size={14} />
+                <Plus className="text-white" size={16} />
               </button>
             </div>
           </div>
-          <div className="bg-dark rounded-lg p-4 flex flex-col items-center justify-center">
-            <p className="text-gray-400 text-sm mb-1">Win</p>
-            <p className="text-xl font-semibold">{formatCurrency(winAmount)}</p>
+          
+          {/* Win Display */}
+          <div className={`bg-dark/60 glass-effect rounded-xl p-4 flex flex-col items-center justify-center shadow-lg ${winAmount > 0 ? 'border border-secondary/50 animate-neon-glow' : ''}`}>
+            <p className="text-muted-foreground text-sm mb-1">WIN</p>
+            <p className={`text-xl font-bold ${winAmount > 0 ? 'text-secondary' : 'text-white'}`}>
+              {formatCurrency(winAmount)}
+            </p>
           </div>
         </div>
         
+        {/* Spin Button */}
         <div className="flex justify-center">
           <button 
             onClick={spinReels}
             disabled={isSpinning || balance < betAmount}
-            className={`bg-secondary hover:bg-secondary-light transition-colors text-gray-900 font-heading font-bold text-xl py-4 px-12 rounded-full disabled:opacity-50 ${isSpinning ? 'cursor-not-allowed' : ''}`}
+            className={`
+              relative overflow-hidden
+              bg-gradient-to-r from-secondary-dark to-secondary
+              hover:from-secondary hover:to-secondary-light
+              transition-all duration-300
+              text-dark font-heading font-bold text-xl
+              py-5 px-16 rounded-full
+              shadow-lg hover:shadow-secondary/30
+              disabled:opacity-50 disabled:cursor-not-allowed
+              ${isSpinning ? 'cursor-not-allowed animate-pulse-fast' : 'animate-neon-glow'}
+            `}
           >
             {isSpinning ? 'SPINNING...' : 'SPIN'}
+            {/* Spin shine effect */}
+            <div className={`absolute top-0 left-0 w-full h-full bg-white/20 transform ${isSpinning ? 'scale-x-100 -skew-x-12' : 'scale-x-0'} transition-transform duration-500`}></div>
           </button>
         </div>
       </div>
       
+      {/* Win Notification */}
       <WinNotification 
         winAmount={winAmount} 
         isVisible={showWinNotification} 
