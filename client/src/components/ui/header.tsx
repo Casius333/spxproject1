@@ -2,14 +2,15 @@ import { useState } from 'react';
 import { Link } from 'wouter';
 import { useBalanceContext } from '@/contexts/balance-context';
 import { formatCurrency } from '@/lib/utils';
-import { Dice5, User, Coins, ChevronDown } from 'lucide-react';
+import { Dice5, Coins, ChevronDown } from 'lucide-react';
+import { GiLeprechanHat } from 'react-icons/gi';
 
 export function Header() {
   const [isBalanceHovered, setIsBalanceHovered] = useState(false);
   const { balance, isLoading } = useBalanceContext();
 
   return (
-    <header className="bg-dark border-b border-primary/20 sticky top-0 z-50 shadow-lg">
+    <header className="bg-dark sticky top-0 z-50 shadow-lg">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         {/* Left spacer */}
         <div className="w-32"></div>
@@ -17,8 +18,8 @@ export function Header() {
         {/* Centered Logo */}
         <div className="flex items-center justify-center">
           <Link href="/" className="flex items-center group">
-            <Dice5 className="text-primary text-3xl mr-2" />
-            <span className="font-heading font-bold text-2xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <Dice5 className="text-primary text-4xl mr-3" />
+            <span className="font-heading font-bold text-3xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               LUCKY SPIN
             </span>
           </Link>
@@ -59,7 +60,7 @@ export function Header() {
           <div className="relative">
             <button className="bg-gradient-to-r from-accent to-accent-light hover:from-accent-light hover:to-accent transition-all duration-300 px-5 py-2 rounded-lg font-bold text-dark shadow-lg hover:shadow-accent/30">
               <span className="hidden md:inline">SIGN IN</span>
-              <User className="md:hidden w-5 h-5" />
+              <GiLeprechanHat className="md:hidden w-5 h-5" />
             </button>
           </div>
         </div>
