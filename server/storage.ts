@@ -27,10 +27,25 @@ export async function getAllCategories(): Promise<Category[]> {
 // Games
 export async function getAllGames(): Promise<Game[]> {
   try {
-    // Use the safer query API instead of select
-    return await db.query.games.findMany({
-      orderBy: desc(games.createdAt),
-    });
+    // Use direct SQL query to bypass schema mismatch issues
+    const result = await db.execute(sql`
+      SELECT 
+        id, title, slug, description, provider, image, 
+        category_id as "categoryId", 
+        is_featured as "isFeatured", 
+        is_popular as "isPopular", 
+        is_new as "isNew", 
+        is_jackpot as "isJackpot", 
+        category, 
+        jackpot_amount as "jackpotAmount", 
+        rtp, volatility, 
+        min_bet as "minBet", 
+        max_bet as "maxBet", 
+        created_at as "createdAt" 
+      FROM games
+      ORDER BY created_at DESC
+    `);
+    return result as unknown as Game[];
   } catch (error) {
     console.error('Error in getAllGames:', error);
     // Return empty array on error instead of crashing
@@ -40,11 +55,26 @@ export async function getAllGames(): Promise<Game[]> {
 
 export async function getGamesByCategory(categoryId: number): Promise<Game[]> {
   try {
-    // Use the safer query API instead of select
-    return await db.query.games.findMany({
-      where: eq(games.categoryId, categoryId),
-      orderBy: desc(games.createdAt),
-    });
+    // Use direct SQL query to bypass schema mismatch issues
+    const result = await db.execute(sql`
+      SELECT 
+        id, title, slug, description, provider, image, 
+        category_id as "categoryId", 
+        is_featured as "isFeatured", 
+        is_popular as "isPopular", 
+        is_new as "isNew", 
+        is_jackpot as "isJackpot", 
+        category, 
+        jackpot_amount as "jackpotAmount", 
+        rtp, volatility, 
+        min_bet as "minBet", 
+        max_bet as "maxBet", 
+        created_at as "createdAt" 
+      FROM games
+      WHERE category_id = ${categoryId}
+      ORDER BY created_at DESC
+    `);
+    return result as unknown as Game[];
   } catch (error) {
     console.error('Error in getGamesByCategory:', error);
     return [];
@@ -53,12 +83,35 @@ export async function getGamesByCategory(categoryId: number): Promise<Game[]> {
 
 export async function getGameById(id: number): Promise<Game | undefined> {
   try {
-    return await db.query.games.findFirst({
-      where: eq(games.id, id),
-      with: {
-        category: true,
-      },
-    });
+    // Use direct SQL query to bypass schema mismatch issues
+    const result = await db.execute(sql`
+      SELECT 
+        g.id, g.title, g.slug, g.description, g.provider, g.image, 
+        g.category_id as "categoryId", 
+        g.is_featured as "isFeatured", 
+        g.is_popular as "isPopular", 
+        g.is_new as "isNew", 
+        g.is_jackpot as "isJackpot", 
+        g.category, 
+        g.jackpot_amount as "jackpotAmount", 
+        g.rtp, g.volatility, 
+        g.min_bet as "minBet", 
+        g.max_bet as "maxBet", 
+        g.created_at as "createdAt",
+        c.id as "category.id",
+        c.name as "category.name",
+        c.slug as "category.slug",
+        c.created_at as "category.createdAt"
+      FROM games g
+      LEFT JOIN categories c ON g.category_id = c.id
+      WHERE g.id = ${id}
+      LIMIT 1
+    `);
+
+    if (result.length > 0) {
+      return result[0] as unknown as Game;
+    }
+    return undefined;
   } catch (error) {
     console.error('Error in getGameById:', error);
     return undefined;
