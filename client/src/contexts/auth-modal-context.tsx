@@ -1,5 +1,5 @@
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
-import AuthModal from '@/components/auth-modal';
+import AuthModalDirect from '@/components/auth-modal-direct';
 
 // Auth modal context
 interface AuthModalContextType {
@@ -45,7 +45,7 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-      <AuthModal 
+      <AuthModalDirect 
         isOpen={isAuthModalOpen} 
         onClose={closeAuthModal} 
         defaultTab={authModalTab} 
