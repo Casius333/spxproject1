@@ -27,12 +27,9 @@ export async function getAllCategories(): Promise<Category[]> {
 // Games
 export async function getAllGames(): Promise<Game[]> {
   try {
-    return await db.query.games.findMany({
-      orderBy: desc(games.createdAt),
-      with: {
-        category: true,
-      },
-    });
+    // Simplified query that avoids using potentially problematic columns
+    const result = await db.select().from(games).orderBy(desc(games.createdAt));
+    return result;
   } catch (error) {
     console.error('Error in getAllGames:', error);
     // Return empty array on error instead of crashing
@@ -164,8 +161,8 @@ export async function updateUserBalance(amount: number, type: 'bet' | 'win' | 'd
   
   if (!currentBalance) {
     const [newBalance] = await db.insert(userBalance).values({
-      userId,
-      balance: 1000, // Default starting balance
+      userId: userId,
+      balance: "1000", // Default starting balance as string for decimal type
     }).returning();
     
     currentBalance = newBalance;
@@ -184,7 +181,7 @@ export async function updateUserBalance(amount: number, type: 'bet' | 'win' | 'd
   // Update balance
   const [updatedBalance] = await db.update(userBalance)
     .set({ 
-      balance: balanceAfter,
+      balance: balanceAfter.toString(), // Convert to string for decimal type
       updatedAt: new Date() 
     })
     .where(eq(userBalance.userId, userId))
@@ -192,11 +189,11 @@ export async function updateUserBalance(amount: number, type: 'bet' | 'win' | 'd
   
   // Record transaction
   await db.insert(transactions).values({
-    userId,
-    type,
-    amount,
-    balanceBefore,
-    balanceAfter,
+    userId: userId,
+    type: type,
+    amount: amount.toString(), // Convert to string for decimal type
+    balanceBefore: balanceBefore.toString(),
+    balanceAfter: balanceAfter.toString(),
     createdAt: new Date()
   });
   
