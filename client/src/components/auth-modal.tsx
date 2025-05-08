@@ -92,11 +92,11 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md p-0 overflow-hidden bg-dark-card">
-        <DialogClose className="absolute right-4 top-4 z-10">
-          <Button variant="ghost" size="icon" className="rounded-full h-7 w-7 hover:bg-white/10">
+        <DialogClose asChild className="absolute right-4 top-4 z-10">
+          <div className="cursor-pointer h-7 w-7 rounded-full flex items-center justify-center hover:bg-white/10">
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
-          </Button>
+          </div>
         </DialogClose>
         
         <Tabs 
@@ -113,10 +113,10 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
           {/* Login Tab */}
           <TabsContent value="login" className="px-6 pb-6 pt-2">
             <div className="min-h-[500px]"> {/* Fixed height container */}
-              <DialogTitle className="text-2xl text-white mb-2 mt-0">Welcome Back</DialogTitle>
-              <DialogDescription className="mb-6">
+              <h2 className="text-2xl text-white font-bold mb-2 mt-0">Welcome Back</h2>
+              <p className="text-sm text-muted-foreground mb-6">
                 Sign in to your account to continue playing
-              </DialogDescription>
+              </p>
               <Form {...loginForm}>
                 <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-6">
                   <FormField
@@ -175,10 +175,10 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
           {/* Register Tab */}
           <TabsContent value="register" className="px-6 pb-6 pt-2">
             <div className="min-h-[500px]"> {/* Fixed height container */}
-              <DialogTitle className="text-2xl text-white mb-2 mt-0">Create Account</DialogTitle>
-              <DialogDescription className="mb-6">
+              <h2 className="text-2xl text-white font-bold mb-2 mt-0">Create Account</h2>
+              <p className="text-sm text-muted-foreground mb-6">
                 Register for a new account to start playing
-              </DialogDescription>
+              </p>
               <Form {...registerForm}>
                 <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-6">
                   <FormField
