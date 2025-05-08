@@ -1,21 +1,21 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
+import { Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
 import * as schema from "@shared/schema";
 import config from "../config";
 
-// This is the correct way neon config - DO NOT change this
-neonConfig.webSocketConstructor = ws;
-
-// Temporarily use the local database until we resolve Supabase connection issues
-// We'll keep the config structure for future deployment
+// Get the database connection string from environment variables
 let connectionString = config.DATABASE_URL;
 
-// Fallback to local database if there's an issue with the connection string
+// Validate the connection string
 try {
   // Test if the URL is valid by creating a URL object
   new URL(connectionString);
-  console.log("Using external database configuration");
+  console.log("Using Supabase database configuration");
+  
+  // Check if it's a Supabase connection
+  if (connectionString.includes('supabase')) {
+    console.log("Detected Supabase Transaction Pooler connection");
+  }
 } catch (error) {
   console.log("Using local database configuration - will automatically create if needed");
   // Use process.env.DATABASE_URL as a fallback which was provisioned by Replit

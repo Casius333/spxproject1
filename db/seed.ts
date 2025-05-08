@@ -289,7 +289,14 @@ async function seed() {
     if (existingGamesCount.length === 0) {
       console.log("Seeding games...");
       for (const game of games) {
-        await db.insert(schema.games).values(game);
+        // Convert numeric values to strings for decimal fields as required by Drizzle
+        await db.insert(schema.games).values({
+          ...game,
+          minBet: game.minBet.toString(),
+          maxBet: game.maxBet.toString(),
+          rtp: game.rtp.toString(),
+          jackpotAmount: game.jackpotAmount ? game.jackpotAmount.toString() : undefined
+        });
       }
     } else {
       console.log("Games already exist, skipping...");
@@ -319,7 +326,7 @@ async function seed() {
       console.log("Seeding test user balance...");
       await db.insert(schema.userBalance).values({
         userId,
-        balance: 1250.00
+        balance: "1250.00"
       });
     } else {
       console.log("Test user already exists, skipping...");
@@ -336,7 +343,7 @@ async function seed() {
         console.log("Seeding test user balance...");
         await db.insert(schema.userBalance).values({
           userId,
-          balance: 1250.00
+          balance: "1250.00"
         });
       } else {
         console.log("User balance already exists, skipping...");
@@ -353,7 +360,7 @@ async function seed() {
       console.log("Seeding guest user balance...");
       await db.insert(schema.userBalance).values({
         userId: guestUserId,
-        balance: 1250.00
+        balance: "1250.00"
       });
     } else {
       console.log("Guest user balance already exists, skipping...");
