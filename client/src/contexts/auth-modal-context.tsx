@@ -48,7 +48,7 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
       <AuthModal 
         isOpen={isAuthModalOpen} 
         onClose={closeAuthModal} 
-        defaultTab={authModalTab} 
+        defaultMode={authModalTab} 
       />
     </AuthModalContext.Provider>
   );
