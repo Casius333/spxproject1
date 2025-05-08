@@ -42,14 +42,14 @@ export function SidebarNav({ className }: SidebarNavProps) {
       {/* Background Overlay - shown when menu is open */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[51]"
           onClick={() => setIsOpen(false)}
         ></div>
       )}
 
-      {/* Toggle Button */}
+      {/* Toggle Button - z-index higher than header */}
       <button
-        className="fixed top-4 left-4 z-40 flex items-center justify-center w-12 h-12 rounded bg-transparent border border-white/30 shadow-md"
+        className="fixed top-4 left-4 z-[60] flex items-center justify-center w-12 h-12 rounded border border-white/30 bg-[#1a1d30]"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Menu"
       >
@@ -59,7 +59,7 @@ export function SidebarNav({ className }: SidebarNavProps) {
       {/* Floating Sidebar */}
       <aside
         className={cn(
-          "fixed top-16 left-4 z-30 flex flex-col transition-all duration-300 rounded-lg overflow-hidden w-60",
+          "fixed top-16 left-4 z-[55] flex flex-col transition-all duration-300 rounded-lg overflow-hidden w-60",
           isOpen 
             ? "opacity-100 translate-x-0" 
             : "opacity-0 -translate-x-full pointer-events-none",
