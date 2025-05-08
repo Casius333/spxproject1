@@ -10,7 +10,6 @@ import {
   DialogDescription,
   DialogTitle,
   DialogClose,
-  DialogHeader,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -91,14 +90,17 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md p-0 overflow-hidden bg-dark-card">
+      <DialogContent className="max-w-md p-0 overflow-hidden bg-dark-card" aria-describedby="auth-modal-description">
+        <DialogTitle className="sr-only">Authentication</DialogTitle>
+        <DialogDescription id="auth-modal-description" className="sr-only">
+          Sign in to your account or create a new one
+        </DialogDescription>
         <DialogClose asChild className="absolute right-4 top-4 z-10">
           <div className="cursor-pointer h-7 w-7 rounded-full flex items-center justify-center hover:bg-white/10">
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
           </div>
         </DialogClose>
-        
         <Tabs 
           defaultValue={activeTab} 
           value={activeTab} 
@@ -113,10 +115,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
           {/* Login Tab */}
           <TabsContent value="login" className="px-6 pb-6 pt-2">
             <div className="min-h-[500px]"> {/* Fixed height container */}
-              <h2 className="text-2xl text-white font-bold mb-2 mt-0">Welcome Back</h2>
-              <p className="text-sm text-muted-foreground mb-6">
-                Sign in to your account to continue playing
-              </p>
+              <h2 className="text-2xl text-white font-bold mb-6 mt-0">Welcome Back</h2>
               <Form {...loginForm}>
                 <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-6">
                   <FormField
@@ -175,10 +174,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
           {/* Register Tab */}
           <TabsContent value="register" className="px-6 pb-6 pt-2">
             <div className="min-h-[500px]"> {/* Fixed height container */}
-              <h2 className="text-2xl text-white font-bold mb-2 mt-0">Create Account</h2>
-              <p className="text-sm text-muted-foreground mb-6">
-                Register for a new account to start playing
-              </p>
+              <h2 className="text-2xl text-white font-bold mb-6 mt-0">Create Account</h2>
               <Form {...registerForm}>
                 <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-6">
                   <FormField
