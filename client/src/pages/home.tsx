@@ -3,7 +3,6 @@ import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { CategoryFilter, Category } from '@/components/category-filter';
 import { GameGrid } from '@/components/game-grid';
-import { SlotMachine } from '@/components/ui/slot-machine';
 import { CallToAction } from '@/components/call-to-action';
 import { CarouselBanner } from '@/components/ui/carousel-banner';
 import { PromotionBanner } from '@/components/ui/promotion-banner';
@@ -98,19 +97,7 @@ export default function Home() {
             limit={12}
           />
           
-          {/* Featured Slot Machine (only on home page) */}
-          {location === '/' && (
-            <section className="bg-dark-light py-10 rounded-xl neon-border overflow-hidden" id="try-your-luck">
-              <div className="container mx-auto px-4">
-                <div className="text-center mb-8">
-                  <h2 className="font-heading font-bold text-3xl mb-2 text-white animate-neon-glow">Try Your Luck</h2>
-                  <p className="text-muted-foreground">Spin the reels and win big!</p>
-                </div>
-                
-                <SlotMachine />
-              </div>
-            </section>
-          )}
+          {/* Featured Slot Machine section removed */}
           
           {/* Call to Action (only on home page) */}
           {location === '/' && (
