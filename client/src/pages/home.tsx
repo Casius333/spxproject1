@@ -5,6 +5,8 @@ import { CategoryFilter, Category } from '@/components/category-filter';
 import { GameGrid } from '@/components/game-grid';
 import { SlotMachine } from '@/components/ui/slot-machine';
 import { CallToAction } from '@/components/call-to-action';
+import { CarouselBanner } from '@/components/ui/carousel-banner';
+import { PromotionBanner } from '@/components/ui/promotion-banner';
 
 export default function Home() {
   const [location] = useLocation();
@@ -49,50 +51,72 @@ export default function Home() {
   };
   
   return (
-    <div className="container mx-auto px-4 pt-2">
-      {/* Category Filter Bar */}
-      <div className="mb-6">
-        <CategoryFilter 
-          categories={categories || defaultCategories} 
-          selectedCategory={selectedCategory}
-          onSelectCategory={handleCategorySelect}
-        />
-      </div>
+    <div className="mx-auto">
+      {/* Home page layout with banner and promotion */}
+      {location === '/' && (
+        <div className="mb-8">
+          {/* Carousel Banner */}
+          <div className="w-full mb-4">
+            <CarouselBanner />
+          </div>
+          
+          {/* Promotion Banner */}
+          <div className="container mx-auto px-4">
+            <PromotionBanner 
+              title="Deposit Bonus"
+              description="Get 100% bonus on your next deposit!"
+              actionText="View Promotions"
+              onClick={() => console.log('Navigate to promotions')}
+            />
+          </div>
+        </div>
+      )}
       
-      {/* Page Title */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="font-heading font-bold text-3xl text-white">
-          {pageTitle}
-        </h1>
-      </div>
-      
-      {/* Main Content */}
-      <div className="space-y-12">
-        {/* Games Grid */}
-        <GameGrid 
-          title="" 
-          filter={currentFilter} 
-          limit={12}
-        />
+      <div className="container mx-auto px-4">
+        {/* Category Filter Bar */}
+        <div className="mb-6">
+          <CategoryFilter 
+            categories={categories || defaultCategories} 
+            selectedCategory={selectedCategory}
+            onSelectCategory={handleCategorySelect}
+          />
+        </div>
         
-        {/* Featured Slot Machine (only on home page) */}
-        {location === '/' && (
-          <section className="bg-dark-light py-10 rounded-xl neon-border overflow-hidden" id="try-your-luck">
-            <div className="container mx-auto px-4">
-              <div className="text-center mb-8">
-                <h2 className="font-heading font-bold text-3xl mb-2 text-white animate-neon-glow">Try Your Luck</h2>
-                <p className="text-muted-foreground">Spin the reels and win big!</p>
+        {/* Page Title */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="font-heading font-bold text-3xl text-white">
+            {pageTitle}
+          </h1>
+        </div>
+        
+        {/* Main Content */}
+        <div className="space-y-12">
+          {/* Games Grid */}
+          <GameGrid 
+            title="" 
+            filter={currentFilter} 
+            limit={12}
+          />
+          
+          {/* Featured Slot Machine (only on home page) */}
+          {location === '/' && (
+            <section className="bg-dark-light py-10 rounded-xl neon-border overflow-hidden" id="try-your-luck">
+              <div className="container mx-auto px-4">
+                <div className="text-center mb-8">
+                  <h2 className="font-heading font-bold text-3xl mb-2 text-white animate-neon-glow">Try Your Luck</h2>
+                  <p className="text-muted-foreground">Spin the reels and win big!</p>
+                </div>
+                
+                <SlotMachine />
               </div>
-              
-              <SlotMachine />
-            </div>
-          </section>
-        )}
-        
-        {/* Call to Action (only on home page) */}
-        {location === '/' && (
-          <CallToAction />
-        )}
+            </section>
+          )}
+          
+          {/* Call to Action (only on home page) */}
+          {location === '/' && (
+            <CallToAction />
+          )}
+        </div>
       </div>
     </div>
   );
