@@ -90,7 +90,13 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md p-0 overflow-hidden bg-dark-card" aria-describedby="auth-modal-description">
+      <DialogContent className="max-w-md p-0 overflow-hidden bg-dark-card relative" aria-describedby="auth-modal-description">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,theme(colors.primary.DEFAULT)/5,transparent_60%)] pointer-events-none"></div>
+        <div className="absolute top-0 left-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+        <div className="absolute bottom-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
+        
         <DialogTitle className="sr-only">Authentication</DialogTitle>
         <DialogDescription id="auth-modal-description" className="sr-only">
           Sign in to your account or create a new one
@@ -107,10 +113,32 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
           onValueChange={setActiveTab}
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-2 mb-2 mt-4 px-6">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="register">Register</TabsTrigger>
-          </TabsList>
+          <div className="px-6 pt-6 pb-4 bg-gradient-to-r from-primary/20 to-transparent">
+            <TabsList className="grid w-full grid-cols-2 mb-0 rounded-lg border border-primary/30 shadow-lg overflow-hidden">
+              <TabsTrigger 
+                value="login" 
+                className="data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-inner py-3 text-base font-medium transition-all duration-200"
+              >
+                <span className="flex items-center gap-2">
+                  <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center">
+                    <span className="text-xs">→</span>
+                  </div>
+                  Login
+                </span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="register" 
+                className="data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-inner py-3 text-base font-medium transition-all duration-200"
+              >
+                <span className="flex items-center gap-2">
+                  <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center">
+                    <span className="text-xs">+</span>
+                  </div>
+                  Register
+                </span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Login Tab */}
           <TabsContent value="login" className="px-6 pb-6 pt-2">
@@ -125,7 +153,12 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your email" type="email" {...field} />
+                          <Input 
+                            placeholder="Enter your email" 
+                            type="email" 
+                            className="bg-black/30 border-primary/30 focus:border-primary transition-colors duration-200" 
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -138,7 +171,12 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
                       <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="Enter your password" {...field} />
+                          <Input 
+                            type="password" 
+                            placeholder="Enter your password" 
+                            className="bg-black/30 border-primary/30 focus:border-primary transition-colors duration-200"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -150,12 +188,16 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
                   
                   <Button 
                     type="submit" 
-                    className="w-full bg-primary hover:bg-primary-light text-white"
+                    className="w-full bg-gradient-to-r from-primary to-primary-light text-white h-12 text-lg font-bold shadow-lg transition-all duration-300 hover:shadow-primary/50"
                     disabled={loginMutation.isPending}
                   >
                     {loginMutation.isPending ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    ) : (
+                      <div className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center mr-2">
+                        <span className="text-xs">→</span>
+                      </div>
+                    )}
                     Sign In
                   </Button>
                 </form>
@@ -184,7 +226,12 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="Enter your email" {...field} />
+                          <Input 
+                            type="email" 
+                            placeholder="Enter your email" 
+                            className="bg-black/30 border-primary/30 focus:border-primary transition-colors duration-200"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -197,7 +244,12 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
                       <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="Create a password" {...field} />
+                          <Input 
+                            type="password" 
+                            placeholder="Create a password" 
+                            className="bg-black/30 border-primary/30 focus:border-primary transition-colors duration-200"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormDescription>
                           Must be at least 6 characters
@@ -221,12 +273,16 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
                   />
                   <Button 
                     type="submit" 
-                    className="w-full bg-primary hover:bg-primary-light text-white"
+                    className="w-full bg-gradient-to-r from-primary to-primary-light text-white h-12 text-lg font-bold shadow-lg transition-all duration-300 hover:shadow-primary/50"
                     disabled={registerMutation.isPending}
                   >
                     {registerMutation.isPending ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    ) : (
+                      <div className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center mr-2">
+                        <span className="text-xs">+</span>
+                      </div>
+                    )}
                     Create Account
                   </Button>
                 </form>
