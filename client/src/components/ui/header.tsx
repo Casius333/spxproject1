@@ -2,17 +2,9 @@ import { useState } from 'react';
 import { Link } from 'wouter';
 import { useBalanceContext } from '@/contexts/balance-context';
 import { formatCurrency } from '@/lib/utils';
-import { Dice5, User, Menu, Coins, ChevronDown } from 'lucide-react';
-
-const MENU_ITEMS = [
-  { label: 'Slots', href: '/' },
-  { label: 'Jackpots', href: '/jackpots' },
-  { label: 'New Games', href: '/new-games' },
-  { label: 'Popular', href: '/popular' },
-];
+import { Dice5, User, Coins, ChevronDown } from 'lucide-react';
 
 export function Header() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isBalanceHovered, setIsBalanceHovered] = useState(false);
   const { balance, isLoading } = useBalanceContext();
 
@@ -29,23 +21,9 @@ export function Header() {
           </Link>
         </div>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center space-x-8">
-          <nav>
-            <ul className="flex space-x-6">
-              {MENU_ITEMS.map((item, index) => (
-                <li key={index}>
-                  <Link 
-                    href={item.href}
-                    className="text-white hover:text-primary transition-colors font-medium py-2 border-b-2 border-transparent hover:border-primary text-base relative group"
-                  >
-                    {item.label}
-                    <span className="absolute left-0 bottom-0 w-full h-0.5 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out"></span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
+        {/* Search Bar (Future Implementation) */}
+        <div className="hidden md:flex items-center flex-1 max-w-md mx-auto">
+          {/* Search can be added here later */}
         </div>
 
         {/* User Controls */}
@@ -79,40 +57,22 @@ export function Header() {
             </div>
           </div>
 
-          {/* Sign In Button */}
-          <div className="relative">
-            <button className="bg-gradient-to-r from-accent to-accent-light hover:from-accent-light hover:to-accent transition-all duration-300 px-5 py-2 rounded-lg font-bold text-dark shadow-lg hover:shadow-accent/30">
-              <span className="hidden md:inline">SIGN IN</span>
-              <User className="md:hidden w-5 h-5" />
-            </button>
+          {/* Sign In / Admin Button */}
+          <div className="flex items-center space-x-3">
+            <Link href="/admin">
+              <a className="hidden md:inline-flex px-3 py-2 rounded-md text-white hover:text-primary font-medium transition-colors hover:bg-primary/10 text-sm">
+                Admin Panel
+              </a>
+            </Link>
+            
+            <div className="relative">
+              <button className="bg-gradient-to-r from-accent to-accent-light hover:from-accent-light hover:to-accent transition-all duration-300 px-5 py-2 rounded-lg font-bold text-dark shadow-lg hover:shadow-accent/30">
+                <span className="hidden md:inline">SIGN IN</span>
+                <User className="md:hidden w-5 h-5" />
+              </button>
+            </div>
           </div>
-
-          {/* Mobile Menu Toggle */}
-          <button 
-            className="md:hidden text-2xl text-white hover:text-primary transition-colors" 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            <Menu className="w-6 h-6" />
-          </button>
         </div>
-      </div>
-
-      {/* Mobile Menu */}
-      <div className={`md:hidden ${isMobileMenuOpen ? 'block' : 'hidden'} bg-dark-card border-t border-primary/20 glass-effect`}>
-        <nav className="container mx-auto px-4 py-3">
-          <ul className="space-y-3">
-            {MENU_ITEMS.map((item, index) => (
-              <li key={index}>
-                <Link 
-                  href={item.href}
-                  className="block py-3 px-4 hover:bg-primary/10 rounded-md transition-colors text-white hover:text-primary"
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
       </div>
     </header>
   );
