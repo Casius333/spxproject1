@@ -24,12 +24,11 @@ const NAV_ITEMS: NavItem[] = [
 export function SidebarNav({ className }: SidebarNavProps) {
   const [location] = useLocation();
   const isMobile = useMobile();
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Close mobile sidebar when location changes
-    setIsMobileOpen(false);
+    // Close sidebar when location changes
+    setIsOpen(false);
   }, [location]);
 
   // Determine if an item is active
@@ -40,33 +39,29 @@ export function SidebarNav({ className }: SidebarNavProps) {
 
   return (
     <>
-      {/* Mobile Overlay */}
-      {isMobileOpen && (
+      {/* Background Overlay - shown when menu is open */}
+      {isOpen && (
         <div 
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
-          onClick={() => setIsMobileOpen(false)}
+          onClick={() => setIsOpen(false)}
         ></div>
       )}
 
-      {/* Mobile Toggle Button */}
+      {/* Toggle Button */}
       <button
-        className="fixed bottom-4 right-4 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-primary shadow-lg md:hidden animate-neon-glow"
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
+        className="fixed bottom-4 right-4 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-primary shadow-lg animate-neon-glow"
+        onClick={() => setIsOpen(!isOpen)}
       >
         <MenuSquare className="w-6 h-6 text-white" />
       </button>
 
-      {/* Sidebar */}
+      {/* Floating Sidebar */}
       <aside
         className={cn(
-          "fixed top-16 bottom-0 z-30 flex flex-col transition-all duration-300 rounded-tr-lg rounded-br-lg overflow-hidden",
-          isMobile
-            ? isMobileOpen
-              ? "left-0 w-64"
-              : "-left-72 w-72"
-            : isCollapsed
-              ? "w-16 left-4"
-              : "w-60 left-4",
+          "fixed top-16 left-4 z-30 flex flex-col transition-all duration-300 rounded-lg overflow-hidden w-60",
+          isOpen 
+            ? "opacity-100 translate-x-0" 
+            : "opacity-0 -translate-x-full pointer-events-none",
           className
         )}
       >
@@ -87,9 +82,7 @@ export function SidebarNav({ className }: SidebarNavProps) {
                   <span className="flex items-center justify-center mr-3 text-primary">
                     {item.icon}
                   </span>
-                  <span className={cn("transition-opacity", 
-                    isCollapsed && !isMobile && !isMobileOpen ? "opacity-0 w-0 hidden" : "opacity-100"
-                  )}>
+                  <span className="transition-opacity">
                     {item.label}
                   </span>
                   
@@ -101,26 +94,8 @@ export function SidebarNav({ className }: SidebarNavProps) {
               </Link>
             ))}
           </nav>
-
-          {/* Collapse toggle button (desktop only) */}
-          {!isMobile && (
-            <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="absolute top-2 right-2 w-6 h-6 rounded-md bg-dark-card text-primary border border-primary/30 flex items-center justify-center shadow-md hover:bg-primary/10 transition-colors"
-            >
-              {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-            </button>
-          )}
         </div>
       </aside>
-
-      {/* Empty spacing for content layout */}
-      {!isMobile && (
-        <div className={cn(
-          "transition-all duration-300", 
-          isCollapsed ? "ml-24" : "ml-68"
-        )}></div>
-      )}
     </>
   );
 }
