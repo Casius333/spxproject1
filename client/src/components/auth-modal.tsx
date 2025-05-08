@@ -94,15 +94,13 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md p-0 overflow-hidden bg-dark-card">
-        <DialogHeader className="p-6 pb-2">
-          <div className="absolute right-4 top-4">
-            <DialogClose asChild>
-              <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/10">
-                <X className="h-4 w-4" />
-              </Button>
-            </DialogClose>
-          </div>
-        </DialogHeader>
+        <DialogClose className="absolute right-4 top-4 z-10">
+          <Button variant="ghost" size="icon" className="rounded-full h-7 w-7 hover:bg-white/10">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </Button>
+        </DialogClose>
+        <DialogHeader className="p-6 pb-2"></DialogHeader>
         
         <Tabs 
           defaultValue={activeTab} 
