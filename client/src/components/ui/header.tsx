@@ -3,7 +3,7 @@ import { Link } from 'wouter';
 import { useBalanceContext } from '@/contexts/balance-context';
 import { formatCurrency } from '@/lib/utils';
 import { Dice5, Coins, ChevronDown } from 'lucide-react';
-import { GiLeprechanHat } from 'react-icons/gi';
+import { GiTopHat, GiShamrock } from 'react-icons/gi';
 
 export function Header() {
   const [isBalanceHovered, setIsBalanceHovered] = useState(false);
@@ -56,11 +56,11 @@ export function Header() {
             </div>
           </div>
 
-          {/* Sign In Button */}
+          {/* Sign In Button - Now with Top Hat */}
           <div className="relative">
             <button className="bg-gradient-to-r from-accent to-accent-light hover:from-accent-light hover:to-accent transition-all duration-300 px-5 py-2 rounded-lg font-bold text-dark shadow-lg hover:shadow-accent/30">
-              <span className="hidden md:inline">SIGN IN</span>
-              <GiLeprechanHat className="md:hidden w-5 h-5" />
+              <span className="hidden md:inline mr-1">SIGN IN</span>
+              <GiTopHat className="md:inline w-5 h-5" />
             </button>
           </div>
         </div>
