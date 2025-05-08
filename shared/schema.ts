@@ -3,6 +3,16 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
 
+// Users table
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
 // Categories table
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
@@ -74,10 +84,19 @@ export const gamesInsertSchema = createInsertSchema(games, {
   image: (schema) => schema.url("Image must be a valid URL")
 });
 
+export const usersInsertSchema = createInsertSchema(users, {
+  username: (schema) => schema.min(3, "Username must be at least 3 characters"),
+  email: (schema) => schema.email("Email must be valid"),
+  password: (schema) => schema.min(6, "Password must be at least 6 characters")
+});
+
 export const userBalanceInsertSchema = createInsertSchema(userBalance);
 export const transactionsInsertSchema = createInsertSchema(transactions);
 
 // Types for TypeScript
+export type UserInsert = z.infer<typeof usersInsertSchema>;
+export type User = typeof users.$inferSelect;
+
 export type CategoryInsert = z.infer<typeof categoriesInsertSchema>;
 export type Category = typeof categories.$inferSelect;
 

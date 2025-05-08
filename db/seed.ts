@@ -1,6 +1,7 @@
 import { db } from "./index";
 import * as schema from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { createHash } from "crypto";
 
 async function seed() {
   try {
@@ -294,20 +295,68 @@ async function seed() {
       console.log("Games already exist, skipping...");
     }
 
-    // Seed initial user balance
-    const userId = process.env.GUEST_USER_ID || 'guest-user';
-    const existingBalance = await db.query.userBalance.findFirst({
-      where: eq(schema.userBalance.userId, userId)
+    // Seed test user for authentication
+    const testUser = {
+      username: "testuser",
+      email: "test@example.com",
+      // Simple hash function to store password securely
+      password: createHash('sha256').update('password123').digest('hex')
+    };
+
+    // Check if test user already exists
+    const existingUser = await db.query.users.findFirst({
+      where: eq(schema.users.username, testUser.username)
     });
 
-    if (!existingBalance) {
-      console.log("Seeding initial user balance...");
+    if (!existingUser) {
+      console.log("Seeding test user...");
+      const [newUser] = await db.insert(schema.users).values(testUser).returning();
+      console.log(`Created test user with ID: ${newUser.id}`);
+      
+      // Use the new user's ID for the balance
+      const userId = newUser.id.toString();
+      
+      console.log("Seeding test user balance...");
       await db.insert(schema.userBalance).values({
         userId,
         balance: 1250.00
       });
     } else {
-      console.log("User balance already exists, skipping...");
+      console.log("Test user already exists, skipping...");
+      
+      // Use existing user's ID for balance check
+      const userId = existingUser.id.toString();
+      
+      // Check if balance exists for this user
+      const existingBalance = await db.query.userBalance.findFirst({
+        where: eq(schema.userBalance.userId, userId)
+      });
+      
+      if (!existingBalance) {
+        console.log("Seeding test user balance...");
+        await db.insert(schema.userBalance).values({
+          userId,
+          balance: 1250.00
+        });
+      } else {
+        console.log("User balance already exists, skipping...");
+      }
+    }
+    
+    // Also maintain the guest user balance for backward compatibility
+    const guestUserId = process.env.GUEST_USER_ID || 'guest-user';
+    const existingGuestBalance = await db.query.userBalance.findFirst({
+      where: eq(schema.userBalance.userId, guestUserId)
+    });
+
+    if (!existingGuestBalance) {
+      console.log("Seeding guest user balance...");
+      await db.insert(schema.userBalance).values({
+        userId: guestUserId,
+        balance: 1250.00
+      });
+    } else {
+      console.log("Guest user balance already exists, skipping...");
     }
 
     console.log("Database seeding completed successfully!");
