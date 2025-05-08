@@ -26,85 +26,126 @@ export async function getAllCategories(): Promise<Category[]> {
 
 // Games
 export async function getAllGames(): Promise<Game[]> {
-  return await db.query.games.findMany({
-    orderBy: desc(games.createdAt),
-    with: {
-      category: true,
-    },
-  });
+  try {
+    return await db.query.games.findMany({
+      orderBy: desc(games.createdAt),
+      with: {
+        category: true,
+      },
+    });
+  } catch (error) {
+    console.error('Error in getAllGames:', error);
+    // Return empty array on error instead of crashing
+    return [];
+  }
 }
 
 export async function getGamesByCategory(categoryId: number): Promise<Game[]> {
-  return await db.query.games.findMany({
-    where: eq(games.categoryId, categoryId),
-    orderBy: desc(games.createdAt),
-    with: {
-      category: true,
-    },
-  });
+  try {
+    return await db.query.games.findMany({
+      where: eq(games.categoryId, categoryId),
+      orderBy: desc(games.createdAt),
+      with: {
+        category: true,
+      },
+    });
+  } catch (error) {
+    console.error('Error in getGamesByCategory:', error);
+    return [];
+  }
 }
 
 export async function getGameById(id: number): Promise<Game | undefined> {
-  return await db.query.games.findFirst({
-    where: eq(games.id, id),
-    with: {
-      category: true,
-    },
-  });
+  try {
+    return await db.query.games.findFirst({
+      where: eq(games.id, id),
+      with: {
+        category: true,
+      },
+    });
+  } catch (error) {
+    console.error('Error in getGameById:', error);
+    return undefined;
+  }
 }
 
 export async function getFeaturedGames(): Promise<Game[]> {
-  return await db.query.games.findMany({
-    where: eq(games.isFeatured, true),
-    orderBy: desc(games.createdAt),
-    with: {
-      category: true,
-    },
-  });
+  try {
+    return await db.query.games.findMany({
+      where: eq(games.isFeatured, true),
+      orderBy: desc(games.createdAt),
+      with: {
+        category: true,
+      },
+    });
+  } catch (error) {
+    console.error('Error in getFeaturedGames:', error);
+    return [];
+  }
 }
 
 export async function getJackpotGames(): Promise<Game[]> {
-  return await db.query.games.findMany({
-    where: eq(games.isJackpot, true),
-    orderBy: desc(games.jackpotAmount),
-    with: {
-      category: true,
-    },
-  });
+  try {
+    return await db.query.games.findMany({
+      where: eq(games.isJackpot, true),
+      orderBy: desc(games.jackpotAmount),
+      with: {
+        category: true,
+      },
+    });
+  } catch (error) {
+    console.error('Error in getJackpotGames:', error);
+    return [];
+  }
 }
 
 export async function getPopularGames(): Promise<Game[]> {
-  return await db.query.games.findMany({
-    where: eq(games.isPopular, true),
-    orderBy: desc(games.createdAt),
-    with: {
-      category: true,
-    },
-  });
+  try {
+    return await db.query.games.findMany({
+      where: eq(games.isPopular, true),
+      orderBy: desc(games.createdAt),
+      with: {
+        category: true,
+      },
+    });
+  } catch (error) {
+    console.error('Error in getPopularGames:', error);
+    return [];
+  }
 }
 
 export async function getNewGames(): Promise<Game[]> {
-  return await db.query.games.findMany({
-    where: eq(games.isNew, true),
-    orderBy: desc(games.createdAt),
-    with: {
-      category: true,
-    },
-  });
+  try {
+    return await db.query.games.findMany({
+      where: eq(games.isNew, true),
+      orderBy: desc(games.createdAt),
+      with: {
+        category: true,
+      },
+    });
+  } catch (error) {
+    console.error('Error in getNewGames:', error);
+    return [];
+  }
 }
 
 export async function searchGames(query: string): Promise<Game[]> {
-  return await db.query.games.findMany({
-    where: or(
-      like(games.title, `%${query}%`),
-      like(games.provider, `%${query}%`),
-      like(games.description, `%${query}%`)
-    ),
-    orderBy: desc(games.createdAt),
-    with: {
-      category: true,
-    },
-  });
+  try {
+    return await db.query.games.findMany({
+      where: or(
+        like(games.title, `%${query}%`),
+        like(games.provider, `%${query}%`),
+        like(games.description, `%${query}%`)
+      ),
+      orderBy: desc(games.createdAt),
+      with: {
+        category: true,
+      },
+    });
+  } catch (error) {
+    console.error('Error in searchGames:', error);
+    return [];
+  }
 }
 
 // User balance

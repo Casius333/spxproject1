@@ -87,12 +87,8 @@ export default function AdminGames() {
                     <td className="px-4 py-4 text-sm text-gray-300">{game.provider}</td>
                     <td className="px-4 py-4 text-sm text-gray-300">{game.category || 'None'}</td>
                     <td className="px-4 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        game.isActive 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300' 
-                          : 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-300'
-                      }`}>
-                        {game.isActive ? 'Active' : 'Inactive'}
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300">
+                        Active
                       </span>
                     </td>
                     <td className="px-4 py-4 text-right space-x-2">

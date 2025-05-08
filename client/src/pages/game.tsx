@@ -22,6 +22,12 @@ export default function Game() {
         <Header />
         <main className="flex-1 bg-dark py-8">
           <div className="container mx-auto px-4">
+            <Link href="/">
+              <div className="mb-4 flex items-center text-primary hover:text-primary-light transition-colors cursor-pointer w-fit">
+                <ChevronLeft className="h-5 w-5 mr-1" />
+                <span>Back to Home</span>
+              </div>
+            </Link>
             <div className="animate-pulse bg-dark-card rounded-xl p-8">
               <div className="h-8 bg-gray-700 rounded w-1/4 mb-4"></div>
               <div className="h-64 bg-gray-800 rounded-lg"></div>
