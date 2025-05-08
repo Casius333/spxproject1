@@ -3,11 +3,14 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { BalanceProvider } from "@/contexts/balance-context";
+import { AuthProvider } from "@/hooks/use-auth";
 import { Header } from "@/components/ui/header";
 import { SidebarNav } from "@/components/ui/sidebar-nav";
+import { ProtectedRoute } from "@/lib/protected-route";
 import Home from "@/pages/home";
 import Game from "@/pages/game";
 import NotFound from "@/pages/not-found";
+import AuthPage from "@/pages/auth-page";
 import AdminDashboard from "@/pages/admin";
 import AdminGames from "@/pages/admin/games";
 import AdminUsers from "@/pages/admin/users";
@@ -16,14 +19,17 @@ import AdminUsers from "@/pages/admin/users";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/game/:id" component={Game} />
-      <Route path="/category/:slug" component={Home} />
-      <Route path="/jackpots" component={Home} />
-      <Route path="/popular" component={Home} />
-      <Route path="/new-games" component={Home} />
-      <Route path="/featured" component={Home} />
-      <Route path="/premium" component={Home} />
+      <ProtectedRoute path="/" component={Home} />
+      <ProtectedRoute path="/game/:id" component={Game} />
+      <ProtectedRoute path="/category/:slug" component={Home} />
+      <ProtectedRoute path="/jackpots" component={Home} />
+      <ProtectedRoute path="/popular" component={Home} />
+      <ProtectedRoute path="/new-games" component={Home} />
+      <ProtectedRoute path="/featured" component={Home} />
+      <ProtectedRoute path="/premium" component={Home} />
+      
+      {/* Auth route */}
+      <Route path="/auth" component={AuthPage} />
       
       {/* Admin routes */}
       <Route path="/admin" component={AdminDashboard} />
@@ -36,12 +42,12 @@ function Router() {
   );
 }
 
-// Main casino layout (not used for admin pages)
+// Main casino layout (not used for admin pages or auth page)
 function MainLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   
-  // If we're on an admin page, don't show the main layout
-  if (location.startsWith('/admin')) {
+  // If we're on an admin page or auth page, don't show the main layout
+  if (location.startsWith('/admin') || location === '/auth') {
     return <>{children}</>;
   }
   
@@ -61,12 +67,14 @@ function MainLayout({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BalanceProvider initialBalance={1250}>
-        <MainLayout>
-          <Router />
-        </MainLayout>
-        <Toaster />
-      </BalanceProvider>
+      <AuthProvider>
+        <BalanceProvider initialBalance={1250}>
+          <MainLayout>
+            <Router />
+          </MainLayout>
+          <Toaster />
+        </BalanceProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
