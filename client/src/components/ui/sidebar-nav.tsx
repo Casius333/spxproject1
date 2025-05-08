@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useMobile } from "@/hooks/use-mobile";
-import { ChevronLeft, ChevronRight, Home, Wallet, User, LogOut, MenuSquare } from "lucide-react";
+import { Menu, Home, Wallet, User, LogOut } from "lucide-react";
 
 interface SidebarNavProps {
   className?: string;
@@ -49,10 +49,11 @@ export function SidebarNav({ className }: SidebarNavProps) {
 
       {/* Toggle Button */}
       <button
-        className="fixed bottom-4 right-4 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-primary shadow-lg animate-neon-glow"
+        className="fixed top-4 left-4 z-40 flex items-center justify-center w-12 h-12 rounded bg-transparent border border-white/30 shadow-md"
         onClick={() => setIsOpen(!isOpen)}
+        aria-label="Menu"
       >
-        <MenuSquare className="w-6 h-6 text-white" />
+        <Menu className="w-7 h-7 text-white" />
       </button>
 
       {/* Floating Sidebar */}
