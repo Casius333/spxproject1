@@ -27,7 +27,7 @@ export async function getAllCategories(): Promise<Category[]> {
 // Games
 export async function getAllGames(): Promise<Game[]> {
   try {
-    // Use direct SQL query to bypass schema mismatch issues
+    // Use SQL query but access the rows property which is an array
     const result = await db.execute(sql`
       SELECT 
         id, title, slug, description, provider, image, 
@@ -45,8 +45,13 @@ export async function getAllGames(): Promise<Game[]> {
       ORDER BY created_at DESC
     `);
     
+    // Convert result to proper array 
+    const gameRows = Array.isArray(result) ? result : 
+                     result.rows ? result.rows : 
+                     (result as any)?.length ? result : [];
+    
     // Add empty category property for compatibility
-    const gamesWithCategory = (result as unknown as Game[]).map(game => ({
+    const gamesWithCategory = gameRows.map(game => ({
       ...game,
       category: "slots" // Default category
     }));
@@ -80,8 +85,13 @@ export async function getGamesByCategory(categoryId: number): Promise<Game[]> {
       ORDER BY created_at DESC
     `);
     
+    // Convert result to proper array 
+    const gameRows = Array.isArray(result) ? result : 
+                     result.rows ? result.rows : 
+                     (result as any)?.length ? result : [];
+    
     // Add empty category property for compatibility
-    const gamesWithCategory = (result as any[]).map(game => ({
+    const gamesWithCategory = gameRows.map(game => ({
       ...game,
       category: "slots" // Default category
     }));
@@ -118,14 +128,17 @@ export async function getGameById(id: number): Promise<Game | undefined> {
       LIMIT 1
     `);
 
-    // Cast to array and check if there's data
-    const resultArray = result as any[];
-    if (resultArray.length === 0) {
+    // Extract rows from result
+    const gameRows = Array.isArray(result) ? result : 
+                    result.rows ? result.rows : 
+                    (result as any)?.length ? result : [];
+    
+    if (gameRows.length === 0) {
       return undefined;
     }
     
     // Format the result
-    const game = resultArray[0] as any;
+    const game = gameRows[0] as any;
     
     // Add category string (if it's not there already)
     if (!game.category) {
@@ -174,8 +187,13 @@ export async function getFeaturedGames(): Promise<Game[]> {
       ORDER BY created_at DESC
     `);
     
+    // Convert result to proper array 
+    const gameRows = Array.isArray(result) ? result : 
+                     result.rows ? result.rows : 
+                     (result as any)?.length ? result : [];
+    
     // Add empty category property for compatibility
-    const gamesWithCategory = (result as unknown as any[]).map(game => ({
+    const gamesWithCategory = gameRows.map(game => ({
       ...game,
       category: "slots" // Default category
     }));
@@ -208,8 +226,13 @@ export async function getJackpotGames(): Promise<Game[]> {
       ORDER BY jackpot_amount DESC
     `);
     
+    // Convert result to proper array 
+    const gameRows = Array.isArray(result) ? result : 
+                     result.rows ? result.rows : 
+                     (result as any)?.length ? result : [];
+    
     // Add empty category property for compatibility
-    const gamesWithCategory = (result as unknown as any[]).map(game => ({
+    const gamesWithCategory = gameRows.map(game => ({
       ...game,
       category: "slots" // Default category
     }));
@@ -242,8 +265,13 @@ export async function getPopularGames(): Promise<Game[]> {
       ORDER BY created_at DESC
     `);
     
+    // Convert result to proper array 
+    const gameRows = Array.isArray(result) ? result : 
+                     result.rows ? result.rows : 
+                     (result as any)?.length ? result : [];
+    
     // Add empty category property for compatibility
-    const gamesWithCategory = (result as unknown as any[]).map(game => ({
+    const gamesWithCategory = gameRows.map(game => ({
       ...game,
       category: "slots" // Default category
     }));
@@ -276,8 +304,13 @@ export async function getNewGames(): Promise<Game[]> {
       ORDER BY created_at DESC
     `);
     
+    // Convert result to proper array 
+    const gameRows = Array.isArray(result) ? result : 
+                     result.rows ? result.rows : 
+                     (result as any)?.length ? result : [];
+    
     // Add empty category property for compatibility
-    const gamesWithCategory = (result as unknown as any[]).map(game => ({
+    const gamesWithCategory = gameRows.map(game => ({
       ...game,
       category: "slots" // Default category
     }));
@@ -313,8 +346,13 @@ export async function searchGames(query: string): Promise<Game[]> {
       ORDER BY created_at DESC
     `);
     
+    // Convert result to proper array 
+    const gameRows = Array.isArray(result) ? result : 
+                     result.rows ? result.rows : 
+                     (result as any)?.length ? result : [];
+    
     // Add empty category property for compatibility
-    const gamesWithCategory = (result as unknown as any[]).map(game => ({
+    const gamesWithCategory = gameRows.map(game => ({
       ...game,
       category: "slots" // Default category
     }));
