@@ -1,4 +1,4 @@
-import { db } from "@db";
+import { db, pool } from "@db";
 import {
   categories,
   games,
@@ -27,9 +27,16 @@ export async function getAllCategories(): Promise<Category[]> {
 // Games
 export async function getAllGames(): Promise<Game[]> {
   try {
-    // Simplified query that avoids using potentially problematic columns
-    const result = await db.select().from(games).orderBy(desc(games.createdAt));
-    return result;
+    // Even more simplified query to avoid is_active column
+    const result = await pool.query(
+      `SELECT id, title, slug, description, provider, image, category_id, 
+      is_featured, is_popular, is_new, is_jackpot, category, 
+      jackpot_amount, rtp, volatility, min_bet, max_bet, play_count, 
+      created_at, updated_at 
+      FROM games 
+      ORDER BY created_at DESC`
+    );
+    return result.rows as Game[];
   } catch (error) {
     console.error('Error in getAllGames:', error);
     // Return empty array on error instead of crashing
