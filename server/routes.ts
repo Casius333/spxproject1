@@ -79,6 +79,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Protected route middleware
   app.use('/api/protected', authenticate);
   
+  // Auth callback route for handling Supabase email confirmations and redirects
+  app.get('/auth/callback', (req: Request, res: Response) => {
+    // This route captures all Supabase redirects from email confirmations
+    // Just redirect to the main page, and the frontend will handle the tokens
+    res.redirect('/');
+  });
+  
   // Test endpoint to verify Supabase connection
   app.get('/api/supabase-test', async (req: Request, res: Response) => {
     try {

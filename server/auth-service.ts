@@ -40,8 +40,7 @@ async function createDatabaseUser(supabaseUser: any, username: string) {
       username: username,
       email: supabaseUser.email,
       password: tempPassword, // Just a placeholder since auth is handled by Supabase
-      role: 'user',
-      status: 'active',
+      // Don't include role and status - they're causing issues
       lastLogin: new Date(),
     };
     
@@ -204,8 +203,7 @@ function formatUser(supabaseUser: any, dbUser: any = null): any {
       id: dbUser.id,
       email: dbUser.email,
       username: dbUser.username,
-      role: dbUser.role || 'user',
-      status: dbUser.status || 'active',
+      // Removed role and status to match DB structure
       lastLogin: dbUser.lastLogin || new Date(),
       createdAt: dbUser.createdAt || new Date(),
       updatedAt: dbUser.updatedAt || new Date()
@@ -217,8 +215,7 @@ function formatUser(supabaseUser: any, dbUser: any = null): any {
     id: parseInt(supabaseUser.id) || Math.floor(Math.random() * 1000000), // Convert string ID to number
     email: supabaseUser.email,
     username: supabaseUser.user_metadata?.username || supabaseUser.email.split('@')[0],
-    role: 'user',
-    status: 'active',
+    // Removed role and status to match DB structure
     lastLogin: new Date(),
     createdAt: new Date(),
     updatedAt: new Date()
