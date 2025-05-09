@@ -13,7 +13,7 @@ export interface SupabaseUser {
   };
 }
 
-// Create a user in our database
+// Create a user in our database using direct SQL queries to bypass ORM issues
 async function createDatabaseUser(supabaseUser: any, username: string) {
   try {
     if (!supabaseUser || !supabaseUser.email) {
@@ -21,63 +21,36 @@ async function createDatabaseUser(supabaseUser: any, username: string) {
       return null;
     }
     
-    // Check if user already exists in our database by email
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, supabaseUser.email),
-    });
-    
-    if (existingUser) {
-      console.log(`User with email ${supabaseUser.email} already exists in database`);
-      return existingUser;
-    }
-    
     // Create a temporary random password for the database record
     // (real authentication happens via Supabase JWT)
     const tempPassword = Math.random().toString(36).slice(-10);
     
-    // Prepare user data to match the actual database structure
-    const userData = {
-      username: username,
-      email: supabaseUser.email,
-      password: tempPassword, // Just a placeholder since auth is handled by Supabase
-      // Our table doesn't have role, status, or lastLogin fields
-      // Use camelCase for field names to match our ORM schema
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    // Use direct SQL approach exclusively to avoid schema mismatches
+    const { pool } = require('../db');
     
-    try {
-      // Try using direct pool query instead of Drizzle ORM if schema validation is causing issues
-      // This is a fallback approach for when the ORM approach fails
-      const { pool } = require('../db');
-      
-      const result = await pool.query(
-        'INSERT INTO users (username, email, password, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [username, supabaseUser.email, tempPassword, new Date(), new Date()]
-      );
-      
-      if (result.rows && result.rows[0]) {
-        console.log(`Created database user for ${supabaseUser.email} using direct query`);
-        return result.rows[0];
-      }
-    } catch (directQueryError) {
-      console.error("Error with direct query insert:", directQueryError);
-      // Continue to try the ORM approach
+    // First check if user already exists
+    const existingResult = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [supabaseUser.email]
+    );
+    
+    if (existingResult.rows && existingResult.rows.length > 0) {
+      console.log(`User with email ${supabaseUser.email} already exists in database`);
+      return existingResult.rows[0];
     }
     
-    try {
-      // Fallback to ORM approach
-      // Validate with schema
-      const validatedData = usersInsertSchema.parse(userData);
-      
-      // Insert the user
-      const [newUser] = await db.insert(users).values(validatedData).returning();
-      console.log(`Created database user for ${supabaseUser.email} using ORM`);
-      
-      return newUser;
-    } catch (ormError) {
-      console.error("Error with ORM insert:", ormError);
-      throw ormError; // Rethrow to be caught by outer try/catch
+    // Create user if doesn't exist
+    const result = await pool.query(
+      'INSERT INTO users (username, email, password, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [username, supabaseUser.email, tempPassword, new Date(), new Date()]
+    );
+    
+    if (result.rows && result.rows[0]) {
+      console.log(`Created database user for ${supabaseUser.email} using direct SQL`);
+      return result.rows[0];
+    } else {
+      console.error("No rows returned from user creation query");
+      return null;
     }
   } catch (error) {
     console.error("Error creating database user:", error);
@@ -213,6 +186,41 @@ export async function getUserByToken(jwt: string) {
       return null;
     }
     
+    // Direct database approach to avoid ORM issues
+    try {
+      const { pool } = require('../db');
+      
+      // Check if user exists first
+      const existingResult = await pool.query(
+        'SELECT * FROM users WHERE email = $1',
+        [data.user.email]
+      );
+      
+      if (existingResult.rows && existingResult.rows.length > 0) {
+        // User exists - return the combined user object
+        return formatUser(data.user, existingResult.rows[0]);
+      } else {
+        // User doesn't exist in database - create them
+        const username = data.user.user_metadata?.username || 
+                       (data.user.email.split('@')[0] + Math.floor(Math.random() * 10000));
+        const tempPassword = Math.random().toString(36).slice(-10);
+        
+        const result = await pool.query(
+          'INSERT INTO users (username, email, password, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+          [username, data.user.email, tempPassword, new Date(), new Date()]
+        );
+        
+        if (result.rows && result.rows[0]) {
+          console.log(`Created database user for ${data.user.email} during token check`);
+          return formatUser(data.user, result.rows[0]);
+        }
+      }
+    } catch (directDbError) {
+      console.error("Direct database error getting user by token:", directDbError);
+      // Try ORM as fallback
+    }
+    
+    // Fallback to ORM approach if direct database query fails
     const dbUser = await db.query.users.findFirst({
       where: eq(users.email, data.user.email),
     });
@@ -240,6 +248,8 @@ function formatUser(supabaseUser: any, dbUser: any = null): any {
   
   // If we have a database user, use its data
   if (dbUser) {
+    // Direct SQL queries return column names in snake_case, ORM returns camelCase
+    // Handle both formats
     return {
       id: dbUser.id,
       email: dbUser.email,
@@ -248,9 +258,9 @@ function formatUser(supabaseUser: any, dbUser: any = null): any {
       role: "user", // Default role since it's not in our database
       status: "active", // Default status since it's not in our database
       lastLogin: new Date(), // Virtual property
-      // Map from database field names to our response format
-      createdAt: dbUser.createdAt || new Date(),
-      updatedAt: dbUser.updatedAt || new Date()
+      // Map from database field names to our response format - handle both camelCase and snake_case
+      createdAt: dbUser.createdAt || dbUser.created_at || new Date(),
+      updatedAt: dbUser.updatedAt || dbUser.updated_at || new Date()
     };
   }
   
@@ -268,7 +278,7 @@ function formatUser(supabaseUser: any, dbUser: any = null): any {
   };
 }
 
-// Find or create a database user for a Supabase auth user
+// Find or create a database user for a Supabase auth user using direct SQL
 async function findOrCreateDatabaseUser(supabaseUser: any): Promise<any> {
   try {
     if (!supabaseUser || !supabaseUser.email) {
@@ -276,16 +286,40 @@ async function findOrCreateDatabaseUser(supabaseUser: any): Promise<any> {
       return null;
     }
     
-    // Try to find the user first
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, supabaseUser.email),
-    });
-    
-    if (existingUser) {
-      return existingUser;
+    // Use direct SQL approach to avoid ORM schema issues
+    try {
+      const { pool } = require('../db');
+      
+      // Find the user first
+      const existingResult = await pool.query(
+        'SELECT * FROM users WHERE email = $1',
+        [supabaseUser.email]
+      );
+      
+      if (existingResult.rows && existingResult.rows.length > 0) {
+        return existingResult.rows[0]; 
+      }
+      
+      // If user doesn't exist, create them
+      const username = supabaseUser.user_metadata?.username || 
+                       (supabaseUser.email.split('@')[0] + Math.floor(Math.random() * 10000));
+      
+      // Create the user
+      const result = await pool.query(
+        'INSERT INTO users (username, email, password, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [username, supabaseUser.email, Math.random().toString(36).slice(-10), new Date(), new Date()]
+      );
+      
+      if (result.rows && result.rows[0]) {
+        console.log(`Created database user for ${supabaseUser.email} in findOrCreateDatabaseUser`);
+        return result.rows[0];
+      }
+    } catch (directQueryError) {
+      console.error("Direct query error in findOrCreateDatabaseUser:", directQueryError);
+      // Fall back to trying the createDatabaseUser function which has different error handling
     }
     
-    // If user doesn't exist, create them
+    // If direct SQL approach failed, try the regular function
     const username = supabaseUser.user_metadata?.username || 
                      (supabaseUser.email.split('@')[0] + Math.floor(Math.random() * 10000));
     
