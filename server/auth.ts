@@ -17,7 +17,7 @@ declare global {
       id: number;
       username: string;
       email: string;
-      role: string;
+      // Removed role from interface
     }
   }
 }
@@ -152,18 +152,18 @@ export function setupAuth(app: Express) {
           username,
           email,
           password: hashedPassword,
-          role: "user",
-          status: "active",
+          // Removed role and status if columns don't exist in DB
         })
         .returning({
           id: users.id,
           username: users.username,
           email: users.email,
-          role: users.role,
+          // Removed role from returned data
         });
 
       // Auto-login after registration
-      req.login(newUser, (err) => {
+      // Add a type assertion to satisfy TypeScript
+      req.login(newUser as Express.User, (err) => {
         if (err) {
           return res.status(500).json({ message: "Failed to login after registration" });
         }
