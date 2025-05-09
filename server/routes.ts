@@ -1,13 +1,82 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { gamesController } from "./controllers/games";
 import { balanceController } from "./controllers/balance";
-import { setupAuth } from "./auth";
+import { registerUser, loginUser, logoutUser, getUserByToken, authenticate } from "./auth-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup authentication
-  setupAuth(app);
+  // Setup JWT authentication routes
+  
+  // Register endpoint
+  app.post('/api/register', async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+      }
+      
+      const user = await registerUser(email, password);
+      res.status(201).json(user);
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.status(500).json({ message: error.message || 'Failed to register' });
+    }
+  });
+  
+  // Login endpoint
+  app.post('/api/login', async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+      }
+      
+      const data = await loginUser(email, password);
+      res.status(200).json(data);
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(401).json({ message: error.message || 'Authentication failed' });
+    }
+  });
+  
+  // Logout endpoint
+  app.post('/api/logout', async (req: Request, res: Response) => {
+    try {
+      const token = req.headers.authorization?.split(' ')[1] || '';
+      await logoutUser(token);
+      res.status(200).json({ message: 'Logged out successfully' });
+    } catch (error) {
+      console.error('Logout error:', error);
+      res.status(500).json({ message: 'Failed to logout' });
+    }
+  });
+  
+  // Get current user endpoint
+  app.get('/api/user', async (req: Request, res: Response) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    
+    if (!token) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+    
+    try {
+      const user = await getUserByToken(token);
+      if (!user) {
+        return res.status(401).json({ message: 'Invalid token' });
+      }
+      
+      res.status(200).json(user);
+    } catch (error) {
+      console.error('Get user error:', error);
+      res.status(401).json({ message: 'Not authenticated' });
+    }
+  });
+  
+  // Protected route middleware
+  app.use('/api/protected', authenticate);
   
   const httpServer = createServer(app);
   

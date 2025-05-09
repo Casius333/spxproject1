@@ -27,11 +27,11 @@ export async function getAllCategories(): Promise<Category[]> {
 // Games
 export async function getAllGames(): Promise<Game[]> {
   try {
-    // Even more simplified query to avoid is_active column
+    // Even more simplified query to avoid columns that don't exist
     const result = await pool.query(
       `SELECT id, title, slug, description, provider, image, category_id, 
-      is_featured, is_popular, is_new, is_jackpot, category, 
-      jackpot_amount, rtp, volatility, min_bet, max_bet, play_count, 
+      is_featured, is_popular, is_new, is_jackpot, 
+      jackpot_amount, rtp, volatility, min_bet, max_bet, 
       created_at, updated_at 
       FROM games 
       ORDER BY created_at DESC`
