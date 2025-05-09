@@ -95,9 +95,11 @@ export async function registerUser(email: string, password: string) {
   }
   
   // Create a user response object directly from Supabase data
+  const userEmail = data.user?.email || email;
+  
   const user = {
     id: parseInt(data.user?.id || '') || Math.floor(Math.random() * 1000000),
-    email: data.user?.email || email,
+    email: userEmail,
     username: username,
     role: "user",
     status: "active",
@@ -129,10 +131,12 @@ export async function loginUser(email: string, password: string) {
   }
   
   // Create a user object directly from Supabase data
+  const userEmail = data.user.email || 'unknown@example.com';
+  
   const user = {
     id: parseInt(data.user.id) || Math.floor(Math.random() * 1000000), 
-    email: data.user.email,
-    username: data.user.user_metadata?.username || data.user.email.split('@')[0],
+    email: userEmail,
+    username: data.user.user_metadata?.username || userEmail.split('@')[0],
     role: "user",
     status: "active",
     lastLogin: new Date(),
@@ -174,10 +178,12 @@ export async function getUserByToken(jwt: string) {
   }
   
   // Create a user object from Supabase data only
+  const userEmail = data.user.email || 'unknown@example.com';
+  
   return {
     id: parseInt(data.user.id) || Math.floor(Math.random() * 1000000), // Use UUID as ID or generate one
-    email: data.user.email,
-    username: data.user.user_metadata?.username || data.user.email.split('@')[0],
+    email: userEmail,
+    username: data.user.user_metadata?.username || userEmail.split('@')[0],
     role: "user", // Default role
     status: "active", // Default status
     lastLogin: new Date(),
@@ -209,10 +215,12 @@ function formatUser(supabaseUser: any, dbUser: any = null): any {
   }
   
   // If no database user provided, use Supabase user data
+  const formattedEmail = supabaseUser.email || 'unknown@example.com';
+  
   return {
     id: parseInt(supabaseUser.id) || Math.floor(Math.random() * 1000000), // Convert string ID to number
-    email: supabaseUser.email,
-    username: supabaseUser.user_metadata?.username || supabaseUser.email.split('@')[0],
+    email: formattedEmail,
+    username: supabaseUser.user_metadata?.username || formattedEmail.split('@')[0],
     // Add virtual properties not stored in the database
     role: "user",
     status: "active",

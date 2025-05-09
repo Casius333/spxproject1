@@ -34,8 +34,11 @@ const poolConfig = {
   connectionString,
   max: 10, // Max number of clients in the pool
   idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
-  ssl: connectionString.includes('supabase') ? { rejectUnauthorized: false } : false
+  // For Supabase, we need to use SSL but not validate certificates
+  ssl: connectionString.includes('supabase.co') ? { rejectUnauthorized: false } : false
 };
+
+console.log("Connecting to database with SSL:", poolConfig.ssl ? "Enabled" : "Disabled");
 
 // Create database connection pool
 export const pool = new Pool(poolConfig);
