@@ -9,7 +9,7 @@ import { supabase } from "../lib/supabase";
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup JWT authentication routes
   
-  // Register endpoint
+  // Register endpoint - pure Supabase approach
   app.post('/api/register', async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
@@ -18,42 +18,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Email and password are required' });
       }
       
-      // First register with Supabase Auth
+      // Register only with Supabase Auth
       const supabaseUser = await registerUser(email, password);
       
-      // Then manually create a user in our database using direct query
-      // This is a fallback to ensure users are created in our database
-      try {
-        // Generate username from email (username@example.com -> username1234)
-        const username = email.split('@')[0] + Math.floor(Math.random() * 10000);
-        const tempPassword = Math.random().toString(36).slice(-10);
-        
-        const { pool } = require('../db');
-        
-        // Check if user already exists first
-        const existingResult = await pool.query(
-          'SELECT * FROM users WHERE email = $1',
-          [email]
-        );
-        
-        if (existingResult.rows && existingResult.rows.length > 0) {
-          console.log(`User ${email} already exists in database`);
-        } else {
-          // Create user if doesn't exist
-          const result = await pool.query(
-            'INSERT INTO users (username, email, password, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [username, email, tempPassword, new Date(), new Date()]
-          );
-          
-          if (result.rows && result.rows[0]) {
-            console.log(`Created database user for ${email} directly in routes`);
-          }
-        }
-      } catch (dbError) {
-        console.error('Database user creation error (ignorable):', dbError);
-        // We continue anyway since auth is handled by Supabase
-      }
-      
+      // No local database user creation, relying solely on Supabase
       res.status(201).json(supabaseUser);
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -61,7 +29,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Login endpoint
+  // Login endpoint - pure Supabase approach
   app.post('/api/login', async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
@@ -70,45 +38,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Email and password are required' });
       }
       
-      // First attempt to login with Supabase Auth
+      // Use only Supabase auth for login
       const data = await loginUser(email, password);
       
-      // Then check if user exists in our database, create if not
-      try {
-        const { pool } = require('../db');
-        
-        // Check if user exists
-        const existingResult = await pool.query(
-          'SELECT * FROM users WHERE email = $1',
-          [email]
-        );
-        
-        if (existingResult.rows && existingResult.rows.length > 0) {
-          // User exists - update last login time
-          await pool.query(
-            'UPDATE users SET updated_at = $1 WHERE email = $2',
-            [new Date(), email]
-          );
-          console.log(`Updated last login time for ${email}`);
-        } else {
-          // User doesn't exist in our database - create them
-          const username = email.split('@')[0] + Math.floor(Math.random() * 10000);
-          const tempPassword = Math.random().toString(36).slice(-10);
-          
-          const result = await pool.query(
-            'INSERT INTO users (username, email, password, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [username, email, tempPassword, new Date(), new Date()]
-          );
-          
-          if (result.rows && result.rows[0]) {
-            console.log(`Created database user for ${email} during login`);
-          }
-        }
-      } catch (dbError) {
-        console.error('Database user check/creation error during login (ignorable):', dbError);
-        // We continue anyway since auth is handled by Supabase
-      }
-      
+      // No local database interactions for user management
       res.status(200).json(data);
     } catch (error: any) {
       console.error('Login error:', error);

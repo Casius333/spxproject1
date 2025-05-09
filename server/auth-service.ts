@@ -60,7 +60,7 @@ async function createDatabaseUser(supabaseUser: any, username: string) {
   }
 }
 
-// Register a new user
+// Register a new user - pure Supabase approach
 export async function registerUser(email: string, password: string) {
   // Generate username from email (username@example.com -> username1234)
   const username = email.split('@')[0] + Math.floor(Math.random() * 10000);
@@ -94,26 +94,26 @@ export async function registerUser(email: string, password: string) {
     console.log("Could not auto-confirm user email - user will need to verify via email link");
   }
   
-  // Create/sync user in our database
-  let dbUser = null;
-  try {
-    dbUser = await createDatabaseUser(data.user, username);
-  } catch (dbError) {
-    console.error("Failed to create database user, but auth registration succeeded:", dbError);
-    // We continue anyway since auth is handled by Supabase
-  }
+  // Create a user response object directly from Supabase data
+  const user = {
+    id: parseInt(data.user?.id || '') || Math.floor(Math.random() * 1000000),
+    email: data.user?.email || email,
+    username: username,
+    role: "user",
+    status: "active",
+    lastLogin: new Date(),
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
   
-  // Format the user data for response
-  const formattedUser = formatUser(data.user, dbUser);
-  
-  // Return both the token and the formatted user
+  // Return both the token and the user
   return {
     access_token: data.session?.access_token || null,
-    user: formattedUser
+    user: user
   };
 }
 
-// Login a user
+// Login a user - pure Supabase approach
 export async function loginUser(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -124,50 +124,26 @@ export async function loginUser(email: string, password: string) {
     throw new Error(error.message);
   }
   
-  // Find or create the user in our database using direct SQL
-  try {
-    const { pool } = require('../db');
-    
-    // Check if user exists
-    const existingResult = await pool.query(
-      'SELECT * FROM users WHERE email = $1',
-      [email]
-    );
-    
-    if (existingResult.rows && existingResult.rows.length > 0) {
-      // User exists - update last login time
-      await pool.query(
-        'UPDATE users SET updated_at = $1 WHERE email = $2',
-        [new Date(), email]
-      );
-      console.log(`Updated last login time for ${email}`);
-    } else {
-      // User doesn't exist in our database - create them
-      const username = data.user?.user_metadata?.username || 
-                     email.split('@')[0] + Math.floor(Math.random() * 10000);
-      const tempPassword = Math.random().toString(36).slice(-10);
-      
-      const result = await pool.query(
-        'INSERT INTO users (username, email, password, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [username, email, tempPassword, new Date(), new Date()]
-      );
-      
-      if (result.rows && result.rows[0]) {
-        console.log(`Created database user for ${email} during login in auth-service`);
-      }
-    }
-  } catch (dbError) {
-    console.error("Database error during login:", dbError);
-    // Continue with login even if database operations fail
+  if (!data.user) {
+    throw new Error("Login successful but no user data returned");
   }
   
-  // Get formatted user with data from both auth and database
-  const formattedUser = await findOrCreateDatabaseUser(data.user);
+  // Create a user object directly from Supabase data
+  const user = {
+    id: parseInt(data.user.id) || Math.floor(Math.random() * 1000000), 
+    email: data.user.email,
+    username: data.user.user_metadata?.username || data.user.email.split('@')[0],
+    role: "user",
+    status: "active",
+    lastLogin: new Date(),
+    createdAt: new Date(data.user.created_at),
+    updatedAt: new Date(data.user.updated_at || data.user.last_sign_in_at || Date.now())
+  };
   
-  // Return both the token and the formatted user
+  // Return both the token and the user
   return {
     access_token: data.session?.access_token || null,
-    user: formattedUser || formatUser(data.user) // Fallback to auth user if DB user creation fails
+    user: user
   };
 }
 
@@ -184,7 +160,7 @@ export async function logoutUser(jwt: string) {
   return true;
 }
 
-// Get a user by JWT token
+// Get a user by JWT token - pure Supabase approach
 export async function getUserByToken(jwt: string) {
   const { data, error } = await supabase.auth.getUser(jwt);
   
@@ -192,67 +168,22 @@ export async function getUserByToken(jwt: string) {
     return null;
   }
   
-  // Find this user in our database by email
-  try {
-    if (!data.user || !data.user.email) {
-      console.error("Invalid user data from Supabase");
-      return null;
-    }
-    
-    // Direct database approach to avoid ORM issues
-    try {
-      const { pool } = require('../db');
-      
-      // Check if user exists first
-      const existingResult = await pool.query(
-        'SELECT * FROM users WHERE email = $1',
-        [data.user.email]
-      );
-      
-      if (existingResult.rows && existingResult.rows.length > 0) {
-        // User exists - return the combined user object
-        return formatUser(data.user, existingResult.rows[0]);
-      } else {
-        // User doesn't exist in database - create them
-        const username = data.user.user_metadata?.username || 
-                       (data.user.email.split('@')[0] + Math.floor(Math.random() * 10000));
-        const tempPassword = Math.random().toString(36).slice(-10);
-        
-        const result = await pool.query(
-          'INSERT INTO users (username, email, password, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-          [username, data.user.email, tempPassword, new Date(), new Date()]
-        );
-        
-        if (result.rows && result.rows[0]) {
-          console.log(`Created database user for ${data.user.email} during token check`);
-          return formatUser(data.user, result.rows[0]);
-        }
-      }
-    } catch (directDbError) {
-      console.error("Direct database error getting user by token:", directDbError);
-      // Try ORM as fallback
-    }
-    
-    // Fallback to ORM approach if direct database query fails
-    const dbUser = await db.query.users.findFirst({
-      where: eq(users.email, data.user.email),
-    });
-    
-    if (dbUser) {
-      // Return a combined user object with data from both sources
-      return formatUser(data.user, dbUser);
-    } else {
-      // Try to create a database user if none exists
-      const username = data.user.user_metadata?.username || 
-                     (data.user.email.split('@')[0] + Math.floor(Math.random() * 10000));
-      const newDbUser = await createDatabaseUser(data.user, username);
-      return formatUser(data.user, newDbUser);
-    }
-  } catch (dbError) {
-    console.error("Error getting DB user by token:", dbError);
-    // Fall back to just auth user if DB operations fail
-    return formatUser(data.user);
+  if (!data.user || !data.user.email) {
+    console.error("Invalid user data from Supabase");
+    return null;
   }
+  
+  // Create a user object from Supabase data only
+  return {
+    id: parseInt(data.user.id) || Math.floor(Math.random() * 1000000), // Use UUID as ID or generate one
+    email: data.user.email,
+    username: data.user.user_metadata?.username || data.user.email.split('@')[0],
+    role: "user", // Default role
+    status: "active", // Default status
+    lastLogin: new Date(),
+    createdAt: new Date(data.user.created_at),
+    updatedAt: new Date(data.user.updated_at || data.user.last_sign_in_at || Date.now())
+  };
 }
 
 // Convert Supabase user to our application's user model
