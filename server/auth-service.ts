@@ -29,8 +29,11 @@ export async function registerUser(email: string, password: string) {
     throw new Error(error.message);
   }
   
-  // Format the user data to match our application's user model
-  return formatUser(data.user);
+  // Return both the token and the formatted user
+  return {
+    access_token: data.session?.access_token || null,
+    user: formatUser(data.user)
+  };
 }
 
 // Login a user
@@ -44,8 +47,11 @@ export async function loginUser(email: string, password: string) {
     throw new Error(error.message);
   }
   
-  // Format the user data to match our application's user model
-  return formatUser(data.user);
+  // Return both the token and the formatted user
+  return {
+    access_token: data.session?.access_token || null,
+    user: formatUser(data.user)
+  };
 }
 
 // Logout a user
