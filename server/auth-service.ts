@@ -35,14 +35,13 @@ async function createDatabaseUser(supabaseUser: any, username: string) {
     // (real authentication happens via Supabase JWT)
     const tempPassword = Math.random().toString(36).slice(-10);
     
-    // Prepare user data
+    // Prepare user data to match the actual database structure
     const userData = {
       username: username,
       email: supabaseUser.email,
       password: tempPassword, // Just a placeholder since auth is handled by Supabase
-      role: "user", // Include required role field
-      status: "active", // Include required status field
-      lastLogin: new Date(),
+      // Our table doesn't have role, status, or lastLogin fields
+      // Use camelCase for field names to match our ORM schema
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -53,8 +52,8 @@ async function createDatabaseUser(supabaseUser: any, username: string) {
       const { pool } = require('../db');
       
       const result = await pool.query(
-        'INSERT INTO users (username, email, password, role, status, "lastLogin", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-        [username, supabaseUser.email, tempPassword, "user", "active", new Date(), new Date(), new Date()]
+        'INSERT INTO users (username, email, password, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [username, supabaseUser.email, tempPassword, new Date(), new Date()]
       );
       
       if (result.rows && result.rows[0]) {
@@ -165,9 +164,9 @@ export async function loginUser(email: string, password: string) {
                      email.split('@')[0] + Math.floor(Math.random() * 10000);
       await createDatabaseUser(data.user, username);
     } else {
-      // Update last login time
+      // Update the updatedAt field (maps to updated_at in the database)
       await db.update(users)
-        .set({ lastLogin: new Date() })
+        .set({ updatedAt: new Date() })
         .where(eq(users.email, email))
         .execute();
     }
@@ -245,9 +244,11 @@ function formatUser(supabaseUser: any, dbUser: any = null): any {
       id: dbUser.id,
       email: dbUser.email,
       username: dbUser.username,
-      role: dbUser.role || "user",
-      status: dbUser.status || "active",
-      lastLogin: dbUser.lastLogin || new Date(),
+      // Add virtual properties not stored in the database
+      role: "user", // Default role since it's not in our database
+      status: "active", // Default status since it's not in our database
+      lastLogin: new Date(), // Virtual property
+      // Map from database field names to our response format
       createdAt: dbUser.createdAt || new Date(),
       updatedAt: dbUser.updatedAt || new Date()
     };
@@ -258,6 +259,7 @@ function formatUser(supabaseUser: any, dbUser: any = null): any {
     id: parseInt(supabaseUser.id) || Math.floor(Math.random() * 1000000), // Convert string ID to number
     email: supabaseUser.email,
     username: supabaseUser.user_metadata?.username || supabaseUser.email.split('@')[0],
+    // Add virtual properties not stored in the database
     role: "user",
     status: "active",
     lastLogin: new Date(),
