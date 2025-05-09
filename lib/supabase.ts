@@ -1,43 +1,42 @@
 import { createClient } from '@supabase/supabase-js';
-import config from '../config';
 
-// Get environment variables
+// Use environment variables for Supabase URL and anon key
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
 
-// Validate the supabase URL and key
 if (!supabaseUrl || !supabaseKey) {
-  console.warn('Missing Supabase credentials. Auth functionality may not work properly.');
+  console.warn('Warning: Supabase URL or Anon Key not provided. Authentication will not work.');
 }
 
-// Create the Supabase client
+// Create Supabase client
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Parse the URL from the DATABASE_URL to extract the project reference
+// Function to get the Supabase project reference from the URL
 export function getSupabaseProjectRef() {
+  if (!supabaseUrl) return null;
+  
   try {
-    const databaseUrl = config.DATABASE_URL;
-    const url = new URL(databaseUrl);
-    const hostname = url.hostname;
+    // Extract the project reference from the URL
+    // Example: https://abcdefghijk.supabase.co -> abcdefghijk
+    const url = new URL(supabaseUrl);
+    const host = url.hostname;
+    const parts = host.split('.');
     
-    // Extract project reference from hostname (e.g., db.abc123def456.supabase.co)
-    const parts = hostname.split('.');
-    if (parts.length >= 3 && parts[1].length > 10) {
-      return parts[1]; // The project reference
+    if (parts.length >= 3) {
+      return parts[0];
     }
     
     return null;
   } catch (error) {
-    console.error('Error extracting Supabase project reference:', error);
+    console.error('Failed to parse Supabase URL:', error);
     return null;
   }
 }
 
-// This utility helps to get the public URL for a Supabase project
+// Function to get the Supabase storage public URL
 export function getSupabasePublicUrl() {
   const projectRef = getSupabaseProjectRef();
-  if (projectRef) {
-    return `https://${projectRef}.supabase.co`;
-  }
-  return null;
+  if (!projectRef) return null;
+  
+  return `https://${projectRef}.supabase.co/storage/v1/object/public`;
 }

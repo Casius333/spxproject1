@@ -98,7 +98,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      try {
+        await apiRequest("POST", "/api/logout");
+      } finally {
+        // Remove the auth token even if the API call fails
+        removeAuthToken();
+      }
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
@@ -108,10 +113,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      // Still mark as logged out on the frontend even if the server logout fails
+      queryClient.setQueryData(["/api/user"], null);
+      
       toast({
-        title: "Logout failed",
-        description: error.message,
-        variant: "destructive",
+        title: "Logged out",
+        description: "You have been logged out successfully.",
       });
     },
   });
