@@ -124,24 +124,37 @@ export async function loginUser(email: string, password: string) {
     throw new Error(error.message);
   }
   
-  // Find or create the user in our database
+  // Find or create the user in our database using direct SQL
   try {
-    // Check if user exists in our database
-    const dbUser = await db.query.users.findFirst({
-      where: eq(users.email, email),
-    });
+    const { pool } = require('../db');
     
-    // If user doesn't exist in our database yet, create them
-    if (!dbUser) {
+    // Check if user exists
+    const existingResult = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+    
+    if (existingResult.rows && existingResult.rows.length > 0) {
+      // User exists - update last login time
+      await pool.query(
+        'UPDATE users SET updated_at = $1 WHERE email = $2',
+        [new Date(), email]
+      );
+      console.log(`Updated last login time for ${email}`);
+    } else {
+      // User doesn't exist in our database - create them
       const username = data.user?.user_metadata?.username || 
                      email.split('@')[0] + Math.floor(Math.random() * 10000);
-      await createDatabaseUser(data.user, username);
-    } else {
-      // Update the updatedAt field (maps to updated_at in the database)
-      await db.update(users)
-        .set({ updatedAt: new Date() })
-        .where(eq(users.email, email))
-        .execute();
+      const tempPassword = Math.random().toString(36).slice(-10);
+      
+      const result = await pool.query(
+        'INSERT INTO users (username, email, password, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [username, email, tempPassword, new Date(), new Date()]
+      );
+      
+      if (result.rows && result.rows[0]) {
+        console.log(`Created database user for ${email} during login in auth-service`);
+      }
     }
   } catch (dbError) {
     console.error("Database error during login:", dbError);
