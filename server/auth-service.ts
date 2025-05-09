@@ -23,7 +23,7 @@ async function createDatabaseUser(supabaseUser: any, username: string) {
     
     // Check if user already exists in our database by email
     const existingUser = await db.query.users.findFirst({
-      where: (users) => eq(users.email, supabaseUser.email),
+      where: eq(users.email, supabaseUser.email),
     });
     
     if (existingUser) {
@@ -120,7 +120,7 @@ export async function loginUser(email: string, password: string) {
     
     // If user doesn't exist in our database yet, create them
     if (!dbUser) {
-      const username = data.user.user_metadata?.username || 
+      const username = data.user?.user_metadata?.username || 
                      email.split('@')[0] + Math.floor(Math.random() * 10000);
       await createDatabaseUser(data.user, username);
     } else {
@@ -174,7 +174,7 @@ export async function getUserByToken(jwt: string) {
     }
     
     const dbUser = await db.query.users.findFirst({
-      where: (users) => eq(users.email, data.user.email),
+      where: eq(users.email, data.user.email),
     });
     
     if (dbUser) {
@@ -235,7 +235,7 @@ async function findOrCreateDatabaseUser(supabaseUser: any): Promise<any> {
     
     // Try to find the user first
     const existingUser = await db.query.users.findFirst({
-      where: (users) => eq(users.email, supabaseUser.email),
+      where: eq(users.email, supabaseUser.email),
     });
     
     if (existingUser) {
