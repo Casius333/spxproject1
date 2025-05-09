@@ -7,16 +7,41 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Get the auth token from localStorage
+export function getAuthToken(): string | null {
+  return localStorage.getItem('auth_token');
+}
+
+// Save auth token to localStorage
+export function setAuthToken(token: string): void {
+  localStorage.setItem('auth_token', token);
+}
+
+// Remove auth token from localStorage
+export function removeAuthToken(): void {
+  localStorage.removeItem('auth_token');
+}
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  // Prepare headers
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
+  
+  // Add authorization header if we have a token
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers: headers,
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
   });
 
   await throwIfResNotOk(res);
@@ -29,8 +54,15 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // Prepare headers with auth token if available
+    const headers: Record<string, string> = {};
+    const token = getAuthToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
+      headers: headers
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

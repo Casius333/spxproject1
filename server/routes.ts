@@ -19,9 +19,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const user = await registerUser(email, password);
       res.status(201).json(user);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
-      res.status(500).json({ message: error.message || 'Failed to register' });
+      res.status(500).json({ message: error?.message || 'Failed to register' });
     }
   });
   
@@ -36,9 +36,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const data = await loginUser(email, password);
       res.status(200).json(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
-      res.status(401).json({ message: error.message || 'Authentication failed' });
+      res.status(401).json({ message: error?.message || 'Authentication failed' });
     }
   });
   
@@ -48,9 +48,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = req.headers.authorization?.split(' ')[1] || '';
       await logoutUser(token);
       res.status(200).json({ message: 'Logged out successfully' });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Logout error:', error);
-      res.status(500).json({ message: 'Failed to logout' });
+      res.status(500).json({ message: error?.message || 'Failed to logout' });
     }
   });
   
@@ -69,9 +69,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.status(200).json(user);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Get user error:', error);
-      res.status(401).json({ message: 'Not authenticated' });
+      res.status(401).json({ message: error?.message || 'Not authenticated' });
     }
   });
   
