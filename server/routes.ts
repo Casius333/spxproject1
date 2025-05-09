@@ -4,6 +4,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { gamesController } from "./controllers/games";
 import { balanceController } from "./controllers/balance";
 import { registerUser, loginUser, logoutUser, getUserByToken, authenticate } from "./auth-service";
+import { supabase } from "../lib/supabase";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup JWT authentication routes
@@ -77,6 +78,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Protected route middleware
   app.use('/api/protected', authenticate);
+  
+  // Test endpoint to verify Supabase connection
+  app.get('/api/supabase-test', async (req: Request, res: Response) => {
+    try {
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) {
+        return res.status(500).json({ 
+          message: 'Error fetching auth users', 
+          error: authError.message 
+        });
+      }
+      
+      // Count users with emails matching what we're looking for
+      const testUsers = authUsers.users.filter(user => 
+        user.email?.includes('test') || user.email?.includes('example')
+      );
+      
+      return res.status(200).json({ 
+        message: 'Supabase connection successful',
+        totalAuthUsers: authUsers.users.length,
+        testUsersCount: testUsers.length
+      });
+    } catch (error: any) {
+      console.error('Supabase test error:', error);
+      return res.status(500).json({ 
+        message: 'Error testing Supabase connection', 
+        error: error?.message || 'Unknown error' 
+      });
+    }
+  });
   
   const httpServer = createServer(app);
   
