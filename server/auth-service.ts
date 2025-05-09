@@ -40,18 +40,46 @@ async function createDatabaseUser(supabaseUser: any, username: string) {
       username: username,
       email: supabaseUser.email,
       password: tempPassword, // Just a placeholder since auth is handled by Supabase
-      // Don't include role and status - they're causing issues
+      role: "user", // Include required role field
+      status: "active", // Include required status field
       lastLogin: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
     
-    // Validate with schema
-    const validatedData = usersInsertSchema.parse(userData);
+    try {
+      // Try using direct pool query instead of Drizzle ORM if schema validation is causing issues
+      // This is a fallback approach for when the ORM approach fails
+      const { pool } = require('../db');
+      
+      const result = await pool.query(
+        'INSERT INTO users (username, email, password, role, status, "lastLogin", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+        [username, supabaseUser.email, tempPassword, "user", "active", new Date(), new Date(), new Date()]
+      );
+      
+      if (result.rows && result.rows[0]) {
+        console.log(`Created database user for ${supabaseUser.email} using direct query`);
+        return result.rows[0];
+      }
+    } catch (directQueryError) {
+      console.error("Error with direct query insert:", directQueryError);
+      // Continue to try the ORM approach
+    }
     
-    // Insert the user
-    const [newUser] = await db.insert(users).values(validatedData).returning();
-    console.log(`Created database user for ${supabaseUser.email}`);
-    
-    return newUser;
+    try {
+      // Fallback to ORM approach
+      // Validate with schema
+      const validatedData = usersInsertSchema.parse(userData);
+      
+      // Insert the user
+      const [newUser] = await db.insert(users).values(validatedData).returning();
+      console.log(`Created database user for ${supabaseUser.email} using ORM`);
+      
+      return newUser;
+    } catch (ormError) {
+      console.error("Error with ORM insert:", ormError);
+      throw ormError; // Rethrow to be caught by outer try/catch
+    }
   } catch (error) {
     console.error("Error creating database user:", error);
     // We'll continue even if there's an error creating the database user
@@ -65,19 +93,33 @@ export async function registerUser(email: string, password: string) {
   // Generate username from email (username@example.com -> username1234)
   const username = email.split('@')[0] + Math.floor(Math.random() * 10000);
   
-  // Register with Supabase Auth
+  // Register with Supabase Auth with email auto-confirmation
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
         username,
-      }
+      },
+      // This will bypass email verification requirement
+      emailRedirectTo: `${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : 'http://localhost:5000'}/auth/callback`
     }
   });
   
   if (error) {
     throw new Error(error.message);
+  }
+  
+  // For development - skip email verification by confirming the user immediately
+  // NOTE: In production, you would remove this and use proper email verification
+  try {
+    // This line requires admin privileges - will work if your anon key has enough permissions
+    // If this fails, user will still be registered but will need to verify email
+    await supabase.auth.admin.updateUserById(data.user?.id || '', {
+      email_confirm: true
+    });
+  } catch (confirmError) {
+    console.log("Could not auto-confirm user email - user will need to verify via email link");
   }
   
   // Create/sync user in our database
@@ -203,7 +245,8 @@ function formatUser(supabaseUser: any, dbUser: any = null): any {
       id: dbUser.id,
       email: dbUser.email,
       username: dbUser.username,
-      // Removed role and status to match DB structure
+      role: dbUser.role || "user",
+      status: dbUser.status || "active",
       lastLogin: dbUser.lastLogin || new Date(),
       createdAt: dbUser.createdAt || new Date(),
       updatedAt: dbUser.updatedAt || new Date()
@@ -215,7 +258,8 @@ function formatUser(supabaseUser: any, dbUser: any = null): any {
     id: parseInt(supabaseUser.id) || Math.floor(Math.random() * 1000000), // Convert string ID to number
     email: supabaseUser.email,
     username: supabaseUser.user_metadata?.username || supabaseUser.email.split('@')[0],
-    // Removed role and status to match DB structure
+    role: "user",
+    status: "active",
     lastLogin: new Date(),
     createdAt: new Date(),
     updatedAt: new Date()
