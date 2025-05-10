@@ -14,9 +14,9 @@ interface CategoryFilterProps {
 
 export function CategoryFilter({ categories, selectedCategory, onSelectCategory }: CategoryFilterProps) {
   return (
-    <div className="bg-dark py-2">
+    <div className="bg-dark py-1">
       <div className="container mx-auto px-4">
-        <div className="flex overflow-x-auto pb-2 scrollbar-hide space-x-4">
+        <div className="flex overflow-x-auto pb-1 scrollbar-hide space-x-4">
           {categories.map((category) => (
             <button
               key={category.id}

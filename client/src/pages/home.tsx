@@ -62,7 +62,7 @@ export default function Home() {
       
       <div className="container mx-auto px-4">
         {/* Category Filter Bar */}
-        <div className="mb-2">
+        <div className="mb-1">
           <CategoryFilter 
             categories={categories || defaultCategories} 
             selectedCategory={selectedCategory}
@@ -71,7 +71,7 @@ export default function Home() {
         </div>
         
         {/* Main Content */}
-        <div className="space-y-12">
+        <div className="space-y-1">
           {/* Games Grid - No Title */}
           <GameGrid 
             title="" 
