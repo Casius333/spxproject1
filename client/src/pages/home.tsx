@@ -70,13 +70,6 @@ export default function Home() {
           />
         </div>
         
-        {/* Page Title */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="font-heading font-bold text-3xl text-white">
-            {pageTitle}
-          </h1>
-        </div>
-        
         {/* Main Content */}
         <div className="space-y-12">
           {/* Games Grid - No Title */}
