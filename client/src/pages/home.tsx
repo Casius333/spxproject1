@@ -3,7 +3,6 @@ import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { CategoryFilter, Category } from '@/components/category-filter';
 import { GameGrid } from '@/components/game-grid';
-import { CallToAction } from '@/components/call-to-action';
 import { CarouselBanner } from '@/components/ui/carousel-banner';
 import { PromotionBanner } from '@/components/ui/promotion-banner';
 
@@ -85,11 +84,6 @@ export default function Home() {
             title="" 
             limit={12}
           />
-          
-          {/* Call to Action (only on home page) */}
-          {location === '/' && (
-            <CallToAction />
-          )}
         </div>
       </div>
     </div>
