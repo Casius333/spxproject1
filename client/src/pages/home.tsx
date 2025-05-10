@@ -42,9 +42,9 @@ export default function Home() {
     <div className="mx-auto">
       {/* Home page layout with banner and promotion */}
       {location === '/' && (
-        <div className="mb-2">
+        <div className="mb-8">
           {/* Carousel Banner */}
-          <div className="w-full mb-2">
+          <div className="w-full mb-4">
             <CarouselBanner />
           </div>
           
@@ -62,7 +62,7 @@ export default function Home() {
       
       <div className="container mx-auto px-4">
         {/* Category Filter Bar */}
-        <div className="mb-2">
+        <div className="mb-6">
           <CategoryFilter 
             categories={categories || defaultCategories} 
             selectedCategory={selectedCategory}
@@ -71,14 +71,14 @@ export default function Home() {
         </div>
         
         {/* Page Title */}
-        <div className="flex justify-between items-center mb-2">
+        <div className="flex justify-between items-center mb-6">
           <h1 className="font-heading font-bold text-3xl text-white">
             {pageTitle}
           </h1>
         </div>
         
         {/* Main Content */}
-        <div className="space-y-2">
+        <div className="space-y-12">
           {/* Games Grid - No Title */}
           <GameGrid 
             title="" 

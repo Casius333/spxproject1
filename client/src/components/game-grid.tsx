@@ -84,8 +84,8 @@ export function GameGrid({ title, filter = 'all', viewAllLink, limit = 10 }: Gam
   const gamesForDisplay = PLACEHOLDER_GAMES.slice(0, limit);
   
   return (
-    <section className="bg-dark py-1">
-      <div className="container mx-auto px-2">
+    <section className="bg-dark py-8">
+      <div className="container mx-auto px-4">
         {title && (
           <div className="flex justify-between items-center mb-6">
             <h2 className="font-heading font-bold text-2xl">{title}</h2>
