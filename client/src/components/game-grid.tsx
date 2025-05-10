@@ -166,16 +166,44 @@ const PLACEHOLDER_GAMES = [
 interface GameGridProps {
   title: string;
   filter?: string;
+  searchQuery?: string;
+  providerId?: number | null;
   viewAllLink?: string;
   limit?: number;
 }
 
-export function GameGrid({ title, filter = 'all', viewAllLink, limit = 10 }: GameGridProps) {
-  // Select games to display based on filter (using placeholders)
-  const gamesForDisplay = PLACEHOLDER_GAMES.slice(0, limit);
+export function GameGrid({ title, filter = 'all', searchQuery = '', providerId = null, viewAllLink, limit = 10 }: GameGridProps) {
+  // Filter games based on the parameters
+  let filteredGames = [...PLACEHOLDER_GAMES];
+  
+  // Apply filter based on category
+  if (filter === 'search' && searchQuery) {
+    // Search by name or provider
+    filteredGames = filteredGames.filter(game => 
+      game.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      game.provider.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  } else if (filter !== 'all' && filter !== 'search' && filter !== 'provider') {
+    // Filter by category
+    // For our placeholder implementation, we're just filtering games by position in the array
+    // In a real implementation, this would filter by category
+    const categoryIndex = parseInt(filter) % 3;
+    filteredGames = filteredGames.filter((_, index) => index % 3 === categoryIndex);
+  }
+  
+  // Apply provider filter if specified
+  if (filter === 'provider' && providerId) {
+    // Filter by provider ID
+    // In this placeholder implementation, we'll just filter games by index
+    const providerMod = providerId % 5;
+    filteredGames = filteredGames.filter((_, index) => index % 5 === providerMod);
+  }
+  
+  // Apply limit
+  const gamesForDisplay = filteredGames.slice(0, limit);
   
   return (
-    <section className="bg-dark py-8">
+    <section className="bg-dark py-2">
       <div className="container mx-auto px-4">
         {title && (
           <div className="flex justify-between items-center mb-6">

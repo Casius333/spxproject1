@@ -85,6 +85,7 @@ export default function Home() {
             selectedCategory={selectedCategory}
             onSelectCategory={handleCategorySelect}
             onSearch={handleSearch}
+            onSelectProvider={handleProviderSelect}
           />
         </div>
         
@@ -95,12 +96,14 @@ export default function Home() {
             <GameGrid 
               title={`Search Results for "${searchQuery}"`}
               filter="search"
+              searchQuery={searchQuery}
               limit={24}
             />
           ) : selectedProvider ? (
             <GameGrid 
               title=""
               filter="provider"
+              providerId={selectedProvider}
               limit={24}
             />
           ) : (
