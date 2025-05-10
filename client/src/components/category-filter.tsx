@@ -57,31 +57,31 @@ export function CategoryFilter({ categories, selectedCategory, onSelectCategory,
   return (
     <div className="bg-dark py-1">
       <div className="container mx-auto px-4">
-        {/* Categories row */}
-        <div className="flex overflow-x-auto pb-1 scrollbar-hide space-x-4">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              className={cn(
-                "whitespace-nowrap px-5 py-2.5 rounded-full font-medium transition-colors",
-                category.id === selectedCategory
-                  ? "bg-primary hover:bg-primary-light text-white"
-                  : "bg-dark-card hover:bg-dark-light text-white"
-              )}
-              onClick={() => onSelectCategory(category.id)}
-            >
-              {category.name}
-            </button>
-          ))}
-        </div>
-        
-        {/* Providers dropdown and search row */}
-        <div className="flex flex-wrap gap-2 mt-2">
+        {/* All filters in one row */}
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+          {/* Category buttons */}
+          <div className="flex-none flex">
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                className={cn(
+                  "whitespace-nowrap px-4 py-2 rounded-md font-medium transition-colors mr-2",
+                  category.id === selectedCategory
+                    ? "bg-primary hover:bg-primary-light text-white"
+                    : "bg-dark-card hover:bg-dark-light text-white"
+                )}
+                onClick={() => onSelectCategory(category.id)}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+          
           {/* Providers dropdown */}
-          <div className="relative">
+          <div className="flex-none relative">
             <button 
               onClick={() => setIsProvidersOpen(!isProvidersOpen)}
-              className="flex items-center justify-between bg-dark-card text-white px-5 py-2.5 rounded-md w-40 md:w-48"
+              className="flex items-center justify-between bg-dark-card text-white px-4 py-2 rounded-md w-40"
             >
               <span className="truncate">
                 {selectedProvider ? selectedProvider.name : 'Providers'}
@@ -105,21 +105,21 @@ export function CategoryFilter({ categories, selectedCategory, onSelectCategory,
           </div>
           
           {/* Search form */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-md">
+          <form onSubmit={handleSearch} className="flex-1 max-w-[250px]">
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-dark-card text-white px-5 py-2.5 pl-10 rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full bg-dark-card text-white px-4 py-2 pl-10 rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
               />
               <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <button 
                 type="submit"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-primary hover:bg-primary-light text-white px-2 py-1 rounded-sm text-xs"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2"
               >
-                Go
+                <Search className="h-5 w-5 text-white" />
               </button>
             </div>
           </form>
