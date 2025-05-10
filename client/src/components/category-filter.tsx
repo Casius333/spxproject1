@@ -19,9 +19,10 @@ interface CategoryFilterProps {
   selectedCategory: string;
   onSelectCategory: (categoryId: string) => void;
   onSearch?: (query: string) => void;
+  onSelectProvider?: (providerId: number) => void;
 }
 
-export function CategoryFilter({ categories, selectedCategory, onSelectCategory, onSearch }: CategoryFilterProps) {
+export function CategoryFilter({ categories, selectedCategory, onSelectCategory, onSearch, onSelectProvider }: CategoryFilterProps) {
   const [isProvidersOpen, setIsProvidersOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,7 +40,11 @@ export function CategoryFilter({ categories, selectedCategory, onSelectCategory,
   const handleProviderSelect = (provider: Provider) => {
     setSelectedProvider(provider);
     setIsProvidersOpen(false);
-    // Here you would handle filtering games by provider
+    
+    // Pass provider ID to parent component for filtering
+    if (onSelectProvider) {
+      onSelectProvider(provider.id);
+    }
   };
 
   const handleSearch = (e: React.FormEvent) => {

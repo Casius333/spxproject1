@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
-import { CategoryFilter, Category } from '@/components/category-filter';
+import { CategoryFilter, Category, Provider } from '@/components/category-filter';
 import { GameGrid } from '@/components/game-grid';
 import { CarouselBanner } from '@/components/ui/carousel-banner';
 import { PromotionBanner } from '@/components/ui/promotion-banner';
@@ -9,6 +9,8 @@ import { PromotionBanner } from '@/components/ui/promotion-banner';
 export default function Home() {
   const [location] = useLocation();
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedProvider, setSelectedProvider] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [pageTitle, setPageTitle] = useState('Games');
   
   const { data: categories, isLoading: isCategoriesLoading } = useQuery<Category[]>({
@@ -36,6 +38,21 @@ export default function Home() {
   
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategory(categoryId);
+    // Reset search and provider filters when changing category
+    setSearchQuery('');
+  };
+  
+  const handleProviderSelect = (providerId: number) => {
+    setSelectedProvider(providerId);
+    // Reset search when changing provider
+    setSearchQuery('');
+  };
+  
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    // Reset filters when searching
+    setSelectedCategory('all');
+    setSelectedProvider(null);
   };
   
   return (
@@ -67,16 +84,32 @@ export default function Home() {
             categories={categories || defaultCategories} 
             selectedCategory={selectedCategory}
             onSelectCategory={handleCategorySelect}
+            onSearch={handleSearch}
           />
         </div>
         
         {/* Main Content */}
         <div className="space-y-1">
           {/* Games Grid - No Title */}
-          <GameGrid 
-            title="" 
-            limit={24}
-          />
+          {searchQuery ? (
+            <GameGrid 
+              title={`Search Results for "${searchQuery}"`}
+              filter="search"
+              limit={24}
+            />
+          ) : selectedProvider ? (
+            <GameGrid 
+              title=""
+              filter="provider"
+              limit={24}
+            />
+          ) : (
+            <GameGrid 
+              title=""
+              filter={selectedCategory} 
+              limit={24}
+            />
+          )}
         </div>
       </div>
     </div>
@@ -88,9 +121,9 @@ const defaultCategories: Category[] = [
   { id: 'all', name: 'All Slots' },
   { id: 'new', name: 'New Games' },
   { id: 'popular', name: 'Popular' },
-  { id: 'jackpot', name: 'Jackpots' },
+  { id: 'live', name: 'Live Games' },
   { id: 'megaways', name: 'Megaways' },
-  { id: 'classic', name: 'Classic Slots' },
+  { id: 'table', name: 'Table Games' },
   { id: 'bonus', name: 'Bonus Buy' },
-  { id: 'fruit', name: 'Fruit Slots' },
+  { id: 'classic', name: 'Classic Slots' },
 ];
