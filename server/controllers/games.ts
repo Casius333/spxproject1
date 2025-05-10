@@ -6,10 +6,9 @@ const CATEGORIES = [
   { id: 2, name: 'New Games', slug: 'new', description: 'Latest releases' },
   { id: 3, name: 'Popular', slug: 'popular', description: 'Most played games' },
   { id: 4, name: 'Live Games', slug: 'live', description: 'Live dealer games' },
-  { id: 5, name: 'Megaways', slug: 'megaways', description: 'Games with Megaways mechanic' },
-  { id: 6, name: 'Table Games', slug: 'table', description: 'Casino table games' },
-  { id: 7, name: 'Bonus Buy', slug: 'bonus', description: 'Games with bonus buy feature' },
-  { id: 8, name: 'Classic Slots', slug: 'classic', description: 'Traditional slot games' },
+  { id: 5, name: 'Table Games', slug: 'table', description: 'Casino table games' },
+  { id: 6, name: 'Bonus Buy', slug: 'bonus', description: 'Games with bonus buy feature' },
+  { id: 7, name: 'Classic Slots', slug: 'classic', description: 'Traditional slot games' },
 ];
 
 // Placeholder providers

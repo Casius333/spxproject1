@@ -81,7 +81,7 @@ export function CategoryFilter({ categories, selectedCategory, onSelectCategory,
           <div className="flex-none relative">
             <button 
               onClick={() => setIsProvidersOpen(!isProvidersOpen)}
-              className="flex items-center justify-between bg-dark-card text-white px-4 py-2 rounded-md w-40"
+              className="flex items-center justify-between bg-dark-card text-white px-4 py-2 rounded-md w-32"
             >
               <span className="truncate">
                 {selectedProvider ? selectedProvider.name : 'Providers'}
@@ -105,16 +105,15 @@ export function CategoryFilter({ categories, selectedCategory, onSelectCategory,
           </div>
           
           {/* Search form */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-[250px]">
+          <form onSubmit={handleSearch} className="flex-1 min-w-[300px] max-w-[400px]">
             <div className="relative">
               <input
                 type="text"
                 placeholder="Search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-dark-card text-white px-4 py-2 pl-10 rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full bg-dark-card text-white px-4 py-2 rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
               />
-              <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <button 
                 type="submit"
                 className="absolute right-3 top-1/2 transform -translate-y-1/2"

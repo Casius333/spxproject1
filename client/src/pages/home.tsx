@@ -121,12 +121,11 @@ export default function Home() {
 
 // Fallback categories in case API fails
 const defaultCategories: Category[] = [
-  { id: 'all', name: 'All Slots' },
-  { id: 'new', name: 'New Games' },
-  { id: 'popular', name: 'Popular' },
-  { id: 'live', name: 'Live Games' },
-  { id: 'megaways', name: 'Megaways' },
-  { id: 'table', name: 'Table Games' },
-  { id: 'bonus', name: 'Bonus Buy' },
-  { id: 'classic', name: 'Classic Slots' },
+  { id: '1', name: 'All Slots' },
+  { id: '2', name: 'New Games' },
+  { id: '3', name: 'Popular' },
+  { id: '4', name: 'Live Games' },
+  { id: '5', name: 'Table Games' },
+  { id: '6', name: 'Bonus Buy' },
+  { id: '7', name: 'Classic Slots' },
 ];
