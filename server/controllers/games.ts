@@ -5,11 +5,27 @@ const CATEGORIES = [
   { id: 1, name: 'All Slots', slug: 'all-slots', description: 'All slot games available' },
   { id: 2, name: 'New Games', slug: 'new', description: 'Latest releases' },
   { id: 3, name: 'Popular', slug: 'popular', description: 'Most played games' },
-  { id: 4, name: 'Jackpots', slug: 'jackpot', description: 'Games with progressive jackpots' },
+  { id: 4, name: 'Live Games', slug: 'live', description: 'Live dealer games' },
   { id: 5, name: 'Megaways', slug: 'megaways', description: 'Games with Megaways mechanic' },
-  { id: 6, name: 'Classic Slots', slug: 'classic', description: 'Traditional slot games' },
+  { id: 6, name: 'Table Games', slug: 'table', description: 'Casino table games' },
   { id: 7, name: 'Bonus Buy', slug: 'bonus', description: 'Games with bonus buy feature' },
-  { id: 8, name: 'Fruit Slots', slug: 'fruit', description: 'Classic fruit-themed slots' },
+  { id: 8, name: 'Classic Slots', slug: 'classic', description: 'Traditional slot games' },
+];
+
+// Placeholder providers
+const PROVIDERS = [
+  { id: 1, name: 'All Providers', slug: 'all' },
+  { id: 2, name: 'Lucky Games', slug: 'lucky-games' },
+  { id: 3, name: 'Spin Masters', slug: 'spin-masters' },
+  { id: 4, name: 'Casino Kings', slug: 'casino-kings' },
+  { id: 5, name: 'Vegas Slots', slug: 'vegas-slots' },
+  { id: 6, name: 'Premium Games', slug: 'premium-games' },
+  { id: 7, name: 'Galaxy Gaming', slug: 'galaxy-gaming' },
+  { id: 8, name: 'Casino Masters', slug: 'casino-masters' },
+  { id: 9, name: 'Supreme Slots', slug: 'supreme-slots' },
+  { id: 10, name: 'Fortune Games', slug: 'fortune-games' },
+  { id: 11, name: 'Retro Gaming', slug: 'retro-gaming' },
+  { id: 12, name: 'Adventure Games', slug: 'adventure-games' },
 ];
 
 // Placeholder games with generic placeholders
@@ -129,6 +145,46 @@ const PLACEHOLDER_GAMES = [
 ];
 
 export const gamesController = {
+  // Get all providers
+  getAllProviders: async (_req: Request, res: Response) => {
+    try {
+      return res.status(200).json(PROVIDERS);
+    } catch (error) {
+      console.error("Error fetching providers:", error);
+      return res.status(500).json({ message: "Failed to fetch providers" });
+    }
+  },
+
+  // Get games by provider
+  getGamesByProvider: async (req: Request, res: Response) => {
+    try {
+      const providerId = parseInt(req.params.providerId);
+      
+      if (isNaN(providerId)) {
+        return res.status(400).json({ message: "Invalid provider ID" });
+      }
+      
+      const provider = PROVIDERS.find(p => p.id === providerId);
+      if (!provider) {
+        return res.status(404).json({ message: "Provider not found" });
+      }
+      
+      // If "All Providers" is selected, return all games
+      if (provider.slug === 'all') {
+        return res.status(200).json(PLACEHOLDER_GAMES);
+      }
+      
+      const games = PLACEHOLDER_GAMES.filter(g => 
+        provider.name === g.provider || 
+        provider.slug === g.provider.toLowerCase().replace(/\s+/g, '-')
+      );
+      return res.status(200).json(games);
+    } catch (error) {
+      console.error("Error fetching games by provider:", error);
+      return res.status(500).json({ message: "Failed to fetch games by provider" });
+    }
+  },
+
   // Get all games
   getAllGames: async (_req: Request, res: Response) => {
     try {

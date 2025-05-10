@@ -242,7 +242,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/games', gamesController.getAllGames);
   app.get('/api/games/:id', gamesController.getGameById);
   app.get('/api/games/category/:categoryId', gamesController.getGamesByCategory);
+  app.get('/api/games/provider/:providerId', gamesController.getGamesByProvider);
   app.get('/api/categories', gamesController.getAllCategories);
+  app.get('/api/providers', gamesController.getAllProviders);
   app.get('/api/search', gamesController.searchGames);
   
   // Featured collections
