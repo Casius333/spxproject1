@@ -1,20 +1,76 @@
-import { useQuery } from '@tanstack/react-query';
 import { GameCard } from '@/components/ui/game-card';
 import { Link } from 'wouter';
 import { ChevronRight } from 'lucide-react';
 
-interface Game {
-  id: number;
-  title: string;
-  provider: string;
-  image: string;
-  category: string;
-  isFeatured: boolean;
-  isPopular: boolean;
-  isJackpot: boolean;
-  isNew: boolean;
-  jackpotAmount?: number;
-}
+// Define placeholder games with generic data
+const PLACEHOLDER_GAMES = [
+  {
+    id: 1,
+    title: 'Fortune Spinner',
+    provider: 'Lucky Games',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+1',
+    tag: { text: 'New', type: 'new' as const },
+  },
+  {
+    id: 2,
+    title: 'Golden Treasures',
+    provider: 'Spin Masters',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+2',
+    tag: { text: 'Popular', type: 'popular' as const },
+  },
+  {
+    id: 3,
+    title: 'Wild Jackpot',
+    provider: 'Casino Kings',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+3',
+    tag: { text: 'Jackpot', type: 'jackpot' as const },
+  },
+  {
+    id: 4,
+    title: 'Lucky Sevens',
+    provider: 'Vegas Slots',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+4',
+  },
+  {
+    id: 5,
+    title: 'Diamond Deluxe',
+    provider: 'Premium Games',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+5',
+    tag: { text: 'Hot', type: 'hot' as const },
+  },
+  {
+    id: 6,
+    title: 'Mystic Fortunes',
+    provider: 'Galaxy Gaming',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+6',
+  },
+  {
+    id: 7,
+    title: 'Royal Flush',
+    provider: 'Casino Masters',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+7',
+    tag: { text: 'New', type: 'new' as const },
+  },
+  {
+    id: 8,
+    title: 'Gems & Jewels',
+    provider: 'Supreme Slots',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+8',
+  },
+  {
+    id: 9,
+    title: 'Mega Millions',
+    provider: 'Fortune Games',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+9',
+    tag: { text: 'Jackpot', type: 'jackpot' as const },
+  },
+  {
+    id: 10,
+    title: 'Classic Slots',
+    provider: 'Retro Gaming',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+10',
+  },
+];
 
 interface GameGridProps {
   title: string;
@@ -23,89 +79,33 @@ interface GameGridProps {
   limit?: number;
 }
 
-export function GameGrid({ title, filter = 'all', viewAllLink, limit = 5 }: GameGridProps) {
-  const { data: games, isLoading, error } = useQuery<Game[]>({
-    queryKey: ['/api/games', filter],
-  });
-  
-  // Filter games based on the provided filter
-  const filteredGames = games
-    ? games.filter(game => {
-        if (filter === 'all') return game.isFeatured;
-        if (filter === 'jackpot') return game.isJackpot;
-        if (filter === 'popular') return game.isPopular;
-        if (filter === 'new') return game.isNew;
-        if (filter === 'featured') return game.isFeatured;
-        return game.category === filter;
-      }).slice(0, limit)
-    : [];
-  
-  if (isLoading) {
-    return (
-      <section className="bg-dark py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="font-heading font-bold text-2xl">{title}</h2>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="relative rounded-lg overflow-hidden bg-dark-card border border-gray-800 h-64 animate-pulse">
-                <div className="w-full h-40 bg-gray-800"></div>
-                <div className="p-2">
-                  <div className="w-3/4 h-4 bg-gray-800 rounded mb-2 mx-auto"></div>
-                  <div className="w-1/2 h-3 bg-gray-800 rounded mx-auto"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
-  
-  if (error || !games) {
-    return (
-      <section className="bg-dark py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="font-heading font-bold text-2xl">{title}</h2>
-          </div>
-          <div className="bg-dark-card p-4 rounded-lg text-center text-gray-400">
-            <p>Error loading games. Please try again later.</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
+export function GameGrid({ title, filter = 'all', viewAllLink, limit = 10 }: GameGridProps) {
+  // Select games to display based on filter (using placeholders)
+  const gamesForDisplay = PLACEHOLDER_GAMES.slice(0, limit);
   
   return (
     <section className="bg-dark py-8">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="font-heading font-bold text-2xl">{title}</h2>
-          {viewAllLink && (
-            <Link href={viewAllLink} className="text-secondary hover:text-secondary-light transition-colors flex items-center">
-              View all <ChevronRight className="ml-1" size={16} />
-            </Link>
-          )}
-        </div>
+        {title && (
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="font-heading font-bold text-2xl">{title}</h2>
+            {viewAllLink && (
+              <Link href={viewAllLink} className="text-secondary hover:text-secondary-light transition-colors flex items-center">
+                View all <ChevronRight className="ml-1" size={16} />
+              </Link>
+            )}
+          </div>
+        )}
         
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {filteredGames.map(game => (
+          {gamesForDisplay.map(game => (
             <GameCard 
               key={game.id}
               id={game.id}
               title={game.title}
               provider={game.provider}
               image={game.image}
-              tag={
-                game.isNew ? { text: 'New', type: 'new' } :
-                game.isJackpot ? { text: game.jackpotAmount ? 'Mega Jackpot' : 'Jackpot', type: 'jackpot' } :
-                game.isPopular ? { text: 'Popular', type: 'popular' } :
-                game.isFeatured ? { text: 'Hot', type: 'hot' } :
-                undefined
-              }
-              jackpotAmount={game.isJackpot ? game.jackpotAmount : undefined}
+              tag={game.tag}
             />
           ))}
         </div>

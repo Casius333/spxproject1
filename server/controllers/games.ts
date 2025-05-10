@@ -1,12 +1,138 @@
 import { Request, Response } from "express";
-import * as storage from "../storage";
+
+// Placeholder categories
+const CATEGORIES = [
+  { id: 1, name: 'All Slots', slug: 'all-slots', description: 'All slot games available' },
+  { id: 2, name: 'New Games', slug: 'new', description: 'Latest releases' },
+  { id: 3, name: 'Popular', slug: 'popular', description: 'Most played games' },
+  { id: 4, name: 'Jackpots', slug: 'jackpot', description: 'Games with progressive jackpots' },
+  { id: 5, name: 'Megaways', slug: 'megaways', description: 'Games with Megaways mechanic' },
+  { id: 6, name: 'Classic Slots', slug: 'classic', description: 'Traditional slot games' },
+  { id: 7, name: 'Bonus Buy', slug: 'bonus', description: 'Games with bonus buy feature' },
+  { id: 8, name: 'Fruit Slots', slug: 'fruit', description: 'Classic fruit-themed slots' },
+];
+
+// Placeholder games with generic placeholders
+const PLACEHOLDER_GAMES = [
+  {
+    id: 1,
+    title: 'Fortune Spinner',
+    provider: 'Lucky Games',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+1',
+    category: 'all-slots',
+    isFeatured: true,
+    isPopular: false,
+    isJackpot: false,
+    isNew: true,
+  },
+  {
+    id: 2,
+    title: 'Golden Treasures',
+    provider: 'Spin Masters',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+2',
+    category: 'popular',
+    isFeatured: true,
+    isPopular: true,
+    isJackpot: false,
+    isNew: false,
+  },
+  {
+    id: 3,
+    title: 'Wild Jackpot',
+    provider: 'Casino Kings',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+3',
+    category: 'jackpot',
+    isFeatured: true,
+    isPopular: false,
+    isJackpot: true,
+    isNew: false,
+    jackpotAmount: 387500
+  },
+  {
+    id: 4,
+    title: 'Lucky Sevens',
+    provider: 'Vegas Slots',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+4',
+    category: 'classic',
+    isFeatured: false,
+    isPopular: false,
+    isJackpot: false,
+    isNew: false,
+  },
+  {
+    id: 5,
+    title: 'Diamond Deluxe',
+    provider: 'Premium Games',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+5',
+    category: 'all-slots',
+    isFeatured: true,
+    isPopular: true,
+    isJackpot: false,
+    isNew: false,
+  },
+  {
+    id: 6,
+    title: 'Mystic Fortunes',
+    provider: 'Galaxy Gaming',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+6',
+    category: 'all-slots',
+    isFeatured: false,
+    isPopular: false,
+    isJackpot: false,
+    isNew: false,
+  },
+  {
+    id: 7,
+    title: 'Royal Flush',
+    provider: 'Casino Masters',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+7',
+    category: 'new',
+    isFeatured: false,
+    isPopular: false,
+    isJackpot: false,
+    isNew: true,
+  },
+  {
+    id: 8,
+    title: 'Gems & Jewels',
+    provider: 'Supreme Slots',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+8',
+    category: 'all-slots',
+    isFeatured: false,
+    isPopular: false,
+    isJackpot: false,
+    isNew: false,
+  },
+  {
+    id: 9,
+    title: 'Mega Millions',
+    provider: 'Fortune Games',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+9',
+    category: 'jackpot',
+    isFeatured: false,
+    isPopular: false,
+    isJackpot: true,
+    isNew: false,
+    jackpotAmount: 1245750
+  },
+  {
+    id: 10,
+    title: 'Classic Slots',
+    provider: 'Retro Gaming',
+    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+10',
+    category: 'classic',
+    isFeatured: false,
+    isPopular: false,
+    isJackpot: false,
+    isNew: false,
+  },
+];
 
 export const gamesController = {
   // Get all games
-  getAllGames: async (req: Request, res: Response) => {
+  getAllGames: async (_req: Request, res: Response) => {
     try {
-      const games = await storage.getAllGames();
-      return res.status(200).json(games);
+      return res.status(200).json(PLACEHOLDER_GAMES);
     } catch (error) {
       console.error("Error fetching games:", error);
       return res.status(500).json({ message: "Failed to fetch games" });
@@ -22,7 +148,7 @@ export const gamesController = {
         return res.status(400).json({ message: "Invalid game ID" });
       }
       
-      const game = await storage.getGameById(id);
+      const game = PLACEHOLDER_GAMES.find(g => g.id === id);
       
       if (!game) {
         return res.status(404).json({ message: "Game not found" });
@@ -44,7 +170,12 @@ export const gamesController = {
         return res.status(400).json({ message: "Invalid category ID" });
       }
       
-      const games = await storage.getGamesByCategory(categoryId);
+      const category = CATEGORIES.find(c => c.id === categoryId);
+      if (!category) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      
+      const games = PLACEHOLDER_GAMES.filter(g => g.category === category.slug);
       return res.status(200).json(games);
     } catch (error) {
       console.error("Error fetching games by category:", error);
@@ -53,10 +184,9 @@ export const gamesController = {
   },
 
   // Get all categories
-  getAllCategories: async (req: Request, res: Response) => {
+  getAllCategories: async (_req: Request, res: Response) => {
     try {
-      const categories = await storage.getAllCategories();
-      return res.status(200).json(categories);
+      return res.status(200).json(CATEGORIES);
     } catch (error) {
       console.error("Error fetching categories:", error);
       return res.status(500).json({ message: "Failed to fetch categories" });
@@ -64,9 +194,9 @@ export const gamesController = {
   },
 
   // Get featured games
-  getFeaturedGames: async (req: Request, res: Response) => {
+  getFeaturedGames: async (_req: Request, res: Response) => {
     try {
-      const featuredGames = await storage.getFeaturedGames();
+      const featuredGames = PLACEHOLDER_GAMES.filter(g => g.isFeatured);
       return res.status(200).json(featuredGames);
     } catch (error) {
       console.error("Error fetching featured games:", error);
@@ -75,9 +205,9 @@ export const gamesController = {
   },
 
   // Get jackpot games
-  getJackpotGames: async (req: Request, res: Response) => {
+  getJackpotGames: async (_req: Request, res: Response) => {
     try {
-      const jackpotGames = await storage.getJackpotGames();
+      const jackpotGames = PLACEHOLDER_GAMES.filter(g => g.isJackpot);
       return res.status(200).json(jackpotGames);
     } catch (error) {
       console.error("Error fetching jackpot games:", error);
@@ -86,9 +216,9 @@ export const gamesController = {
   },
 
   // Get popular games
-  getPopularGames: async (req: Request, res: Response) => {
+  getPopularGames: async (_req: Request, res: Response) => {
     try {
-      const popularGames = await storage.getPopularGames();
+      const popularGames = PLACEHOLDER_GAMES.filter(g => g.isPopular);
       return res.status(200).json(popularGames);
     } catch (error) {
       console.error("Error fetching popular games:", error);
@@ -97,9 +227,9 @@ export const gamesController = {
   },
 
   // Get new games
-  getNewGames: async (req: Request, res: Response) => {
+  getNewGames: async (_req: Request, res: Response) => {
     try {
-      const newGames = await storage.getNewGames();
+      const newGames = PLACEHOLDER_GAMES.filter(g => g.isNew);
       return res.status(200).json(newGames);
     } catch (error) {
       console.error("Error fetching new games:", error);
@@ -116,7 +246,11 @@ export const gamesController = {
         return res.status(400).json({ message: "Search query must be at least 2 characters" });
       }
       
-      const results = await storage.searchGames(query);
+      const results = PLACEHOLDER_GAMES.filter(game => 
+        game.title.toLowerCase().includes(query.toLowerCase()) || 
+        game.provider.toLowerCase().includes(query.toLowerCase())
+      );
+      
       return res.status(200).json(results);
     } catch (error) {
       console.error("Error searching games:", error);

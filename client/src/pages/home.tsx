@@ -10,37 +10,27 @@ import { PromotionBanner } from '@/components/ui/promotion-banner';
 export default function Home() {
   const [location] = useLocation();
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [pageTitle, setPageTitle] = useState('Featured Games');
-  const [currentFilter, setCurrentFilter] = useState('featured');
+  const [pageTitle, setPageTitle] = useState('Games');
   
   const { data: categories, isLoading: isCategoriesLoading } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
   });
   
-  // Set page title and filter based on the current route
+  // Set page title based on the current route
   useEffect(() => {
     if (location === '/') {
-      setPageTitle('Featured Games');
-      setCurrentFilter('featured');
+      setPageTitle('Games');
     } else if (location === '/jackpots') {
       setPageTitle('Jackpot Games');
-      setCurrentFilter('jackpot');
     } else if (location === '/popular') {
       setPageTitle('Popular Games');
-      setCurrentFilter('popular');
     } else if (location === '/new-games') {
       setPageTitle('New Releases');
-      setCurrentFilter('new');
-    } else if (location === '/featured') {
-      setPageTitle('Featured Games');
-      setCurrentFilter('featured');
     } else if (location === '/premium') {
       setPageTitle('Premium Games');
-      setCurrentFilter('premium');
     } else if (location.startsWith('/category/')) {
       const slug = location.split('/').pop();
       setPageTitle(`${slug?.replace(/-/g, ' ')} Games`);
-      setCurrentFilter('all');
       setSelectedCategory(slug || 'all');
     }
   }, [location]);
@@ -90,14 +80,11 @@ export default function Home() {
         
         {/* Main Content */}
         <div className="space-y-12">
-          {/* Games Grid */}
+          {/* Games Grid - No Title */}
           <GameGrid 
             title="" 
-            filter={currentFilter} 
             limit={12}
           />
-          
-          {/* Featured Slot Machine section removed */}
           
           {/* Call to Action (only on home page) */}
           {location === '/' && (
