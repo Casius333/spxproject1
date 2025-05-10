@@ -62,7 +62,7 @@ export default function Home() {
       
       <div className="container mx-auto px-4">
         {/* Category Filter Bar */}
-        <div className="mb-6">
+        <div className="mb-2">
           <CategoryFilter 
             categories={categories || defaultCategories} 
             selectedCategory={selectedCategory}
