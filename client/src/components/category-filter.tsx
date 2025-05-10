@@ -119,7 +119,7 @@ export function CategoryFilter({ categories, selectedCategory, onSelectCategory,
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 focus:outline-none"
                 aria-label="Search"
               >
-                <Search className="h-5 w-5 text-gray-400 hover:text-primary transition-colors" />
+                <Search className="h-5 w-5 text-white" />
               </button>
             </div>
           </form>
