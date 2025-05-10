@@ -70,6 +70,97 @@ const PLACEHOLDER_GAMES = [
     provider: 'Retro Gaming',
     image: 'https://placehold.co/400x400/1a1c24/444?text=Game+10',
   },
+  {
+    id: 11,
+    title: 'Treasure Hunt',
+    provider: 'Adventure Games',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+11',
+    tag: { text: 'Popular', type: 'popular' as const },
+  },
+  {
+    id: 12,
+    title: 'Fruit Frenzy',
+    provider: 'Classic Gaming',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+12',
+  },
+  {
+    id: 13,
+    title: "Dragon's Lair",
+    provider: 'Fantasy Slots',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+13',
+    tag: { text: 'Hot', type: 'hot' as const },
+  },
+  {
+    id: 14,
+    title: 'Gold Rush',
+    provider: 'Western Gaming',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+14',
+  },
+  {
+    id: 15,
+    title: 'Mega Joker',
+    provider: 'Casino Plus',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+15',
+    tag: { text: 'Jackpot', type: 'jackpot' as const },
+  },
+  {
+    id: 16,
+    title: 'Egyptian Riches',
+    provider: 'Ancient Slots',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+16',
+  },
+  {
+    id: 17,
+    title: 'Neon Nights',
+    provider: 'Modern Games',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+17',
+    tag: { text: 'New', type: 'new' as const },
+  },
+  {
+    id: 18,
+    title: 'Space Invaders',
+    provider: 'Retro Gaming',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+18',
+  },
+  {
+    id: 19,
+    title: "Pirate's Bounty",
+    provider: 'Adventure Games',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+19',
+  },
+  {
+    id: 20,
+    title: 'Crystal Kingdom',
+    provider: 'Fantasy Slots',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+20',
+    tag: { text: 'Popular', type: 'popular' as const },
+  },
+  {
+    id: 21,
+    title: 'Super Bonus',
+    provider: 'Jackpot Kings',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+21',
+    tag: { text: 'Jackpot', type: 'jackpot' as const },
+  },
+  {
+    id: 22,
+    title: 'Vegas Dreams',
+    provider: 'Casino Royale',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+22',
+  },
+  {
+    id: 23,
+    title: 'Mystic Gems',
+    provider: 'Magic Slots',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+23',
+    tag: { text: 'New', type: 'new' as const },
+  },
+  {
+    id: 24,
+    title: 'Wild West',
+    provider: 'Western Gaming',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+24',
+  },
 ];
 
 interface GameGridProps {
@@ -103,7 +194,7 @@ export function GameGrid({ title, filter = 'all', viewAllLink, limit = 10 }: Gam
               key={game.id}
               id={game.id}
               title={game.title}
-              provider={game.provider}
+              provider={game.provider || ''}
               image={game.image}
               tag={game.tag}
             />

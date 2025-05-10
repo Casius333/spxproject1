@@ -75,7 +75,7 @@ export default function Home() {
           {/* Games Grid - No Title */}
           <GameGrid 
             title="" 
-            limit={12}
+            limit={24}
           />
         </div>
       </div>
