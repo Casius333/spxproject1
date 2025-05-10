@@ -1,15 +1,9 @@
-import { db, pool } from "@db";
 import {
-  categories,
-  games,
-  userBalance,
-  transactions,
   type Game,
   type Category,
   type UserBalance,
   type Transaction
 } from "@shared/schema";
-import { eq, desc, and, like, or } from "drizzle-orm";
 
 // Generate a temporary user ID for session
 const getGuestUserId = (): string => {
@@ -17,203 +11,215 @@ const getGuestUserId = (): string => {
   return userId;
 };
 
+// Mock data for categories
+const mockCategories = [
+  { id: 1, name: 'All Slots', slug: 'all-slots', createdAt: new Date() },
+  { id: 2, name: 'Classic Slots', slug: 'classic-slots', createdAt: new Date() },
+  { id: 3, name: 'Video Slots', slug: 'video-slots', createdAt: new Date() },
+  { id: 4, name: 'Jackpot Slots', slug: 'jackpot-slots', createdAt: new Date() },
+  { id: 5, name: 'Megaways Slots', slug: 'megaways-slots', createdAt: new Date() }
+];
+
+// Mock data for games
+const mockGames = [
+  {
+    id: 1,
+    title: 'Big Bass Bonanza',
+    slug: 'big-bass-bonanza',
+    description: 'Catch the big one in this fishing-themed slot with free spins and money symbols.',
+    provider: 'Pragmatic Play',
+    image: 'https://cdn.plaingaming.net/files/online-slots/big-bass-bonanza-thumbnail.webp',
+    categoryId: 3,
+    isFeatured: true,
+    isPopular: true,
+    isNew: false,
+    isJackpot: false,
+    isActive: true,
+    category: 'video-slots',
+    rtp: 96.71,
+    volatility: 'High',
+    minBet: 0.10,
+    maxBet: 250.00,
+    playCount: 0,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: 2,
+    title: 'Starburst',
+    slug: 'starburst',
+    description: 'A classic cosmic slot with expanding wilds and respins.',
+    provider: 'NetEnt',
+    image: 'https://cdn.plaingaming.net/files/online-slots/starburst-thumbnail.webp',
+    categoryId: 2,
+    isFeatured: true,
+    isPopular: true,
+    isNew: false,
+    isJackpot: false,
+    isActive: true,
+    category: 'classic-slots',
+    rtp: 96.09,
+    volatility: 'Low',
+    minBet: 0.10,
+    maxBet: 100.00,
+    playCount: 0,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: 3,
+    title: 'Mega Moolah',
+    slug: 'mega-moolah',
+    description: 'The millionaire maker with four progressive jackpots.',
+    provider: 'Microgaming',
+    image: 'https://cdn.plaingaming.net/files/online-slots/mega-moolah-thumbnail.webp',
+    categoryId: 4,
+    isFeatured: true,
+    isPopular: true,
+    isNew: false,
+    isJackpot: true,
+    isActive: true,
+    category: 'jackpot-slots',
+    jackpotAmount: 1000000,
+    rtp: 88.12,
+    volatility: 'Medium',
+    minBet: 0.25,
+    maxBet: 6.25,
+    playCount: 0,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: 4,
+    title: 'Gonzo\'s Quest Megaways',
+    slug: 'gonzos-quest-megaways',
+    description: 'Join Gonzo in his quest for El Dorado with up to 117,649 ways to win.',
+    provider: 'Red Tiger',
+    image: 'https://cdn.plaingaming.net/files/online-slots/gonzos-quest-megaways-thumbnail.webp',
+    categoryId: 5,
+    isFeatured: true,
+    isPopular: true,
+    isNew: true,
+    isJackpot: false,
+    isActive: true,
+    category: 'megaways-slots',
+    rtp: 96.00,
+    volatility: 'High',
+    minBet: 0.10,
+    maxBet: 4.00,
+    playCount: 0,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: 5,
+    title: 'Sweet Bonanza',
+    slug: 'sweet-bonanza',
+    description: 'A sweet treat with tumbling reels and multipliers.',
+    provider: 'Pragmatic Play',
+    image: 'https://cdn.plaingaming.net/files/online-slots/sweet-bonanza-thumbnail.webp',
+    categoryId: 3,
+    isFeatured: true,
+    isPopular: true,
+    isNew: false,
+    isJackpot: false,
+    isActive: true,
+    category: 'video-slots',
+    rtp: 96.51,
+    volatility: 'High',
+    minBet: 0.20,
+    maxBet: 125.00,
+    playCount: 0,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+];
+
 // Categories
 export async function getAllCategories(): Promise<Category[]> {
-  return await db.query.categories.findMany({
-    orderBy: categories.name,
-  });
+  return mockCategories as Category[];
 }
 
 // Games
 export async function getAllGames(): Promise<Game[]> {
-  try {
-    // Further simplified query to avoid any non-existent columns
-    const result = await pool.query(
-      `SELECT id, title, slug, description, provider, image, category_id, 
-      is_featured, is_popular, is_new, is_jackpot, 
-      jackpot_amount, rtp, volatility, min_bet, max_bet, 
-      created_at
-      FROM games 
-      ORDER BY created_at DESC`
-    );
-    return result.rows as Game[];
-  } catch (error) {
-    console.error('Error in getAllGames:', error);
-    // Return empty array on error instead of crashing
-    return [];
-  }
+  return mockGames as unknown as Game[];
 }
 
 export async function getGamesByCategory(categoryId: number): Promise<Game[]> {
-  try {
-    return await db.query.games.findMany({
-      where: eq(games.categoryId, categoryId),
-      orderBy: desc(games.createdAt),
-      with: {
-        category: true,
-      },
-    });
-  } catch (error) {
-    console.error('Error in getGamesByCategory:', error);
-    return [];
-  }
+  return mockGames.filter(game => game.categoryId === categoryId) as unknown as Game[];
 }
 
 export async function getGameById(id: number): Promise<Game | undefined> {
-  try {
-    return await db.query.games.findFirst({
-      where: eq(games.id, id),
-      with: {
-        category: true,
-      },
-    });
-  } catch (error) {
-    console.error('Error in getGameById:', error);
-    return undefined;
-  }
+  return mockGames.find(game => game.id === id) as unknown as Game | undefined;
 }
 
 export async function getFeaturedGames(): Promise<Game[]> {
-  try {
-    return await db.query.games.findMany({
-      where: eq(games.isFeatured, true),
-      orderBy: desc(games.createdAt),
-      with: {
-        category: true,
-      },
-    });
-  } catch (error) {
-    console.error('Error in getFeaturedGames:', error);
-    return [];
-  }
+  return mockGames.filter(game => game.isFeatured) as unknown as Game[];
 }
 
 export async function getJackpotGames(): Promise<Game[]> {
-  try {
-    return await db.query.games.findMany({
-      where: eq(games.isJackpot, true),
-      orderBy: desc(games.jackpotAmount),
-      with: {
-        category: true,
-      },
-    });
-  } catch (error) {
-    console.error('Error in getJackpotGames:', error);
-    return [];
-  }
+  return mockGames.filter(game => game.isJackpot) as unknown as Game[];
 }
 
 export async function getPopularGames(): Promise<Game[]> {
-  try {
-    return await db.query.games.findMany({
-      where: eq(games.isPopular, true),
-      orderBy: desc(games.createdAt),
-      with: {
-        category: true,
-      },
-    });
-  } catch (error) {
-    console.error('Error in getPopularGames:', error);
-    return [];
-  }
+  return mockGames.filter(game => game.isPopular) as unknown as Game[];
 }
 
 export async function getNewGames(): Promise<Game[]> {
-  try {
-    return await db.query.games.findMany({
-      where: eq(games.isNew, true),
-      orderBy: desc(games.createdAt),
-      with: {
-        category: true,
-      },
-    });
-  } catch (error) {
-    console.error('Error in getNewGames:', error);
-    return [];
-  }
+  return mockGames.filter(game => game.isNew) as unknown as Game[];
 }
 
 export async function searchGames(query: string): Promise<Game[]> {
-  try {
-    return await db.query.games.findMany({
-      where: or(
-        like(games.title, `%${query}%`),
-        like(games.provider, `%${query}%`),
-        like(games.description, `%${query}%`)
-      ),
-      orderBy: desc(games.createdAt),
-      with: {
-        category: true,
-      },
-    });
-  } catch (error) {
-    console.error('Error in searchGames:', error);
-    return [];
-  }
+  const lowercaseQuery = query.toLowerCase();
+  return mockGames.filter(game => 
+    game.title.toLowerCase().includes(lowercaseQuery) ||
+    game.provider.toLowerCase().includes(lowercaseQuery) ||
+    (game.description && game.description.toLowerCase().includes(lowercaseQuery))
+  ) as unknown as Game[];
 }
+
+// Mock balance data
+const mockBalance = {
+  id: 1,
+  userId: getGuestUserId(),
+  balance: 1000,
+  updatedAt: new Date()
+};
+
+// Mock transactions
+const mockTransactions: any[] = [];
 
 // User balance
 export async function getUserBalance(): Promise<UserBalance | undefined> {
-  const userId = getGuestUserId();
-  return await db.query.userBalance.findFirst({
-    where: eq(userBalance.userId, userId),
-  });
+  return mockBalance as unknown as UserBalance;
 }
 
 export async function updateUserBalance(amount: number, type: 'bet' | 'win' | 'deposit'): Promise<UserBalance> {
-  const userId = getGuestUserId();
-  
-  // Get current balance or initialize if not exists
-  let currentBalance = await getUserBalance();
-  
-  if (!currentBalance) {
-    const [newBalance] = await db.insert(userBalance).values({
-      userId: userId,
-      balance: "1000", // Default starting balance as string for decimal type
-    }).returning();
-    
-    currentBalance = newBalance;
-  }
-  
-  // Calculate new balance
-  const balanceBefore = parseFloat(currentBalance.balance.toString());
-  let balanceAfter = balanceBefore;
+  const balanceBefore = mockBalance.balance;
   
   if (type === 'bet') {
-    balanceAfter = Math.max(0, balanceBefore - amount);
+    mockBalance.balance = Math.max(0, mockBalance.balance - amount);
   } else if (type === 'win' || type === 'deposit') {
-    balanceAfter = balanceBefore + amount;
+    mockBalance.balance += amount;
   }
   
-  // Update balance
-  const [updatedBalance] = await db.update(userBalance)
-    .set({ 
-      balance: balanceAfter.toString(), // Convert to string for decimal type
-      updatedAt: new Date() 
-    })
-    .where(eq(userBalance.userId, userId))
-    .returning();
+  mockBalance.updatedAt = new Date();
   
   // Record transaction
-  await db.insert(transactions).values({
-    userId: userId,
+  mockTransactions.push({
+    id: mockTransactions.length + 1,
+    userId: getGuestUserId(),
     type: type,
-    amount: amount.toString(), // Convert to string for decimal type
-    balanceBefore: balanceBefore.toString(),
-    balanceAfter: balanceAfter.toString(),
+    amount: amount,
+    balanceBefore: balanceBefore,
+    balanceAfter: mockBalance.balance,
     createdAt: new Date()
   });
   
-  return updatedBalance;
+  return mockBalance as unknown as UserBalance;
 }
 
 // Transactions
 export async function getTransactionHistory(limit: number = 20): Promise<Transaction[]> {
-  const userId = getGuestUserId();
-  
-  return await db.query.transactions.findMany({
-    where: eq(transactions.userId, userId),
-    orderBy: desc(transactions.createdAt),
-    limit,
-  });
+  return mockTransactions.slice(0, limit) as unknown as Transaction[];
 }
