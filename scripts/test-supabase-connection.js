@@ -61,7 +61,7 @@ async function testSupabaseDatabase() {
     const sslConfig = {
       rejectUnauthorized: false,
       ca: null,
-      servername: databaseUrl.match(/\/\/([^:]+):/)?.[1] || 'db.lhqydgcveburtggdsgts.supabase.co'
+      servername: databaseUrl.match(/\/\/([^:]+):/)?.[1] || ''
     };
     
     // Create a Postgres connection pool with SSL settings
