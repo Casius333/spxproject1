@@ -75,6 +75,13 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
       setShowVerification(true);
     }
   }, [loginMutation.data, registerMutation.data]);
+  
+  // Hide verification screen if verification is successful
+  useEffect(() => {
+    if (verifyOtpMutation.isSuccess) {
+      setShowVerification(false);
+    }
+  }, [verifyOtpMutation.isSuccess]);
 
   // Login form
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -142,16 +149,75 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
             <span className="sr-only">Close</span>
           </div>
         </DialogClose>
-        <Tabs 
-          defaultValue={activeTab} 
-          value={activeTab} 
-          onValueChange={setActiveTab}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-2 mb-2 mt-4 px-6">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="register">Register</TabsTrigger>
-          </TabsList>
+        
+        {/* Show verification form if needed */}
+        {showVerification ? (
+          <div className="px-6 pb-6 pt-2">
+            <div className="min-h-[500px]">
+              <h2 className="text-2xl text-white font-bold mb-6 mt-4">Email Verification</h2>
+              <div className="flex flex-col items-center justify-center mb-8">
+                <Mail className="h-16 w-16 text-primary mb-4" />
+                <p className="text-center text-white">
+                  We've sent a verification code to<br />
+                  <span className="font-bold">{verificationEmail}</span>
+                </p>
+                <p className="text-center text-white/60 mt-2 text-sm">
+                  Please check your email inbox and enter the code below to verify your account.
+                </p>
+              </div>
+              <Form {...otpForm}>
+                <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-6">
+                  <FormField
+                    control={otpForm.control}
+                    name="otp"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Verification Code</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter your verification code" 
+                            {...field} 
+                            className="text-center text-lg tracking-widest"
+                            maxLength={8}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-primary hover:bg-primary-light text-white"
+                    disabled={verifyOtpMutation.isPending}
+                  >
+                    {verifyOtpMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    Verify Email
+                  </Button>
+                </form>
+              </Form>
+              <div className="flex justify-center mt-6">
+                <div 
+                  className="text-primary hover:text-primary-light cursor-pointer"
+                  onClick={resetVerification}
+                >
+                  Back to login
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Tabs 
+            defaultValue={activeTab} 
+            value={activeTab} 
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-2 mb-2 mt-4 px-6">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="register">Register</TabsTrigger>
+            </TabsList>
 
           {/* Login Tab */}
           <TabsContent value="login" className="px-6 pb-6 pt-2">
@@ -283,6 +349,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
             </div>
           </TabsContent>
         </Tabs>
+        )}
       </DialogContent>
     </Dialog>
   );
