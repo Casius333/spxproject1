@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { gamesController } from "./controllers/games";
 import { balanceController } from "./controllers/balance";
-import { registerUser, loginUser, logoutUser, getUserByToken, authenticate } from "./auth-service";
+import { registerUser, loginUser, logoutUser, getUserByToken, authenticate, verifyOtp } from "./auth-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup JWT authentication routes
@@ -81,6 +81,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Protected route middleware
   app.use('/api/protected', authenticate);
+  
+  // OTP verification endpoint
+  app.post('/api/verify-otp', async (req: Request, res: Response) => {
+    try {
+      const { email, otp } = req.body;
+      
+      if (!email || !otp) {
+        return res.status(400).json({ message: 'Email and OTP code are required' });
+      }
+      
+      // Verify the OTP code with Supabase
+      const verificationResult = await verifyOtp(email, otp);
+      
+      res.status(200).json(verificationResult);
+    } catch (error: any) {
+      console.error('OTP verification error:', error);
+      res.status(400).json({ message: error?.message || 'Verification failed' });
+    }
+  });
   
   // Auth callback route for handling redirects (keeping for compatibility)
   app.get('/auth/callback', (req: Request, res: Response) => {

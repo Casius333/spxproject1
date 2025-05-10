@@ -61,6 +61,7 @@ export async function registerUser(email: string, password: string) {
     
     let accessToken = null;
     let skipSupabaseAuth = false;
+    let needsEmailVerification = false;
     
     // Try to create Supabase auth user (will be used for authentication)
     try {
@@ -70,7 +71,8 @@ export async function registerUser(email: string, password: string) {
         options: {
           data: {
             username,
-          }
+          },
+          emailRedirectTo: `${process.env.APP_URL || 'http://localhost:5000'}/auth/callback`
         }
       });
       
@@ -86,6 +88,12 @@ export async function registerUser(email: string, password: string) {
           throw new Error(error.message);
         }
       } else {
+        // Check if email verification is needed
+        if (data.user && !data.user.email_confirmed_at) {
+          needsEmailVerification = true;
+          console.log(`Email verification needed for: ${email}`);
+        }
+        
         accessToken = data.session?.access_token || null;
       }
     } catch (authError) {
@@ -124,13 +132,64 @@ export async function registerUser(email: string, password: string) {
       accessToken = localToken;
     }
     
-    // Return both the token and the user
+    // Return both the token and the user, along with verification status
     return {
       access_token: accessToken,
-      user: user
+      user: user,
+      verification_required: needsEmailVerification
     };
   } catch (error) {
     console.error("Registration error:", error);
+    throw error;
+  }
+}
+
+// Verify a user with OTP code
+export async function verifyOtp(email: string, token: string) {
+  console.log(`Verifying OTP for email: ${email}`);
+  
+  try {
+    // Verify the OTP code with Supabase
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'email'
+    });
+    
+    if (error) {
+      console.error("OTP verification error:", error);
+      throw new Error(error.message);
+    }
+    
+    // If successful, get the user from database and return
+    const databaseUser = await db.query.users.findFirst({
+      where: eq(users.email, email)
+    });
+    
+    if (!databaseUser) {
+      throw new Error("User not found in application database");
+    }
+    
+    // Create a user response object
+    const user = {
+      id: databaseUser.id,
+      email: databaseUser.email,
+      username: databaseUser.username,
+      role: "user",
+      status: "active",
+      lastLogin: new Date(),
+      createdAt: databaseUser.createdAt,
+      updatedAt: databaseUser.updatedAt
+    };
+    
+    // Return the verification result
+    return {
+      access_token: data.session?.access_token || null,
+      user: user,
+      verified: true
+    };
+  } catch (error) {
+    console.error("OTP verification error:", error);
     throw error;
   }
 }
@@ -142,6 +201,7 @@ export async function loginUser(email: string, password: string) {
   try {
     let accessToken = null;
     let skipSupabaseAuth = false;
+    let needsEmailVerification = false;
     
     // First, retrieve user from our database
     const databaseUser = await db.query.users.findFirst({
@@ -162,6 +222,12 @@ export async function loginUser(email: string, password: string) {
       if (error) {
         console.error("Supabase login error:", error);
         
+        // Check if the error is about email verification
+        if (error.message.includes("Email not confirmed")) {
+          needsEmailVerification = true;
+          throw new Error("Email not verified. Please check your email for verification code.");
+        }
+        
         // If email is invalid for Supabase but we want to allow test emails in development
         if (error.message.includes("Email") && (error.message.includes("invalid") || error.message.includes("not found"))) {
           console.log("Using database-only auth for development test email");
@@ -170,10 +236,21 @@ export async function loginUser(email: string, password: string) {
           throw new Error(error.message);
         }
       } else {
+        // Check if user is verified in Supabase
+        if (data.user && !data.user.email_confirmed_at) {
+          needsEmailVerification = true;
+          throw new Error("Email not verified. Please check your email for verification code.");
+        }
+        
         accessToken = data.session?.access_token || null;
       }
-    } catch (authError) {
+    } catch (authError: any) {
       console.error("Error during Supabase auth:", authError);
+      
+      // If we need email verification, propagate this error
+      if (needsEmailVerification || (authError.message && authError.message.includes("Email not verified"))) {
+        throw new Error("Email not verified. Please check your email for verification code.");
+      }
       
       // For development/testing, we'll continue with database-only auth
       if (process.env.NODE_ENV !== 'production') {
@@ -213,13 +290,20 @@ export async function loginUser(email: string, password: string) {
     
     console.log(`User logged in successfully: ${user.username} (ID: ${user.id})`);
     
-    // Return both the token and the user
+    // Return both the token and the user, along with verification information
     return {
       access_token: accessToken,
-      user: user
+      user: user,
+      verification_required: needsEmailVerification
     };
   } catch (error) {
     console.error("Login error:", error);
+    
+    // Check if this is a verification error and provide helpful info
+    if (error instanceof Error && error.message.includes("Email not verified")) {
+      throw new Error(error.message);
+    }
+    
     throw error;
   }
 }
