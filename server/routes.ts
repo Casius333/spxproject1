@@ -8,7 +8,7 @@ import { registerUser, loginUser, logoutUser, getUserByToken, authenticate } fro
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup JWT authentication routes
   
-  // Register endpoint - in-memory auth approach
+  // Register endpoint - Supabase auth approach
   app.post('/api/register', async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
@@ -17,7 +17,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Email and password are required' });
       }
       
-      // Register with in-memory auth service
+      // Register with Supabase and create database user
       const userData = await registerUser(email, password);
       
       res.status(201).json(userData);
@@ -27,7 +27,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Login endpoint - in-memory auth approach
+  // Login endpoint - Supabase auth approach
   app.post('/api/login', async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
@@ -36,7 +36,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Email and password are required' });
       }
       
-      // Use in-memory auth service for login
+      // Authenticate with Supabase and get user info
       const data = await loginUser(email, password);
       
       res.status(200).json(data);
