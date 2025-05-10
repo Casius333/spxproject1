@@ -40,27 +40,27 @@ export function GameCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative rounded-lg overflow-hidden bg-dark-card border border-gray-800 transition-all duration-300 hover:border-secondary">
+      <div className="relative overflow-hidden transition-all duration-300 hover:opacity-90">
         <img 
           src={image} 
           alt={title} 
-          className="w-full h-40 object-cover"
+          className="w-full aspect-square object-cover"
         />
         <div 
           className={cn(
-            "absolute inset-0 bg-gradient-to-t from-dark to-transparent transition-opacity flex items-end justify-center pb-10",
+            "absolute inset-0 bg-gradient-to-t from-black/70 to-transparent transition-opacity flex items-center justify-center",
             isHovered ? "opacity-100" : "opacity-0"
           )}
         >
           <Link href={`/game/${id}`}>
-            <button className="bg-secondary hover:bg-secondary-light transition-colors text-gray-900 font-bold py-2 px-4 rounded-lg">
-              Play Now
+            <button className="bg-secondary hover:bg-secondary-light transition-colors text-gray-900 font-bold py-2 px-6 rounded">
+              PLAY
             </button>
           </Link>
         </div>
         
         {tag && (
-          <div className={`absolute top-2 right-2 ${tagBgColors[tag.type]} bg-opacity-80 text-white text-xs px-2 py-1 rounded`}>
+          <div className={`absolute top-2 right-2 ${tagBgColors[tag.type]} bg-opacity-90 text-white text-xs px-2 py-1 rounded-sm`}>
             {tag.text}
           </div>
         )}
@@ -70,11 +70,6 @@ export function GameCard({
             <span className="text-sm font-bold">${jackpotAmount.toLocaleString()}</span>
           </div>
         )}
-      </div>
-      
-      <div className="mt-2 text-center">
-        <h3 className="font-medium">{title}</h3>
-        <p className="text-xs text-gray-400">{provider}</p>
       </div>
     </div>
   );

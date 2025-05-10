@@ -8,67 +8,67 @@ const PLACEHOLDER_GAMES = [
     id: 1,
     title: 'Fortune Spinner',
     provider: 'Lucky Games',
-    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+1',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+1',
     tag: { text: 'New', type: 'new' as const },
   },
   {
     id: 2,
     title: 'Golden Treasures',
     provider: 'Spin Masters',
-    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+2',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+2',
     tag: { text: 'Popular', type: 'popular' as const },
   },
   {
     id: 3,
     title: 'Wild Jackpot',
     provider: 'Casino Kings',
-    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+3',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+3',
     tag: { text: 'Jackpot', type: 'jackpot' as const },
   },
   {
     id: 4,
     title: 'Lucky Sevens',
     provider: 'Vegas Slots',
-    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+4',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+4',
   },
   {
     id: 5,
     title: 'Diamond Deluxe',
     provider: 'Premium Games',
-    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+5',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+5',
     tag: { text: 'Hot', type: 'hot' as const },
   },
   {
     id: 6,
     title: 'Mystic Fortunes',
     provider: 'Galaxy Gaming',
-    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+6',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+6',
   },
   {
     id: 7,
     title: 'Royal Flush',
     provider: 'Casino Masters',
-    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+7',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+7',
     tag: { text: 'New', type: 'new' as const },
   },
   {
     id: 8,
     title: 'Gems & Jewels',
     provider: 'Supreme Slots',
-    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+8',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+8',
   },
   {
     id: 9,
     title: 'Mega Millions',
     provider: 'Fortune Games',
-    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+9',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+9',
     tag: { text: 'Jackpot', type: 'jackpot' as const },
   },
   {
     id: 10,
     title: 'Classic Slots',
     provider: 'Retro Gaming',
-    image: 'https://placehold.co/300x200/1e293b/e2e8f0?text=Game+10',
+    image: 'https://placehold.co/400x400/1a1c24/444?text=Game+10',
   },
 ];
 
@@ -97,7 +97,7 @@ export function GameGrid({ title, filter = 'all', viewAllLink, limit = 10 }: Gam
           </div>
         )}
         
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1">
           {gamesForDisplay.map(game => (
             <GameCard 
               key={game.id}
