@@ -56,8 +56,8 @@ export async function registerUser(email: string, password: string) {
   console.log(`Registering user with email: ${email}`);
   
   try {
-    // Generate username from email (username@example.com -> username1234)
-    const username = email.split('@')[0] + Math.floor(Math.random() * 10000);
+    // Use email as username directly
+    const username = email;
     
     let accessToken = null;
     let skipSupabaseAuth = false;
