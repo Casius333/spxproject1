@@ -3,7 +3,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/use-auth";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Mail } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +41,11 @@ const registerSchema = z.object({
   path: ["confirmPassword"],
 });
 
+// OTP verification schema
+const otpSchema = z.object({
+  otp: z.string().min(6, "Please enter a valid verification code").max(8, "Please enter a valid verification code")
+});
+
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -48,8 +53,10 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalProps) {
-  const { user, loginMutation, registerMutation } = useAuth();
+  const { user, loginMutation, registerMutation, verifyOtpMutation } = useAuth();
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
+  const [verificationEmail, setVerificationEmail] = useState<string>("");
+  const [showVerification, setShowVerification] = useState<boolean>(false);
 
   // Close the modal if user successfully logs in
   useEffect(() => {
@@ -57,6 +64,17 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
       onClose();
     }
   }, [user, onClose]);
+  
+  // Check if we need to show verification based on mutation results
+  useEffect(() => {
+    if (loginMutation.data?.verification_required) {
+      setVerificationEmail(loginMutation.data.verification_email || "");
+      setShowVerification(true);
+    } else if (registerMutation.data?.verification_required) {
+      setVerificationEmail(registerMutation.data.verification_email || "");
+      setShowVerification(true);
+    }
+  }, [loginMutation.data, registerMutation.data]);
 
   // Login form
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -76,6 +94,14 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
       confirmPassword: "",
     },
   });
+  
+  // OTP verification form
+  const otpForm = useForm<z.infer<typeof otpSchema>>({
+    resolver: zodResolver(otpSchema),
+    defaultValues: {
+      otp: "",
+    },
+  });
 
   // Handle login form submission
   function onLoginSubmit(values: z.infer<typeof loginSchema>) {
@@ -86,6 +112,21 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
   function onRegisterSubmit(values: z.infer<typeof registerSchema>) {
     const { confirmPassword, ...registerData } = values;
     registerMutation.mutate(registerData);
+  }
+  
+  // Handle OTP verification submission
+  function onOtpSubmit(values: z.infer<typeof otpSchema>) {
+    verifyOtpMutation.mutate({
+      email: verificationEmail,
+      otp: values.otp
+    });
+  }
+  
+  // Reset verification state
+  function resetVerification() {
+    setShowVerification(false);
+    setVerificationEmail("");
+    otpForm.reset();
   }
 
   return (
