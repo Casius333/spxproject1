@@ -4,12 +4,11 @@ import { WebSocketServer, WebSocket } from "ws";
 import { gamesController } from "./controllers/games";
 import { balanceController } from "./controllers/balance";
 import { registerUser, loginUser, logoutUser, getUserByToken, authenticate } from "./auth-service";
-import { supabase } from "../lib/supabase";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup JWT authentication routes
   
-  // Register endpoint - pure Supabase approach
+  // Register endpoint - in-memory auth approach
   app.post('/api/register', async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
@@ -18,18 +17,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Email and password are required' });
       }
       
-      // Register only with Supabase Auth
-      const supabaseUser = await registerUser(email, password);
+      // Register with in-memory auth service
+      const userData = await registerUser(email, password);
       
-      // No local database user creation, relying solely on Supabase
-      res.status(201).json(supabaseUser);
+      res.status(201).json(userData);
     } catch (error: any) {
       console.error('Registration error:', error);
       res.status(500).json({ message: error?.message || 'Failed to register' });
     }
   });
   
-  // Login endpoint - pure Supabase approach
+  // Login endpoint - in-memory auth approach
   app.post('/api/login', async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
@@ -38,10 +36,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Email and password are required' });
       }
       
-      // Use only Supabase auth for login
+      // Use in-memory auth service for login
       const data = await loginUser(email, password);
       
-      // No local database interactions for user management
       res.status(200).json(data);
     } catch (error: any) {
       console.error('Login error:', error);
@@ -85,39 +82,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Protected route middleware
   app.use('/api/protected', authenticate);
   
-  // Auth callback route for handling Supabase email confirmations and redirects
+  // Auth callback route for handling redirects (keeping for compatibility)
   app.get('/auth/callback', (req: Request, res: Response) => {
-    // This route captures all Supabase redirects from email confirmations
-    // Just redirect to the main page, and the frontend will handle the tokens
+    // This route is kept for future compatibility with external auth providers
+    // Just redirect to the main page, frontend will handle token management
     res.redirect('/');
   });
   
-  // Test endpoint to verify Supabase connection
-  app.get('/api/supabase-test', async (req: Request, res: Response) => {
+  // Test endpoint to list users in memory
+  app.get('/api/users-test', async (req: Request, res: Response) => {
     try {
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) {
-        return res.status(500).json({ 
-          message: 'Error fetching auth users', 
-          error: authError.message 
-        });
-      }
-      
-      // Count users with emails matching what we're looking for
-      const testUsers = authUsers.users.filter(user => 
-        user.email?.includes('test') || user.email?.includes('example')
-      );
+      // This route will be implemented with our in-memory auth system
+      // Get the current user if authenticated
+      const token = req.headers.authorization?.split(' ')[1] || '';
+      const currentUser = token ? await getUserByToken(token) : null;
       
       return res.status(200).json({ 
-        message: 'Supabase connection successful',
-        totalAuthUsers: authUsers.users.length,
-        testUsersCount: testUsers.length
+        message: 'In-memory authentication is active',
+        currentUser: currentUser || 'Not logged in',
+        note: 'Default test user: test@example.com / password123'
       });
     } catch (error: any) {
-      console.error('Supabase test error:', error);
+      console.error('Users test error:', error);
       return res.status(500).json({ 
-        message: 'Error testing Supabase connection', 
+        message: 'Error testing users', 
         error: error?.message || 'Unknown error' 
       });
     }
