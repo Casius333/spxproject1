@@ -80,8 +80,31 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
   useEffect(() => {
     if (verifyOtpMutation.isSuccess) {
       setShowVerification(false);
+      // Reset the forms in case the user comes back later
+      loginForm.reset();
+      registerForm.reset();
+      otpForm.reset();
     }
   }, [verifyOtpMutation.isSuccess]);
+  
+  // Reset verification and mutation states when closing modal
+  useEffect(() => {
+    if (!isOpen) {
+      // Small delay to prevent visual glitches
+      setTimeout(() => {
+        if (showVerification) {
+          setShowVerification(false);
+          setVerificationEmail("");
+          otpForm.reset();
+        }
+        // Only reset these if we're not in the middle of a verification
+        if (!showVerification) {
+          loginForm.reset();
+          registerForm.reset();
+        }
+      }, 300);
+    }
+  }, [isOpen]);
 
   // Login form
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -185,6 +208,14 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
                       </FormItem>
                     )}
                   />
+                  
+                  {/* Display verification error if there is one */}
+                  {verifyOtpMutation.isError && (
+                    <div className="text-red-500 text-sm text-center">
+                      {verifyOtpMutation.error?.message || "Verification failed. Please try again."}
+                    </div>
+                  )}
+                  
                   <Button 
                     type="submit" 
                     className="w-full bg-primary hover:bg-primary-light text-white"
@@ -197,6 +228,30 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
                   </Button>
                 </form>
               </Form>
+              
+              {/* Resend verification option */}
+              <div className="mt-4 text-center">
+                <p className="text-sm text-white/60 mb-2">
+                  Didn't receive the code?
+                </p>
+                <button 
+                  className="text-primary hover:text-primary-light text-sm font-medium"
+                  onClick={() => {
+                    // If the user registered, trigger register again
+                    if (registerForm.getValues().email === verificationEmail) {
+                      const values = registerForm.getValues();
+                      const { confirmPassword, ...registerData } = values;
+                      registerMutation.mutate(registerData);
+                    } 
+                    // If the user tried to log in, trigger login again
+                    else if (loginForm.getValues().email === verificationEmail) {
+                      loginMutation.mutate(loginForm.getValues());
+                    }
+                  }}
+                >
+                  Resend verification code
+                </button>
+              </div>
               <div className="flex justify-center mt-6">
                 <div 
                   className="text-primary hover:text-primary-light cursor-pointer"
@@ -252,8 +307,15 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
                     )}
                   />
                   
+                  {/* Display login error if there is one */}
+                  {loginMutation.isError && (
+                    <div className="text-red-500 text-sm">
+                      {loginMutation.error?.message || "Login failed. Please check your credentials."}
+                    </div>
+                  )}
+                  
                   {/* Empty space to match register form height */}
-                  <div className="h-[100px]"></div>
+                  <div className="h-[70px]"></div>
                   
                   <Button 
                     type="submit" 
@@ -326,6 +388,14 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
                       </FormItem>
                     )}
                   />
+                  
+                  {/* Display registration error if there is one */}
+                  {registerMutation.isError && (
+                    <div className="text-red-500 text-sm">
+                      {registerMutation.error?.message || "Registration failed. Please try again."}
+                    </div>
+                  )}
+                  
                   <Button 
                     type="submit" 
                     className="w-full bg-primary hover:bg-primary-light text-white"
