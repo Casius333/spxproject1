@@ -66,12 +66,14 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <AuthModalProvider>
-          <BalanceProvider initialBalance={1250}>
-            <MainLayout>
-              <Router />
-            </MainLayout>
-            <Toaster />
-          </BalanceProvider>
+          <SidebarProvider>
+            <BalanceProvider initialBalance={1250}>
+              <MainLayout>
+                <Router />
+              </MainLayout>
+              <Toaster />
+            </BalanceProvider>
+          </SidebarProvider>
         </AuthModalProvider>
       </AuthProvider>
     </QueryClientProvider>

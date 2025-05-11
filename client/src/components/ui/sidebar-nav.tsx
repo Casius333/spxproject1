@@ -59,7 +59,6 @@ export function SidebarNav({ className }: SidebarNavProps) {
 
   useEffect(() => {
     // Close sidebar when location changes
-    const sidebarContext = useSidebar();
     if (isOpen) {
       toggleSidebar();
     }
