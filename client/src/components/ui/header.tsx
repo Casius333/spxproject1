@@ -4,8 +4,7 @@ import { useBalanceContext } from '@/contexts/balance-context';
 import { useAuth } from '@/hooks/use-auth';
 import { useAuthModal } from '@/contexts/auth-modal-context';
 import { formatCurrency } from '@/lib/utils';
-import { Coins, ChevronDown, LogIn, UserPlus } from 'lucide-react';
-import { GiTopHat } from 'react-icons/gi';
+import { Coins, ChevronDown, LogIn, UserPlus, Menu } from 'lucide-react';
 import { Button } from './button';
 
 export function Header() {

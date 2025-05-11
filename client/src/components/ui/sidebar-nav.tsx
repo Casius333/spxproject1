@@ -64,9 +64,10 @@ export function SidebarNav({ className }: SidebarNavProps) {
         ></div>
       )}
 
-      {/* Toggle Button - z-index higher than header (only for logged in users) */}
+      {/* Toggle Button - z-index higher than header (only for logged in users) - Now moved to header */}
+      {/* Hidden from view since we'll add it to the header */}
       <button
-        className="fixed top-4 left-4 z-[60] flex items-center justify-center w-12 h-12 rounded border border-white/30 bg-[#1a1d30]"
+        className="hidden fixed top-4 right-4 z-[60] flex items-center justify-center w-12 h-12 rounded border border-white/30 bg-[#1a1d30]"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Menu"
       >
@@ -76,10 +77,10 @@ export function SidebarNav({ className }: SidebarNavProps) {
       {/* Floating Sidebar */}
       <aside
         className={cn(
-          "fixed top-16 left-4 z-[55] flex flex-col transition-all duration-300 rounded-lg overflow-hidden w-60",
+          "fixed top-16 right-4 z-[55] flex flex-col transition-all duration-300 rounded-lg overflow-hidden w-60",
           isOpen 
             ? "opacity-100 translate-x-0" 
-            : "opacity-0 -translate-x-full pointer-events-none",
+            : "opacity-0 translate-x-full pointer-events-none",
           className
         )}
       >
