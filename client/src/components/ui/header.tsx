@@ -4,7 +4,7 @@ import { useBalanceContext } from '@/contexts/balance-context';
 import { useAuth } from '@/hooks/use-auth';
 import { useAuthModal } from '@/contexts/auth-modal-context';
 import { formatCurrency } from '@/lib/utils';
-import { Dice5, Coins, ChevronDown, LogIn, UserPlus } from 'lucide-react';
+import { Coins, ChevronDown, LogIn, UserPlus } from 'lucide-react';
 import { GiTopHat } from 'react-icons/gi';
 import { Button } from './button';
 
@@ -23,7 +23,6 @@ export function Header() {
         {/* Centered Logo */}
         <div className="flex items-center justify-center">
           <Link href="/" className="flex items-center group">
-            <Dice5 className="text-primary text-4xl mr-3" />
             <span className="font-heading font-bold text-3xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               LUCKY SPIN
             </span>
