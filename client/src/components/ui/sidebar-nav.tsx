@@ -5,18 +5,34 @@ import { useMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/use-auth";
 import { Menu, Home, Wallet, User, LogOut } from "lucide-react";
 
-// Create a context to control the sidebar from other components
+// Create a wrapper component to provide sidebar context
 interface SidebarContextType {
   isOpen: boolean;
   toggleSidebar: () => void;
 }
 
-export const SidebarContext = createContext<SidebarContextType>({
+const SidebarContext = createContext<SidebarContextType>({
   isOpen: false,
   toggleSidebar: () => {},
 });
 
 export const useSidebar = () => useContext(SidebarContext);
+
+// Provider component
+interface SidebarProviderProps {
+  children: React.ReactNode;
+}
+
+export function SidebarProvider({ children }: SidebarProviderProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const toggleSidebar = () => setIsOpen(prev => !prev);
+  
+  return (
+    <SidebarContext.Provider value={{ isOpen, toggleSidebar }}>
+      {children}
+    </SidebarContext.Provider>
+  );
+}
 
 interface SidebarNavProps {
   className?: string;
@@ -39,21 +55,21 @@ export function SidebarNav({ className }: SidebarNavProps) {
   const [location, navigate] = useLocation();
   const { user, logoutMutation } = useAuth();
   const isMobile = useMobile();
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, toggleSidebar } = useSidebar();
 
   useEffect(() => {
     // Close sidebar when location changes
-    setIsOpen(false);
-  }, [location]);
+    const sidebarContext = useSidebar();
+    if (isOpen) {
+      toggleSidebar();
+    }
+  }, [location, isOpen, toggleSidebar]);
 
   // Determine if an item is active
   const isActiveLink = (href: string) => {
     return location === href || 
       (href !== "/" && location.startsWith(href));
   };
-  
-  // Toggle sidebar function to expose via context
-  const toggleSidebar = () => setIsOpen(!isOpen);
 
   // Handle special sidebar item clicks
   const handleNavItemClick = (href: string, e: React.MouseEvent<HTMLDivElement>) => {
@@ -71,12 +87,12 @@ export function SidebarNav({ className }: SidebarNavProps) {
   }
 
   return (
-    <SidebarContext.Provider value={{ isOpen, toggleSidebar }}>
+    <>
       {/* Background Overlay - shown when menu is open */}
       {isOpen && (
         <div 
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[51]"
-          onClick={() => setIsOpen(false)}
+          onClick={toggleSidebar}
         ></div>
       )}
 
@@ -149,6 +165,6 @@ export function SidebarNav({ className }: SidebarNavProps) {
           </nav>
         </div>
       </aside>
-    </SidebarContext.Provider>
+    </>
   );
 }

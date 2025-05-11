@@ -6,7 +6,7 @@ import { BalanceProvider } from "@/contexts/balance-context";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AuthModalProvider } from "@/contexts/auth-modal-context";
 import { Header } from "@/components/ui/header";
-import { SidebarNav } from "@/components/ui/sidebar-nav";
+import { SidebarNav, SidebarProvider } from "@/components/ui/sidebar-nav";
 import { ProtectedRoute } from "@/lib/protected-route";
 import Home from "@/pages/home";
 import Game from "@/pages/game";
