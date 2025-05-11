@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/use-auth";
-import { Menu, Home, Wallet, User, LogOut } from "lucide-react";
+import { Menu, Home, Wallet, User, LogOut, CreditCard, Gift } from "lucide-react";
 
 // Create sidebar context
 interface SidebarContextType {
@@ -49,9 +49,10 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Home", href: "/", icon: <Home className="w-5 h-5" /> },
-  { label: "Cashier", href: "/cashier", icon: <Wallet className="w-5 h-5" /> },
   { label: "Profile", href: "/profile", icon: <User className="w-5 h-5" /> },
+  { label: "Deposit", href: "/deposit", icon: <Wallet className="w-5 h-5" /> },
+  { label: "Withdrawal", href: "/withdrawal", icon: <CreditCard className="w-5 h-5" /> },
+  { label: "Promotions", href: "/promotions", icon: <Gift className="w-5 h-5" /> },
   { label: "Logout", href: "/logout", icon: <LogOut className="w-5 h-5" /> },
 ];
 
@@ -87,7 +88,7 @@ export function SidebarNav({ className }: SidebarNavProps) {
       {/* Background Overlay - shown when menu is open */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[51]"
+          className="fixed inset-0 bg-black/70 z-[51]"
           onClick={toggleSidebar}
         ></div>
       )}
@@ -103,22 +104,9 @@ export function SidebarNav({ className }: SidebarNavProps) {
         )}
       >
         {/* Sidebar Content */}
-        <div className="flex flex-col bg-dark/90 glass-effect backdrop-blur-sm shadow-xl border border-primary/20 overflow-hidden">
-          {/* User Info */}
-          <div className="p-4 border-b border-primary/20">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                <User className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1 overflow-hidden">
-                <div className="font-medium text-white truncate">{user.username}</div>
-                <div className="text-xs text-gray-400 truncate">{user.email}</div>
-              </div>
-            </div>
-          </div>
-          
+        <div className="flex flex-col bg-dark shadow-xl border border-primary/20 overflow-hidden">
           {/* Navigation Links */}
-          <nav className="space-y-1 p-2 pt-3 pb-2">
+          <nav className="space-y-1 p-4 py-3">
             {NAV_ITEMS.map((item) => (
               <div key={item.href} onClick={(e) => handleNavItemClick(item.href, e)}>
                 {item.href !== '/logout' ? (
