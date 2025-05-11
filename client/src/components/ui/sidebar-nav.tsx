@@ -1,9 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext, useContext } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/use-auth";
 import { Menu, Home, Wallet, User, LogOut } from "lucide-react";
+
+// Create a context to control the sidebar from other components
+interface SidebarContextType {
+  isOpen: boolean;
+  toggleSidebar: () => void;
+}
+
+export const SidebarContext = createContext<SidebarContextType>({
+  isOpen: false,
+  toggleSidebar: () => {},
+});
+
+export const useSidebar = () => useContext(SidebarContext);
 
 interface SidebarNavProps {
   className?: string;
@@ -38,6 +51,9 @@ export function SidebarNav({ className }: SidebarNavProps) {
     return location === href || 
       (href !== "/" && location.startsWith(href));
   };
+  
+  // Toggle sidebar function to expose via context
+  const toggleSidebar = () => setIsOpen(!isOpen);
 
   // Handle special sidebar item clicks
   const handleNavItemClick = (href: string, e: React.MouseEvent<HTMLDivElement>) => {
@@ -55,7 +71,7 @@ export function SidebarNav({ className }: SidebarNavProps) {
   }
 
   return (
-    <>
+    <SidebarContext.Provider value={{ isOpen, toggleSidebar }}>
       {/* Background Overlay - shown when menu is open */}
       {isOpen && (
         <div 
@@ -63,16 +79,6 @@ export function SidebarNav({ className }: SidebarNavProps) {
           onClick={() => setIsOpen(false)}
         ></div>
       )}
-
-      {/* Toggle Button - z-index higher than header (only for logged in users) - Now moved to header */}
-      {/* Hidden from view since we'll add it to the header */}
-      <button
-        className="hidden fixed top-4 right-4 z-[60] flex items-center justify-center w-12 h-12 rounded border border-white/30 bg-[#1a1d30]"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Menu"
-      >
-        <Menu className="w-7 h-7 text-white" />
-      </button>
 
       {/* Floating Sidebar */}
       <aside
@@ -143,6 +149,6 @@ export function SidebarNav({ className }: SidebarNavProps) {
           </nav>
         </div>
       </aside>
-    </>
+    </SidebarContext.Provider>
   );
 }

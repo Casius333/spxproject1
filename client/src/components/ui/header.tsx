@@ -6,12 +6,14 @@ import { useAuthModal } from '@/contexts/auth-modal-context';
 import { formatCurrency } from '@/lib/utils';
 import { Coins, ChevronDown, LogIn, UserPlus, Menu } from 'lucide-react';
 import { Button } from './button';
+import { useSidebar } from './sidebar-nav';
 
 export function Header() {
   const [isBalanceHovered, setIsBalanceHovered] = useState(false);
   const { balance, isLoading } = useBalanceContext();
   const { user, logoutMutation } = useAuth();
   const { openAuthModal } = useAuthModal();
+  const { toggleSidebar } = useSidebar();
 
   return (
     <header className="bg-dark sticky top-0 z-50 shadow-lg">
@@ -62,15 +64,13 @@ export function Header() {
                 </div>
               </div>
 
-              {/* Logout Button */}
+              {/* Menu Toggle Button replacing Logout */}
               <div className="relative">
                 <button 
-                  className="bg-gradient-to-r from-accent to-accent-light hover:from-accent-light hover:to-accent transition-all duration-300 px-5 py-2 rounded-lg font-bold text-dark shadow-lg hover:shadow-accent/30"
-                  onClick={() => logoutMutation.mutate()}
-                  disabled={logoutMutation.isPending}
+                  className="bg-gradient-to-r from-accent to-accent-light hover:from-accent-light hover:to-accent transition-all duration-300 px-3 py-2 rounded-lg font-bold text-dark shadow-lg hover:shadow-accent/30"
+                  onClick={toggleSidebar}
                 >
-                  <span className="hidden md:inline mr-1">LOGOUT</span>
-                  <GiTopHat className="md:inline w-5 h-5" />
+                  <Menu className="w-5 h-5" />
                 </button>
               </div>
             </>
