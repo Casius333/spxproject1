@@ -3,7 +3,6 @@
 A full-stack online casino platform focused on slot games, built with React, Express, and PostgreSQL.
 
 ## Features
-
 - Multiple slot games with different themes and mechanics
 - Real-time functionality using WebSockets
 - Virtual balance system with betting
