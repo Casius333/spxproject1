@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useBalanceContext } from '@/contexts/balance-context';
 import { useAuth } from '@/hooks/use-auth';
@@ -72,6 +72,8 @@ export function Header() {
                     console.log("Header menu button clicked");
                     toggleSidebar();
                   }}
+                  aria-label="Toggle Menu"
+                  type="button"
                 >
                   <Menu className="w-5 h-5" />
                 </button>

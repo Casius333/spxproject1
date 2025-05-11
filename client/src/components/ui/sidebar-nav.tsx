@@ -5,7 +5,7 @@ import { useMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/use-auth";
 import { Menu, Home, Wallet, User, LogOut } from "lucide-react";
 
-// Create a wrapper component to provide sidebar context
+// Create sidebar context
 interface SidebarContextType {
   isOpen: boolean;
   toggleSidebar: () => void;
@@ -25,6 +25,7 @@ interface SidebarProviderProps {
 
 export function SidebarProvider({ children }: SidebarProviderProps) {
   const [isOpen, setIsOpen] = useState(false);
+  
   const toggleSidebar = () => {
     console.log("Toggling sidebar", !isOpen);
     setIsOpen(prev => !prev);
@@ -60,13 +61,6 @@ export function SidebarNav({ className }: SidebarNavProps) {
   const isMobile = useMobile();
   const { isOpen, toggleSidebar } = useSidebar();
 
-  useEffect(() => {
-    // Close sidebar when location changes
-    if (isOpen) {
-      toggleSidebar();
-    }
-  }, [location, isOpen, toggleSidebar]);
-
   // Determine if an item is active
   const isActiveLink = (href: string) => {
     return location === href || 
@@ -78,7 +72,7 @@ export function SidebarNav({ className }: SidebarNavProps) {
     if (href === '/logout') {
       e.preventDefault();
       logoutMutation.mutate();
-      navigate('/auth');
+      toggleSidebar();
       return;
     }
   };
@@ -151,16 +145,20 @@ export function SidebarNav({ className }: SidebarNavProps) {
                     </div>
                   </Link>
                 ) : (
-                  <div
-                    className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-primary/10 transition-colors relative group cursor-pointer text-white hover:text-primary"
+                  <button
+                    onClick={() => {
+                      logoutMutation.mutate();
+                      toggleSidebar();
+                    }}
+                    className="w-full flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-primary/10 transition-colors relative group cursor-pointer text-white hover:text-primary"
                   >
                     <span className="flex items-center justify-center mr-3 text-primary">
                       {item.icon}
                     </span>
-                    <span className="transition-opacity">
+                    <span className="transition-opacity text-left">
                       {item.label}
                     </span>
-                  </div>
+                  </button>
                 )}
               </div>
             ))}

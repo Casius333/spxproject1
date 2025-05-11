@@ -52,10 +52,10 @@ function MainLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen flex-col">
       <Header />
       <div className="flex flex-1 overflow-hidden">
-        <SidebarNav />
         <main className="flex-1 overflow-y-auto pt-4 pb-12">
           {children}
         </main>
+        <SidebarNav />
       </div>
     </div>
   );
