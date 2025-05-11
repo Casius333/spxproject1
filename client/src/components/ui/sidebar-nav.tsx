@@ -11,7 +11,7 @@ interface SidebarContextType {
   toggleSidebar: () => void;
 }
 
-const SidebarContext = createContext<SidebarContextType>({
+export const SidebarContext = createContext<SidebarContextType>({
   isOpen: false,
   toggleSidebar: () => {},
 });
@@ -25,7 +25,10 @@ interface SidebarProviderProps {
 
 export function SidebarProvider({ children }: SidebarProviderProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const toggleSidebar = () => setIsOpen(prev => !prev);
+  const toggleSidebar = () => {
+    console.log("Toggling sidebar", !isOpen);
+    setIsOpen(prev => !prev);
+  };
   
   return (
     <SidebarContext.Provider value={{ isOpen, toggleSidebar }}>

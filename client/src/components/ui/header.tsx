@@ -68,7 +68,10 @@ export function Header() {
               <div className="relative">
                 <button 
                   className="bg-gradient-to-r from-accent to-accent-light hover:from-accent-light hover:to-accent transition-all duration-300 px-3 py-2 rounded-lg font-bold text-dark shadow-lg hover:shadow-accent/30"
-                  onClick={toggleSidebar}
+                  onClick={() => {
+                    console.log("Header menu button clicked");
+                    toggleSidebar();
+                  }}
                 >
                   <Menu className="w-5 h-5" />
                 </button>
