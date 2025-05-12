@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import { createHash, timingSafeEqual } from 'crypto';
 import jwt from 'jsonwebtoken';
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
@@ -9,15 +9,15 @@ import { Request, Response, NextFunction } from 'express';
 const JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'admin-secret-key-for-development';
 const JWT_EXPIRES_IN = '24h';
 
-// Hash a password
-export async function hashPassword(password: string): Promise<string> {
-  const salt = await bcrypt.genSalt(10);
-  return bcrypt.hash(password, salt);
+// Hash a password using the same method as in seed.ts
+export function hashPassword(password: string): string {
+  return createHash('sha256').update(password).digest('hex');
 }
 
 // Verify a password
-export async function comparePasswords(plainPassword: string, hashedPassword: string): Promise<boolean> {
-  return bcrypt.compare(plainPassword, hashedPassword);
+export function comparePasswords(plainPassword: string, hashedPassword: string): boolean {
+  const hashedInput = createHash('sha256').update(plainPassword).digest('hex');
+  return hashedInput === hashedPassword;
 }
 
 // Get admin by ID
@@ -39,7 +39,7 @@ export async function createAdmin(admin: {
   password: string;
   role?: string;
 }): Promise<AdminUser> {
-  const hashedPassword = await hashPassword(admin.password);
+  const hashedPassword = hashPassword(admin.password);
   
   const result = await db.insert(adminUsers).values({
     username: admin.username,
@@ -80,7 +80,7 @@ export async function loginAdmin(username: string, password: string): Promise<{ 
     return null;
   }
   
-  const isPasswordValid = await comparePasswords(password, admin.password);
+  const isPasswordValid = comparePasswords(password, admin.password);
   
   if (!isPasswordValid) {
     return null;
