@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 
 interface AdminUser {
@@ -7,6 +7,7 @@ interface AdminUser {
   username: string;
   email: string;
   role: string;
+  lastLogin?: string;
 }
 
 interface AdminContextType {
@@ -25,7 +26,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const [location, navigate] = useLocation();
+  const [location] = useLocation();
   
   // Check if admin is already logged in on mount
   useEffect(() => {
@@ -56,13 +57,13 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       
       if (isAdminPage && !isAdminLoginPage && !token) {
         // Not authenticated, redirect to login
-        navigate('/admin/login');
+        window.location.href = '/admin/login';
       } else if (isAdminLoginPage && token) {
         // Already authenticated, redirect to admin dashboard
-        navigate('/admin');
+        window.location.href = '/admin';
       }
     }
-  }, [isLoading, location, token, navigate]);
+  }, [isLoading, location, token]);
   
   // Login function
   const login = (newToken: string, user: AdminUser) => {
@@ -78,11 +79,11 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     setAdmin(null);
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminUser');
-    navigate('/admin/login');
     toast({
       title: 'Logged out',
       description: 'You have been logged out of the admin dashboard',
     });
+    window.location.href = '/admin/login';
   };
   
   return (

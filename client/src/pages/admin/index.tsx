@@ -1,205 +1,414 @@
-import { useState, useEffect } from 'react';
-import { useLocation, Link } from 'wouter';
-import { Users, Activity, Settings, BookOpen, Home, Layout, ChevronLeft, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { 
+  CreditCard, 
+  DollarSign, 
+  ArrowDownCircle, 
+  ArrowUpCircle, 
+  Users,
+  Calendar,
+  LineChart,
+  BarChart,
+} from "lucide-react";
+import { AdminLayout } from "@/components/admin/admin-layout";
+import { useAdmin } from "@/contexts/admin-context";
 
-type AdminLayoutProps = {
-  children: React.ReactNode;
-  title?: string;
+// Mock data for charts - this would come from API in a real implementation
+const financialOverviewData = {
+  currentMonth: {
+    deposits: { total: "187250.00", count: 420 },
+    withdrawals: { total: "134820.00", count: 210 },
+    bets: { total: "523450.00", count: 8721 },
+    wins: { total: "463290.00", count: 2145 },
+    ggr: "60160.00"
+  },
+  previousMonth: {
+    deposits: { total: "165430.00", count: 380 },
+    withdrawals: { total: "110560.00", count: 175 },
+    bets: { total: "490870.00", count: 7930 },
+    wins: { total: "432150.00", count: 1950 },
+    ggr: "58720.00"
+  }
 };
 
-export function AdminLayout({ children, title = 'Dashboard' }: AdminLayoutProps) {
-  const [location] = useLocation();
-  
-  return (
-    <div className="min-h-screen bg-dark-card">
-      <div className="flex">
-        {/* Sidebar */}
-        <div className="hidden md:block w-64 border-r border-primary/20 min-h-screen bg-dark">
-          <div className="p-4 border-b border-primary/20">
-            <h1 className="text-2xl font-bold tracking-tight text-primary">
-              <span className="neon-text">Lucky</span>
-              <span className="text-accent">Punt</span> Admin
-            </h1>
-          </div>
-          
-          <nav className="p-4 space-y-1">
-            <Link href="/admin">
-              <div className={cn(
-                "flex items-center px-3 py-3 text-sm font-medium rounded-md hover:bg-primary/10 transition-colors cursor-pointer",
-                location === "/admin" ? "text-primary bg-primary/10" : "text-gray-300 hover:text-primary"
-              )}>
-                <Layout className="h-5 w-5 mr-3" />
-                Dashboard
-              </div>
-            </Link>
-            
-            <Link href="/admin/games">
-              <div className={cn(
-                "flex items-center px-3 py-3 text-sm font-medium rounded-md hover:bg-primary/10 transition-colors cursor-pointer",
-                location === "/admin/games" ? "text-primary bg-primary/10" : "text-gray-300 hover:text-primary"
-              )}>
-                <BookOpen className="h-5 w-5 mr-3" />
-                Games
-              </div>
-            </Link>
-            
-            <Link href="/admin/users">
-              <div className={cn(
-                "flex items-center px-3 py-3 text-sm font-medium rounded-md hover:bg-primary/10 transition-colors cursor-pointer",
-                location === "/admin/users" ? "text-primary bg-primary/10" : "text-gray-300 hover:text-primary"
-              )}>
-                <Users className="h-5 w-5 mr-3" />
-                Users
-              </div>
-            </Link>
-            
-            <Link href="/admin/settings">
-              <div className={cn(
-                "flex items-center px-3 py-3 text-sm font-medium rounded-md hover:bg-primary/10 transition-colors cursor-pointer",
-                location === "/admin/settings" ? "text-primary bg-primary/10" : "text-gray-300 hover:text-primary"
-              )}>
-                <Settings className="h-5 w-5 mr-3" />
-                Settings
-              </div>
-            </Link>
-            
-            <div className="pt-6 border-t border-primary/20 mt-6">
-              <Link href="/">
-                <div className="flex items-center px-3 py-3 text-sm font-medium rounded-md hover:bg-primary/10 transition-colors text-gray-300 hover:text-primary cursor-pointer">
-                  <Home className="h-5 w-5 mr-3" />
-                  Back to Site
-                </div>
-              </Link>
-            </div>
-          </nav>
-        </div>
-        
-        {/* Main Content */}
-        <div className="flex-1 p-6">
-          <header className="mb-6">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-white">{title}</h1>
-              
-              <Link href="/">
-                <div className="flex items-center text-gray-400 hover:text-primary cursor-pointer">
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  <span className="text-sm">Back to site</span>
-                </div>
-              </Link>
-            </div>
-          </header>
-          
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
+const userRegistrationData = {
+  currentMonth: { count: 210 },
+  previousMonth: { count: 175 },
+  dailyData: [
+    { date: "2025-05-01", count: 12 },
+    { date: "2025-05-02", count: 8 },
+    { date: "2025-05-03", count: 15 },
+    { date: "2025-05-04", count: 10 },
+    { date: "2025-05-05", count: 9 },
+    { date: "2025-05-06", count: 11 },
+    { date: "2025-05-07", count: 7 }
+  ]
+};
 
-export default function AdminDashboard() {
-  // Mock stats for demonstration
-  const stats = [
-    { title: 'Total Users', value: '568', change: '+12%', icon: <Users className="h-6 w-6 text-primary" /> },
-    { title: 'Active Games', value: '47', change: '+4%', icon: <BookOpen className="h-6 w-6 text-primary" /> },
-    { title: 'Daily Revenue', value: '$5,245', change: '+18%', icon: <Activity className="h-6 w-6 text-primary" /> },
-  ];
-  
+const recentDeposits = [
+  { id: 1, username: "user123", amount: "250.00", method: "credit_card", date: "2025-05-12T08:30:00Z" },
+  { id: 2, username: "gambler777", amount: "1000.00", method: "crypto", date: "2025-05-12T07:15:00Z" },
+  { id: 3, username: "slotFan22", amount: "500.00", method: "bank_transfer", date: "2025-05-11T23:45:00Z" },
+  { id: 4, username: "luckySpin", amount: "150.00", method: "credit_card", date: "2025-05-11T22:10:00Z" },
+  { id: 5, username: "highRoller", amount: "2000.00", method: "crypto", date: "2025-05-11T21:30:00Z" }
+];
+
+const recentWithdrawals = [
+  { id: 1, username: "bigWinner", amount: "850.00", method: "bank_transfer", status: "completed", date: "2025-05-12T09:20:00Z" },
+  { id: 2, username: "slotKing", amount: "1200.00", method: "crypto", status: "pending", date: "2025-05-12T08:45:00Z" },
+  { id: 3, username: "luckyGuy", amount: "500.00", method: "bank_transfer", status: "completed", date: "2025-05-11T22:30:00Z" },
+  { id: 4, username: "gambler777", amount: "300.00", method: "crypto", status: "completed", date: "2025-05-11T20:15:00Z" },
+  { id: 5, username: "spinMaster", amount: "725.00", method: "bank_transfer", status: "pending", date: "2025-05-11T19:40:00Z" }
+];
+
+export default function AdminDashboardPage() {
+  const { admin } = useAdmin();
+  const [activeTab, setActiveTab] = useState("overview");
+
+  // In a real implementation, we would fetch this data from the API
+  const { data: financialData, isLoading: isFinancialLoading } = useQuery({
+    queryKey: ['/api/admin/reports/financial-overview'],
+    queryFn: () => Promise.resolve(financialOverviewData),
+  });
+
+  const { data: registrationData, isLoading: isRegistrationLoading } = useQuery({
+    queryKey: ['/api/admin/reports/user-registrations'],
+    queryFn: () => Promise.resolve(userRegistrationData),
+  });
+
+  // Calculate the percent change for metrics
+  const calculateChange = (current: number, previous: number) => {
+    if (previous === 0) return 100;
+    return ((current - previous) / previous) * 100;
+  };
+
+  // Format numbers as currency
+  const formatCurrency = (value: string) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2
+    }).format(parseFloat(value));
+  };
+
+  // Format date
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString();
+  };
+
   return (
     <AdminLayout>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-dark rounded-lg border border-primary/20 shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-sm">{stat.title}</p>
-                <p className="text-2xl font-bold text-white mt-1">{stat.value}</p>
-                <div className="mt-2 flex items-center text-green-500">
-                  <span className="text-xs">{stat.change} this week</span>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-3xl font-bold tracking-tight">Welcome back, {admin?.username}</h2>
+          <span className="text-sm text-gray-400">
+            Last login: {admin?.lastLogin 
+              ? new Date(admin.lastLogin).toLocaleString() 
+              : 'First login'}
+          </span>
+        </div>
+
+        <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="deposits">Deposits</TabsTrigger>
+            <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
+            <TabsTrigger value="activity">User Activity</TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {/* Deposits Card */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total Deposits
+                  </CardTitle>
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {!isFinancialLoading && formatCurrency(financialData?.currentMonth.deposits.total || "0")}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {!isFinancialLoading && (
+                      <>
+                        <span className={
+                          calculateChange(
+                            parseFloat(financialData?.currentMonth.deposits.total || "0"),
+                            parseFloat(financialData?.previousMonth.deposits.total || "0")
+                          ) >= 0 ? "text-green-500" : "text-red-500"
+                        }>
+                          {calculateChange(
+                            parseFloat(financialData?.currentMonth.deposits.total || "0"),
+                            parseFloat(financialData?.previousMonth.deposits.total || "0")
+                          ).toFixed(1)}%
+                        </span>
+                        {" from last month"}
+                      </>
+                    )}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Withdrawals Card */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total Withdrawals
+                  </CardTitle>
+                  <ArrowUpCircle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {!isFinancialLoading && formatCurrency(financialData?.currentMonth.withdrawals.total || "0")}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {!isFinancialLoading && (
+                      <>
+                        <span className={
+                          calculateChange(
+                            parseFloat(financialData?.currentMonth.withdrawals.total || "0"),
+                            parseFloat(financialData?.previousMonth.withdrawals.total || "0")
+                          ) <= 0 ? "text-green-500" : "text-red-500"
+                        }>
+                          {Math.abs(calculateChange(
+                            parseFloat(financialData?.currentMonth.withdrawals.total || "0"),
+                            parseFloat(financialData?.previousMonth.withdrawals.total || "0")
+                          )).toFixed(1)}%
+                        </span>
+                        {calculateChange(
+                          parseFloat(financialData?.currentMonth.withdrawals.total || "0"),
+                          parseFloat(financialData?.previousMonth.withdrawals.total || "0")
+                        ) <= 0 ? " decrease" : " increase"}
+                        {" from last month"}
+                      </>
+                    )}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* GGR Card */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Gross Gaming Revenue
+                  </CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {!isFinancialLoading && formatCurrency(financialData?.currentMonth.ggr || "0")}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {!isFinancialLoading && (
+                      <>
+                        <span className={
+                          calculateChange(
+                            parseFloat(financialData?.currentMonth.ggr || "0"),
+                            parseFloat(financialData?.previousMonth.ggr || "0")
+                          ) >= 0 ? "text-green-500" : "text-red-500"
+                        }>
+                          {calculateChange(
+                            parseFloat(financialData?.currentMonth.ggr || "0"),
+                            parseFloat(financialData?.previousMonth.ggr || "0")
+                          ).toFixed(1)}%
+                        </span>
+                        {" from last month"}
+                      </>
+                    )}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* New Users Card */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    New Users
+                  </CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {!isRegistrationLoading && registrationData?.currentMonth.count || 0}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {!isRegistrationLoading && (
+                      <>
+                        <span className={
+                          calculateChange(
+                            registrationData?.currentMonth.count || 0,
+                            registrationData?.previousMonth.count || 0
+                          ) >= 0 ? "text-green-500" : "text-red-500"
+                        }>
+                          {calculateChange(
+                            registrationData?.currentMonth.count || 0,
+                            registrationData?.previousMonth.count || 0
+                          ).toFixed(1)}%
+                        </span>
+                        {" from last month"}
+                      </>
+                    )}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Chart Cards */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Revenue Overview</CardTitle>
+                  <CardDescription>
+                    Monthly deposit, withdrawal, and GGR summary
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="px-2">
+                  <div className="h-[300px] flex items-center justify-center">
+                    <LineChart className="h-16 w-16 text-gray-400" />
+                    <p className="ml-4 text-gray-400">Revenue chart would display here in a real implementation</p>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>New User Registrations</CardTitle>
+                  <CardDescription>
+                    Daily user registration activity
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="px-2">
+                  <div className="h-[300px] flex items-center justify-center">
+                    <BarChart className="h-16 w-16 text-gray-400" />
+                    <p className="ml-4 text-gray-400">Registration chart would display here in a real implementation</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Deposits Tab */}
+          <TabsContent value="deposits" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Deposits</CardTitle>
+                <CardDescription>
+                  Latest user deposits across all payment methods
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-700">
+                        <th className="text-left pb-3 font-medium">ID</th>
+                        <th className="text-left pb-3 font-medium">User</th>
+                        <th className="text-left pb-3 font-medium">Amount</th>
+                        <th className="text-left pb-3 font-medium">Method</th>
+                        <th className="text-left pb-3 font-medium">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentDeposits.map((deposit) => (
+                        <tr key={deposit.id} className="border-b border-gray-700 hover:bg-gray-800">
+                          <td className="py-3">{deposit.id}</td>
+                          <td className="py-3">{deposit.username}</td>
+                          <td className="py-3">{formatCurrency(deposit.amount)}</td>
+                          <td className="py-3 capitalize">{deposit.method.replace('_', ' ')}</td>
+                          <td className="py-3">{formatDate(deposit.date)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              </div>
-              <div className="p-3 bg-dark-card rounded-lg">
-                {stat.icon}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="rounded-lg border border-primary/20 bg-dark shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Recent Transactions</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-primary/20">
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">User</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Type</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Amount</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-primary/10">
-                  <td className="px-4 py-3 text-sm">player123</td>
-                  <td className="px-4 py-3 text-sm"><span className="text-red-400">Bet</span></td>
-                  <td className="px-4 py-3 text-sm">$25.00</td>
-                  <td className="px-4 py-3 text-sm text-gray-400">Just now</td>
-                </tr>
-                <tr className="border-b border-primary/10">
-                  <td className="px-4 py-3 text-sm">highroller</td>
-                  <td className="px-4 py-3 text-sm"><span className="text-green-400">Win</span></td>
-                  <td className="px-4 py-3 text-sm">$120.00</td>
-                  <td className="px-4 py-3 text-sm text-gray-400">5 mins ago</td>
-                </tr>
-                <tr className="border-b border-primary/10">
-                  <td className="px-4 py-3 text-sm">newuser42</td>
-                  <td className="px-4 py-3 text-sm"><span className="text-blue-400">Deposit</span></td>
-                  <td className="px-4 py-3 text-sm">$100.00</td>
-                  <td className="px-4 py-3 text-sm text-gray-400">15 mins ago</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        
-        <div className="rounded-lg border border-primary/20 bg-dark shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Popular Games</h2>
-          <div className="space-y-4">
-            <div className="flex items-center p-3 hover:bg-dark-card rounded-lg transition-colors">
-              <img src="https://placehold.co/100x100/2a2a2a/purple?text=Game+1" alt="Game" className="w-12 h-12 rounded mr-4" />
-              <div className="flex-1">
-                <h3 className="font-medium">Lucky Spin</h3>
-                <p className="text-sm text-gray-400">2,453 plays this week</p>
-              </div>
-              <div className="text-right">
-                <span className="text-green-400">+18%</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center p-3 hover:bg-dark-card rounded-lg transition-colors">
-              <img src="https://placehold.co/100x100/2a2a2a/purple?text=Game+2" alt="Game" className="w-12 h-12 rounded mr-4" />
-              <div className="flex-1">
-                <h3 className="font-medium">Diamond Rush</h3>
-                <p className="text-sm text-gray-400">1,872 plays this week</p>
-              </div>
-              <div className="text-right">
-                <span className="text-green-400">+12%</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center p-3 hover:bg-dark-card rounded-lg transition-colors">
-              <img src="https://placehold.co/100x100/2a2a2a/purple?text=Game+3" alt="Game" className="w-12 h-12 rounded mr-4" />
-              <div className="flex-1">
-                <h3 className="font-medium">Gold Vault</h3>
-                <p className="text-sm text-gray-400">1,245 plays this week</p>
-              </div>
-              <div className="text-right">
-                <span className="text-red-400">-3%</span>
-              </div>
-            </div>
-          </div>
-        </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Withdrawals Tab */}
+          <TabsContent value="withdrawals" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Withdrawals</CardTitle>
+                <CardDescription>
+                  Latest user withdrawal requests and status
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-700">
+                        <th className="text-left pb-3 font-medium">ID</th>
+                        <th className="text-left pb-3 font-medium">User</th>
+                        <th className="text-left pb-3 font-medium">Amount</th>
+                        <th className="text-left pb-3 font-medium">Method</th>
+                        <th className="text-left pb-3 font-medium">Status</th>
+                        <th className="text-left pb-3 font-medium">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentWithdrawals.map((withdrawal) => (
+                        <tr key={withdrawal.id} className="border-b border-gray-700 hover:bg-gray-800">
+                          <td className="py-3">{withdrawal.id}</td>
+                          <td className="py-3">{withdrawal.username}</td>
+                          <td className="py-3">{formatCurrency(withdrawal.amount)}</td>
+                          <td className="py-3 capitalize">{withdrawal.method.replace('_', ' ')}</td>
+                          <td className="py-3">
+                            <span className={`inline-block px-2 py-1 rounded-full text-xs ${
+                              withdrawal.status === 'completed' 
+                                ? 'bg-green-500/20 text-green-400' 
+                                : withdrawal.status === 'pending'
+                                ? 'bg-yellow-500/20 text-yellow-400'
+                                : 'bg-red-500/20 text-red-400'
+                            }`}>
+                              {withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1)}
+                            </span>
+                          </td>
+                          <td className="py-3">{formatDate(withdrawal.date)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* User Activity Tab */}
+          <TabsContent value="activity" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>User Activity</CardTitle>
+                <CardDescription>
+                  Recent user actions and game activity
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-center h-[200px]">
+                  <Calendar className="h-16 w-16 text-gray-400" />
+                  <p className="ml-4 text-gray-400">User activity would display here in a real implementation</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
   );
