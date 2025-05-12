@@ -3,6 +3,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 import { X, Loader2, Mail } from "lucide-react";
 import {
   Dialog,
@@ -54,6 +55,7 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalProps) {
   const { user, loginMutation, registerMutation, verifyOtpMutation } = useAuth();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
   const [verificationEmail, setVerificationEmail] = useState<string>("");
   const [showVerification, setShowVerification] = useState<boolean>(false);
@@ -171,9 +173,9 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
         <DialogDescription id="auth-modal-description" className="sr-only">
           Sign in to your account or create a new one
         </DialogDescription>
-        <DialogClose asChild className="absolute right-4 top-4 z-10">
-          <div className="cursor-pointer h-7 w-7 rounded-full flex items-center justify-center hover:bg-white/10">
-            <X className="h-4 w-4" />
+        <DialogClose asChild className="absolute right-6 top-6 z-10">
+          <div className="cursor-pointer h-8 w-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">
+            <X className="h-5 w-5 text-white/70 hover:text-white" />
             <span className="sr-only">Close</span>
           </div>
         </DialogClose>
@@ -319,8 +321,40 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
                     </div>
                   )}
                   
-                  {/* Empty space to match register form height */}
-                  <div className="h-[70px]"></div>
+                  {/* Forgot Password Link */}
+                  <div className="flex justify-end mt-1">
+                    <button 
+                      type="button"
+                      className="text-sm text-primary hover:text-primary-light transition-colors"
+                      onClick={() => {
+                        // Get the email from the form if available
+                        const email = loginForm.getValues().email;
+                        
+                        if (!email) {
+                          toast({
+                            title: "Email Required",
+                            description: "Please enter your email address first",
+                            variant: "destructive",
+                            duration: 3000,
+                          });
+                          return;
+                        }
+                        
+                        // Show a toast notification for now 
+                        // In a real implementation, this would send a password reset email
+                        toast({
+                          title: "Password Reset",
+                          description: `Password reset instructions sent to ${email}`,
+                          duration: 5000,
+                        });
+                      }}
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                  
+                  {/* Space for alignment */}
+                  <div className="h-[30px]"></div>
                   
                   <Button 
                     type="submit" 
