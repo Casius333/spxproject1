@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Socket, io } from 'socket.io-client';
 import { useAuth } from '@/hooks/use-auth';
+import { getSocketIOUrl } from '@/lib/utils';
 
 interface UseSocketIOOptions {
   autoConnect?: boolean;
@@ -42,10 +43,8 @@ export function useSocketIO(options: UseSocketIOOptions = {}): UseSocketIOReturn
 
   // Create socket connection
   const createSocket = useCallback(() => {
-    // Get the current origin
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    const url = `${protocol}//${host}`;
+    // Get the Socket.IO URL
+    const url = getSocketIOUrl();
 
     // Create a new socket connection
     const socket = io(url, {

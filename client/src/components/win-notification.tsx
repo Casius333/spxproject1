@@ -9,6 +9,7 @@ interface WinNotification {
   amount: number;
   game: string;
   timestamp: number;
+  isJackpot?: boolean;
 }
 
 export function WinNotificationProvider({ children }: { children: React.ReactNode }) {
@@ -55,7 +56,7 @@ export function WinNotificationProvider({ children }: { children: React.ReactNod
         title: 'JACKPOT WINNER! 🏆',
         description: `${data.username} just won a massive ${formatCurrency(data.amount)} jackpot on ${data.game}!`,
         duration: 8000,
-        variant: 'jackpot',
+        variant: 'destructive', // Using the destructive variant for jackpot notifications
       });
     };
     

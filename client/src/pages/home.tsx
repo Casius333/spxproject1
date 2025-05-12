@@ -5,6 +5,7 @@ import { CategoryFilter, Category, Provider } from '@/components/category-filter
 import { GameGrid } from '@/components/game-grid';
 import { CarouselBanner } from '@/components/ui/carousel-banner';
 import { PromotionBanner } from '@/components/ui/promotion-banner';
+import { RecentWins } from '@/components/win-notification';
 
 export default function Home() {
   const [location] = useLocation();

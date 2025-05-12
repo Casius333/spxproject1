@@ -25,10 +25,16 @@ export function shuffleArray<T>(array: T[]): T[] {
   return newArray;
 }
 
-// Create websocket connection URL
+// Create websocket connection URL (legacy WebSocket)
 export function getWebSocketUrl(): string {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   return `${protocol}//${window.location.host}/ws`;
+}
+
+// Create Socket.IO connection URL
+export function getSocketIOUrl(): string {
+  const protocol = window.location.protocol === "https:" ? "https:" : "http:";
+  return `${protocol}//${window.location.host}`;
 }
 
 // Format big numbers to shorter form (e.g., 1,000,000 -> 1M)

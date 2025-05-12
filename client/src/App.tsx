@@ -3,6 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { BalanceProvider } from "@/contexts/balance-context";
+import { WinNotificationProvider } from "@/components/win-notification";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AuthModalProvider } from "@/contexts/auth-modal-context";
 import { ProfileDialogProvider } from "@/contexts/profile-dialog-context";
@@ -76,10 +77,12 @@ function App() {
           <SidebarProvider>
             <ProfileDialogProvider>
               <BalanceProvider initialBalance={1250}>
-                <MainLayout>
-                  <Router />
-                </MainLayout>
-                <Toaster />
+                <WinNotificationProvider>
+                  <MainLayout>
+                    <Router />
+                  </MainLayout>
+                  <Toaster />
+                </WinNotificationProvider>
               </BalanceProvider>
             </ProfileDialogProvider>
           </SidebarProvider>
