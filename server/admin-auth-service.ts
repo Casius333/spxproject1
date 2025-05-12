@@ -26,10 +26,17 @@ export async function getAdminById(id: number): Promise<AdminUser | undefined> {
   return results[0];
 }
 
-// Get admin by username
+// Get admin by username or email
 export async function getAdminByUsername(username: string): Promise<AdminUser | undefined> {
-  const results = await db.select().from(adminUsers).where(eq(adminUsers.username, username));
-  return results[0];
+  // First try to find by username
+  const resultsByUsername = await db.select().from(adminUsers).where(eq(adminUsers.username, username));
+  if (resultsByUsername.length > 0) {
+    return resultsByUsername[0];
+  }
+  
+  // If not found, try by email
+  const resultsByEmail = await db.select().from(adminUsers).where(eq(adminUsers.email, username));
+  return resultsByEmail[0];
 }
 
 // Create a new admin user
