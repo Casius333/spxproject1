@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { WebSocketServer, WebSocket } from "ws";
+import { Server as SocketIOServer } from "socket.io";
 import { gamesController } from "./controllers/games";
 import { balanceController } from "./controllers/balance";
 import { registerUser, loginUser, logoutUser, getUserByToken, authenticate, verifyOtp } from "./auth-service";
@@ -264,110 +264,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   const httpServer = createServer(app);
   
-  // Setup WebSocket server
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
-  
-  // WebSocket connection status tracking
-  const clientStatus = new Map<WebSocket, boolean>();
-  
-  // WebSocket connections
-  wss.on('connection', (ws: WebSocket) => {
-    // Mark the client as alive
-    clientStatus.set(ws, true);
-    
-    // Handle pings for connection keep-alive
-    ws.on('pong', () => {
-      clientStatus.set(ws, true);
-    });
-    
-    console.log('WebSocket client connected');
-    
-    // Send welcome message
-    ws.send(JSON.stringify({
-      type: 'connection',
-      message: 'Connected to SpinVerse WebSocket server'
-    }));
-    
-    // Handle incoming messages
-    ws.on('message', (message: any) => {
-      try {
-        const data = JSON.parse(message.toString());
-        
-        // Handle different message types
-        switch (data.type) {
-          case 'win':
-            // Broadcast win notifications to all clients except sender
-            wss.clients.forEach((client) => {
-              if (client !== ws && client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({
-                  type: 'win_notification',
-                  amount: data.amount,
-                  username: data.username || 'Anonymous',
-                  game: data.game || 'Slots'
-                }));
-              }
-            });
-            break;
-            
-          case 'jackpot':
-            // Broadcast jackpot win to everyone
-            wss.clients.forEach((client) => {
-              if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({
-                  type: 'jackpot_notification',
-                  amount: data.amount,
-                  username: data.username || 'Anonymous',
-                  game: data.game || 'Slots'
-                }));
-              }
-            });
-            break;
-            
-          case 'ping':
-            // Send pong response only to the sender
-            ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() }));
-            break;
-            
-          default:
-            // Broadcast generic messages to all except sender
-            wss.clients.forEach((client) => {
-              if (client !== ws && client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify(data));
-              }
-            });
-        }
-      } catch (error) {
-        console.error('Invalid WebSocket message:', error);
-      }
-    });
-    
-    ws.on('close', () => {
-      // Remove from status tracking on disconnect
-      clientStatus.delete(ws);
-      console.log('WebSocket client disconnected');
-    });
-    
-    ws.on('error', (error: any) => {
-      console.error('WebSocket error:', error);
-    });
+  // Setup Socket.IO server
+  const io = new SocketIOServer(httpServer, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    },
+    path: '/socket.io'
   });
   
-  // Set up a heartbeat interval to check for stale connections
-  const heartbeatInterval = setInterval(() => {
-    wss.clients.forEach((ws) => {
-      if (clientStatus.get(ws) === false) {
-        clientStatus.delete(ws);
-        return ws.terminate();
-      }
-      
-      clientStatus.set(ws, false);
-      ws.ping();
+  // Socket.IO connections
+  io.on('connection', (socket) => {
+    console.log('Socket.IO client connected:', socket.id);
+    
+    // Send welcome message
+    socket.emit('connection', {
+      message: 'Connected to LuckyPunt Socket.IO server',
+      id: socket.id
     });
-  }, 30000); // Check every 30 seconds
-  
-  // Clean up interval on server close
-  wss.on('close', () => {
-    clearInterval(heartbeatInterval);
+    
+    // Handle win notifications
+    socket.on('win', (data) => {
+      // Broadcast win notifications to all clients except sender
+      socket.broadcast.emit('win_notification', {
+        amount: data.amount,
+        username: data.username || 'Anonymous',
+        game: data.game || 'Slots'
+      });
+    });
+    
+    // Handle jackpot notifications
+    socket.on('jackpot', (data) => {
+      // Broadcast jackpot win to everyone including sender
+      io.emit('jackpot_notification', {
+        amount: data.amount,
+        username: data.username || 'Anonymous',
+        game: data.game || 'Slots'
+      });
+    });
+    
+    // Handle balance updates
+    socket.on('balance_update', (data) => {
+      if (data.userId) {
+        // Join a room specific to this user
+        socket.join(`user:${data.userId}`);
+        
+        // Emit to all of this user's connected devices
+        io.to(`user:${data.userId}`).emit('balance_changed', {
+          balance: data.balance
+        });
+      }
+    });
+    
+    // Handle ping requests
+    socket.on('ping', () => {
+      socket.emit('pong', { timestamp: Date.now() });
+    });
+    
+    // Handle chat messages
+    socket.on('chat_message', (data) => {
+      socket.broadcast.emit('chat_message', {
+        username: data.username || 'Anonymous',
+        message: data.message,
+        timestamp: Date.now()
+      });
+    });
+    
+    // Authenticate socket connection with JWT
+    socket.on('authenticate', async (data) => {
+      try {
+        if (data.token) {
+          const user = await getUserByToken(data.token);
+          if (user) {
+            // Associate socket with user
+            socket.data.user = user;
+            
+            // Join a room specific to this user for multi-device sync
+            socket.join(`user:${user.id}`);
+            
+            socket.emit('authenticated', { success: true });
+          } else {
+            socket.emit('authenticated', { 
+              success: false, 
+              error: 'Invalid token' 
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Socket authentication error:', error);
+        socket.emit('authenticated', { 
+          success: false, 
+          error: 'Authentication failed' 
+        });
+      }
+    });
+    
+    // Handle disconnection
+    socket.on('disconnect', () => {
+      console.log('Socket.IO client disconnected:', socket.id);
+    });
+    
+    // Handle errors
+    socket.on('error', (error) => {
+      console.error('Socket.IO error:', error);
+    });
   });
   
   // Game routes
