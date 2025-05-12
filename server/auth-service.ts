@@ -6,14 +6,14 @@ import { eq } from 'drizzle-orm';
 import * as crypto from 'crypto';
 
 // Function to generate a secure password hash
-function hashPassword(password: string): string {
+export function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = crypto.createHash('sha256').update(password + salt).digest('hex');
   return `${hash}.${salt}`;
 }
 
 // Function to verify a password against a hash
-function verifyPassword(plainPassword: string, hashedPassword: string): boolean {
+export function verifyPassword(plainPassword: string, hashedPassword: string): boolean {
   const [hash, salt] = hashedPassword.split('.');
   const calculatedHash = crypto.createHash('sha256').update(plainPassword + salt).digest('hex');
   return hash === calculatedHash;

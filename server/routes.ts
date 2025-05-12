@@ -171,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { users } = await import('../shared/schema');
       const { eq } = await import('drizzle-orm');
       const { pool } = await import('../db');
-      const { verifyPassword, hashPassword } = await import('./auth-service');
+      const authService = await import('./auth-service');
       
       // Fetch complete user record with password using direct SQL
       const userResult = await pool.query(
@@ -185,14 +185,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Verify current password
       const storedPassword = userResult.rows[0].password;
-      const isPasswordValid = verifyPassword(currentPassword, storedPassword);
+      const isPasswordValid = authService.verifyPassword(currentPassword, storedPassword);
       
       if (!isPasswordValid) {
         return res.status(401).json({ message: 'Current password is incorrect' });
       }
       
       // Hash the new password
-      const hashedPassword = hashPassword(newPassword);
+      const hashedPassword = authService.hashPassword(newPassword);
       
       // Update the password
       const updatedUser = await db.update(users)
