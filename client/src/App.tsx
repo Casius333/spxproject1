@@ -10,6 +10,7 @@ import { SidebarNav, SidebarProvider } from "@/components/ui/sidebar-nav";
 import { ProtectedRoute } from "@/lib/protected-route";
 import Home from "@/pages/home";
 import Game from "@/pages/game";
+import ProfilePage from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 import AdminDashboard from "@/pages/admin";
 import AdminGames from "@/pages/admin/games";
@@ -27,6 +28,9 @@ function Router() {
       <Route path="/new-games" component={Home} />
       <Route path="/featured" component={Home} />
       <Route path="/premium" component={Home} />
+      
+      {/* Protected user routes */}
+      <ProtectedRoute path="/profile" component={ProfilePage} />
       
       {/* Admin routes */}
       <Route path="/admin" component={AdminDashboard} />
