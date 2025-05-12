@@ -5,6 +5,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { 
   Dialog, 
   DialogContent, 
+  DialogDescription,
   DialogHeader, 
   DialogTitle, 
   DialogClose 
@@ -137,6 +138,9 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
               <span className="sr-only">Close</span>
             </DialogClose>
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Manage your account settings
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -209,6 +213,10 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
 
             <Card className="bg-dark border-border/40 shadow-none">
               <CardContent className="p-4 pt-4">
+                <h4 className="text-sm font-medium mb-3 flex items-center">
+                  <Lock className="h-4 w-4 mr-2 text-primary" />
+                  Change Password
+                </h4>
                 <Form {...passwordForm}>
                   <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-3">
                     <FormField
