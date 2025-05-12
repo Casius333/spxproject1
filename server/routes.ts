@@ -385,6 +385,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/popular', gamesController.getPopularGames);
   app.get('/api/new', gamesController.getNewGames);
   
+  // Update user mobile number
+  app.post('/api/user/mobile', async (req: Request, res: Response) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    const { mobileNumber } = req.body;
+    
+    if (!token) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+    
+    try {
+      // Get user from token
+      const user = await getUserByToken(token);
+      if (!user) {
+        return res.status(401).json({ message: 'Invalid token' });
+      }
+      
+      if (!mobileNumber || typeof mobileNumber !== 'string') {
+        return res.status(400).json({ message: 'Valid mobile number is required' });
+      }
+      
+      // Import db and users from the schema
+      const { db } = await import('../db');
+      const { users } = await import('../shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      // Update user with mobile number
+      const updatedUser = await db.update(users)
+        .set({ phoneNumber: mobileNumber })
+        .where(eq(users.id, user.id))
+        .returning();
+      
+      if (!updatedUser.length) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      res.status(200).json(updatedUser[0]);
+    } catch (error: any) {
+      console.error('Update mobile number error:', error);
+      res.status(500).json({ message: error?.message || 'Failed to update mobile number' });
+    }
+  });
+  
   // Balance routes
   app.get('/api/balance', balanceController.getBalance);
   app.post('/api/balance', balanceController.updateBalance);

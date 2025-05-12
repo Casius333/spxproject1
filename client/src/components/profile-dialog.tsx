@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import {
   Dialog,
@@ -12,7 +12,7 @@ import {
   DialogDescription
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Receipt, Loader2, Trophy, ChevronRight } from "lucide-react";
+import { X, Receipt, Loader2, Trophy, ChevronRight, Mail, Smartphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { useProfileDialog } from "@/contexts/profile-dialog-context";
@@ -27,7 +27,12 @@ const passwordSchema = z.object({
   path: ["confirmPassword"],
 });
 
+const mobileSchema = z.object({
+  mobileNumber: z.string().min(1, "Mobile number is required"),
+});
+
 type PasswordFormValues = z.infer<typeof passwordSchema>;
+type MobileFormValues = z.infer<typeof mobileSchema>;
 
 interface ProfileDialogProps {
   open: boolean;
@@ -37,7 +42,9 @@ interface ProfileDialogProps {
 export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { navigateToTransactionHistory, openLoyalty } = useProfileDialog();
+  const [isEditingMobile, setIsEditingMobile] = useState(false);
 
   // Password change form
   const passwordForm = useForm<PasswordFormValues>({
@@ -46,6 +53,14 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
+    },
+  });
+
+  // Mobile number form
+  const mobileForm = useForm<MobileFormValues>({
+    resolver: zodResolver(mobileSchema),
+    defaultValues: {
+      mobileNumber: user?.phoneNumber || "",
     },
   });
 
@@ -71,9 +86,37 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
     },
   });
 
+  // Mutation to update mobile number
+  const mobileMutation = useMutation({
+    mutationFn: async (data: MobileFormValues) => {
+      const res = await apiRequest("POST", "/api/user/mobile", data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Mobile number updated",
+        description: "Your mobile number has been successfully saved.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      setIsEditingMobile(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update mobile number",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Handle password form submission
   const onPasswordSubmit = (values: PasswordFormValues) => {
     passwordMutation.mutate(values);
+  };
+
+  // Handle mobile form submission
+  const onMobileSubmit = (values: MobileFormValues) => {
+    mobileMutation.mutate(values);
   };
 
   if (!user) {
@@ -88,10 +131,10 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
           Account information and options
         </DialogDescription>
         
-        {/* Email header with close button */}
+        {/* Profile header with close button */}
         <div className="p-6 pb-4 flex justify-between items-center">
           <div className="flex-1 text-center">
-            <h2 className="text-lg font-semibold text-primary">{user.email}</h2>
+            <h2 className="text-lg font-semibold text-primary">Profile</h2>
           </div>
           <Button 
             onClick={() => onOpenChange(false)} 
@@ -105,8 +148,61 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
         {/* Divider line */}
         <div className="border-t border-border/70 mx-4"></div>
         
-        {/* Balance section */}
+        {/* Account Info section */}
         <div className="p-6 pt-4 pb-4 space-y-3">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <Mail className="h-4 w-4 text-primary mr-2" />
+              <span className="text-muted-foreground">Email</span>
+            </div>
+            <span className="text-foreground font-semibold">{user.email}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <Smartphone className="h-4 w-4 text-primary mr-2" />
+              <span className="text-muted-foreground">Mobile number</span>
+            </div>
+            
+            {isEditingMobile ? (
+              <form 
+                onSubmit={mobileForm.handleSubmit(onMobileSubmit)}
+                className="flex items-center gap-2"
+              >
+                <input
+                  {...mobileForm.register("mobileNumber")}
+                  type="text"
+                  placeholder="Enter mobile number"
+                  className="bg-dark/70 border border-border/60 rounded-md p-1 text-sm text-foreground w-40 focus:outline-none"
+                />
+                <Button 
+                  type="submit"
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground h-7 px-2 text-xs"
+                  disabled={mobileMutation.isPending}
+                >
+                  {mobileMutation.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : "Save"}
+                </Button>
+              </form>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-foreground font-semibold">
+                  {user.phoneNumber || "Not registered"}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsEditingMobile(true)}
+                  className="h-6 w-6 p-0 text-primary hover:bg-transparent"
+                >
+                  <span className="text-xs underline">
+                    {user.phoneNumber ? "Edit" : "Register"}
+                  </span>
+                </Button>
+              </div>
+            )}
+          </div>
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Real balance</span>
             <span className="text-foreground font-semibold">{formatCurrency(1000)}</span>
