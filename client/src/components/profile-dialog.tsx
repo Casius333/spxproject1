@@ -1,25 +1,17 @@
-import React, { useState } from "react";
+import React from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription,
-  DialogHeader, 
-  DialogTitle, 
-  DialogClose 
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { X, Receipt, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Shield, Phone, Mail, Lock, User, X } from "lucide-react";
+import { useBalanceContext } from "@/contexts/balance-context";
+import { formatCurrency } from "@/lib/utils";
 
 // Form validation schemas
 const passwordSchema = z.object({
@@ -31,12 +23,7 @@ const passwordSchema = z.object({
   path: ["confirmPassword"],
 });
 
-const phoneSchema = z.object({
-  phoneNumber: z.string().optional(),
-});
-
 type PasswordFormValues = z.infer<typeof passwordSchema>;
-type PhoneFormValues = z.infer<typeof phoneSchema>;
 
 interface ProfileDialogProps {
   open: boolean;
@@ -46,7 +33,8 @@ interface ProfileDialogProps {
 export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("account");
+  const { balance } = useBalanceContext();
+  const [, navigate] = useLocation();
 
   // Password change form
   const passwordForm = useForm<PasswordFormValues>({
@@ -55,14 +43,6 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
-    },
-  });
-
-  // Phone number form
-  const phoneForm = useForm<PhoneFormValues>({
-    resolver: zodResolver(phoneSchema),
-    defaultValues: {
-      phoneNumber: user?.phoneNumber || "",
     },
   });
 
@@ -88,36 +68,14 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
     },
   });
 
-  // Mutation to update phone number
-  const phoneMutation = useMutation({
-    mutationFn: async (data: PhoneFormValues) => {
-      const res = await apiRequest("PATCH", "/api/user/profile", data);
-      return await res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Profile updated",
-        description: "Your phone number has been successfully updated.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to update profile",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
   // Handle password form submission
   const onPasswordSubmit = (values: PasswordFormValues) => {
     passwordMutation.mutate(values);
   };
 
-  // Handle phone form submission
-  const onPhoneSubmit = (values: PhoneFormValues) => {
-    phoneMutation.mutate(values);
+  const handleTransactionHistory = () => {
+    navigate('/transaction-history');
+    onOpenChange(false);
   };
 
   if (!user) {
@@ -126,189 +84,118 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-dark border-border/40 max-w-md p-0 pt-6 overflow-hidden">
-        <DialogHeader className="mb-0 px-6">
-          <DialogTitle className="flex justify-between items-center">
+      <DialogContent className="bg-[#1a1f2e] border-none max-w-sm p-0 overflow-hidden">
+        <DialogDescription className="sr-only">
+          Account information and options
+        </DialogDescription>
+        
+        {/* Email header with close button */}
+        <div className="p-6 pb-4 flex justify-between items-center">
+          <div className="flex-1 text-center">
+            <h2 className="text-lg font-semibold text-amber-400">{user.email}</h2>
+          </div>
+          <Button 
+            onClick={() => onOpenChange(false)} 
+            variant="ghost" 
+            className="h-8 w-8 p-0 text-amber-400 hover:text-amber-300 hover:bg-transparent absolute right-4 top-4"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+        
+        {/* Divider line */}
+        <div className="border-t border-gray-700 mx-4"></div>
+        
+        {/* Balance section */}
+        <div className="p-6 pt-4 pb-4 space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-400">Real balance</span>
+            <span className="text-white font-semibold">{formatCurrency(balance)}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-400">Casino Bonus balance</span>
+            <span className="text-white font-semibold">{formatCurrency(0)}</span>
+          </div>
+        </div>
+        
+        {/* Divider line */}
+        <div className="border-t border-gray-700 mx-4 my-2"></div>
+        
+        {/* Menu options */}
+        <div className="p-4">
+          {/* Transaction history button */}
+          <button 
+            onClick={handleTransactionHistory}
+            className="w-full flex items-center justify-between bg-[#232736] hover:bg-[#2a2f3e] p-4 rounded-md transition-colors mb-3"
+          >
             <div className="flex items-center">
-              <User className="mr-2 h-5 w-5 text-primary" />
-              <span>Profile</span>
+              <Receipt className="h-5 w-5 text-gray-400 mr-3" />
+              <span className="text-gray-200">Transaction history</span>
             </div>
-            <DialogClose className="rounded-full h-6 w-6 p-0 hover:bg-primary/10">
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </DialogClose>
-          </DialogTitle>
-          <DialogDescription className="sr-only">
-            Manage your account settings
-          </DialogDescription>
-        </DialogHeader>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-dark/50 border-b border-border/40 p-0 h-10 rounded-none w-full">
-            <TabsTrigger
-              value="account"
-              className="flex-1 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-            >
-              <User className="mr-2 h-4 w-4" />
-              Account
-            </TabsTrigger>
-            <TabsTrigger
-              value="loyalty"
-              className="flex-1 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-            >
-              <Shield className="mr-2 h-4 w-4" />
-              Loyalty
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Account Tab Content */}
-          <TabsContent value="account" className="space-y-4 py-4 px-6">
-            <div className="space-y-4">
-              {/* User Email */}
-              <div className="flex flex-col space-y-1.5">
-                <div className="flex items-center space-x-2 rounded-md border border-border/70 p-2 bg-dark/30">
-                  <Mail className="h-4 w-4 text-primary" />
-                  <span className="text-sm text-foreground">{user.email}</span>
-                </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+            </svg>
+          </button>
+          
+          {/* Change Password section */}
+          <div className="w-full bg-[#232736] p-4 rounded-md">
+            <h3 className="text-sm font-medium mb-3 text-gray-300">Change Password</h3>
+            <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-2">
+              <div className="rounded-md border border-gray-700 bg-[#1a1f2e]/80 p-2 flex items-center">
+                <input 
+                  {...passwordForm.register("currentPassword")}
+                  type="password" 
+                  placeholder="Current password" 
+                  className="bg-transparent border-0 text-sm text-gray-300 w-full focus:outline-none"
+                />
               </div>
-
-              {/* Phone Number */}
-              <Form {...phoneForm}>
-                <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-1.5">
-                  <FormField
-                    control={phoneForm.control}
-                    name="phoneNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex space-x-2">
-                          <FormControl>
-                            <div className="flex items-center space-x-2 rounded-md border border-border/70 p-2 bg-dark/30 w-full">
-                              <Phone className="h-4 w-4 text-primary flex-shrink-0" />
-                              <Input 
-                                placeholder="Phone number" 
-                                {...field} 
-                                className="border-0 h-6 bg-transparent focus-visible:ring-0 p-0 focus-visible:ring-offset-0"
-                              />
-                            </div>
-                          </FormControl>
-                          <Button 
-                            type="submit" 
-                            className="bg-primary hover:bg-primary/90 h-9" 
-                            disabled={phoneMutation.isPending}
-                          >
-                            {phoneMutation.isPending ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              "Save"
-                            )}
-                          </Button>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </form>
-              </Form>
-            </div>
-
-            <Card className="bg-dark border-border/40 shadow-none">
-              <CardContent className="p-4 pt-4">
-                <h4 className="text-sm font-medium mb-3 flex items-center">
-                  <Lock className="h-4 w-4 mr-2 text-primary" />
-                  Change Password
-                </h4>
-                <Form {...passwordForm}>
-                  <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-3">
-                    <FormField
-                      control={passwordForm.control}
-                      name="currentPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <div className="flex items-center space-x-2 rounded-md border border-border/70 p-2 bg-dark/30">
-                              <Lock className="h-4 w-4 text-primary" />
-                              <Input 
-                                type="password" 
-                                placeholder="Current password" 
-                                {...field} 
-                                className="border-0 h-6 bg-transparent focus-visible:ring-0 p-0 focus-visible:ring-offset-0"
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={passwordForm.control}
-                      name="newPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <div className="flex items-center space-x-2 rounded-md border border-border/70 p-2 bg-dark/30">
-                              <Lock className="h-4 w-4 text-primary" />
-                              <Input 
-                                type="password" 
-                                placeholder="New password (min 6 characters)" 
-                                {...field} 
-                                className="border-0 h-6 bg-transparent focus-visible:ring-0 p-0 focus-visible:ring-offset-0"
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={passwordForm.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <div className="flex items-center space-x-2 rounded-md border border-border/70 p-2 bg-dark/30">
-                              <Lock className="h-4 w-4 text-primary" />
-                              <Input 
-                                type="password" 
-                                placeholder="Confirm new password" 
-                                {...field} 
-                                className="border-0 h-6 bg-transparent focus-visible:ring-0 p-0 focus-visible:ring-offset-0"
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-primary hover:bg-primary/90 h-9"
-                      disabled={passwordMutation.isPending}
-                    >
-                      {passwordMutation.isPending ? (
-                        <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                      ) : null}
-                      Update Password
-                    </Button>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Loyalty Tab Content */}
-          <TabsContent value="loyalty" className="px-6 py-4">
-            <div className="flex flex-col items-center justify-center p-4 text-center">
-              <div className="rounded-full bg-primary/10 p-3 mb-3">
-                <Shield className="h-6 w-6 text-primary" />
+              {passwordForm.formState.errors.currentPassword && (
+                <p className="text-xs text-red-400 mt-1">
+                  {passwordForm.formState.errors.currentPassword.message}
+                </p>
+              )}
+              
+              <div className="rounded-md border border-gray-700 bg-[#1a1f2e]/80 p-2 flex items-center">
+                <input 
+                  {...passwordForm.register("newPassword")}
+                  type="password" 
+                  placeholder="New password (min 6 characters)" 
+                  className="bg-transparent border-0 text-sm text-gray-300 w-full focus:outline-none"
+                />
               </div>
-              <h3 className="text-base font-semibold mb-1">Coming Soon</h3>
-              <p className="text-muted-foreground text-sm mb-3">
-                Our loyalty program is currently under development.
-              </p>
-              <Button variant="outline" disabled size="sm">Explore Rewards</Button>
-            </div>
-          </TabsContent>
-        </Tabs>
+              {passwordForm.formState.errors.newPassword && (
+                <p className="text-xs text-red-400 mt-1">
+                  {passwordForm.formState.errors.newPassword.message}
+                </p>
+              )}
+              
+              <div className="rounded-md border border-gray-700 bg-[#1a1f2e]/80 p-2 flex items-center">
+                <input 
+                  {...passwordForm.register("confirmPassword")}
+                  type="password" 
+                  placeholder="Confirm new password" 
+                  className="bg-transparent border-0 text-sm text-gray-300 w-full focus:outline-none"
+                />
+              </div>
+              {passwordForm.formState.errors.confirmPassword && (
+                <p className="text-xs text-red-400 mt-1">
+                  {passwordForm.formState.errors.confirmPassword.message}
+                </p>
+              )}
+              
+              <Button 
+                type="submit"
+                className="w-full mt-2 bg-amber-500 hover:bg-amber-600 text-black h-9"
+                disabled={passwordMutation.isPending}
+              >
+                {passwordMutation.isPending ? (
+                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                ) : null}
+                Update Password
+              </Button>
+            </form>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
