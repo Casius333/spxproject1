@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog
 import { Button } from "@/components/ui/button";
 import { X, Receipt, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useBalanceContext } from "@/contexts/balance-context";
 import { formatCurrency } from "@/lib/utils";
 
 // Form validation schemas
@@ -33,7 +32,6 @@ interface ProfileDialogProps {
 export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { balance } = useBalanceContext();
   const [, navigate] = useLocation();
 
   // Password change form
@@ -110,7 +108,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
         <div className="p-6 pt-4 pb-4 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-gray-400">Real balance</span>
-            <span className="text-white font-semibold">{formatCurrency(balance)}</span>
+            <span className="text-white font-semibold">{formatCurrency(1000)}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-400">Casino Bonus balance</span>
