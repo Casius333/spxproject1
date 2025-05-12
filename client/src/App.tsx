@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { BalanceProvider } from "@/contexts/balance-context";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AuthModalProvider } from "@/contexts/auth-modal-context";
+import { ProfileDialogProvider } from "@/contexts/profile-dialog-context";
 import { Header } from "@/components/ui/header";
 import { SidebarNav, SidebarProvider } from "@/components/ui/sidebar-nav";
 import { ProtectedRoute } from "@/lib/protected-route";
@@ -71,12 +72,14 @@ function App() {
       <AuthProvider>
         <AuthModalProvider>
           <SidebarProvider>
-            <BalanceProvider initialBalance={1250}>
-              <MainLayout>
-                <Router />
-              </MainLayout>
-              <Toaster />
-            </BalanceProvider>
+            <ProfileDialogProvider>
+              <BalanceProvider initialBalance={1250}>
+                <MainLayout>
+                  <Router />
+                </MainLayout>
+                <Toaster />
+              </BalanceProvider>
+            </ProfileDialogProvider>
           </SidebarProvider>
         </AuthModalProvider>
       </AuthProvider>
