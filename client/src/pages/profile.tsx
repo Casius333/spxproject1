@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { formatDate } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,7 +11,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, Shield, Phone, Mail, Lock } from "lucide-react";
+import { Loader2, Shield, Phone, Mail, Lock } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 // Form validation schemas
@@ -167,15 +166,6 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  {/* Username */}
-                  <div className="flex flex-col space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Username</label>
-                    <div className="flex items-center space-x-2 rounded-md border border-border p-3 bg-dark/30">
-                      <User className="h-5 w-5 text-primary" />
-                      <span className="text-sm text-foreground">{user.username}</span>
-                    </div>
-                  </div>
-
                   {/* Phone Number */}
                   <Form {...phoneForm}>
                     <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-4">
@@ -216,16 +206,6 @@ export default function ProfilePage() {
                       />
                     </form>
                   </Form>
-
-                  {/* Registration Date */}
-                  <div className="flex flex-col space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Registration Date</label>
-                    <div className="flex items-center space-x-2 rounded-md border border-border p-3 bg-dark/30">
-                      <span className="text-sm text-foreground">
-                        {formatDate(user.createdAt)}
-                      </span>
-                    </div>
-                  </div>
                 </div>
               </CardContent>
             </Card>
