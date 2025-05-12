@@ -170,26 +170,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { db } = await import('../db');
       const { users } = await import('../shared/schema');
       const { eq } = await import('drizzle-orm');
-      const bcrypt = await import('bcryptjs');
+      const { pool } = await import('../db');
+      const { verifyPassword, hashPassword } = await import('./auth-service');
       
-      // Fetch complete user record with password
-      const userResult = await db.query.users.findFirst({
-        where: eq(users.id, user.id),
-      });
+      // Fetch complete user record with password using direct SQL
+      const userResult = await pool.query(
+        `SELECT id, password FROM users WHERE id = $1`,
+        [user.id]
+      );
       
-      if (!userResult || !userResult.password) {
+      if (userResult.rows.length === 0 || !userResult.rows[0].password) {
         return res.status(404).json({ message: 'User not found' });
       }
       
       // Verify current password
-      const isPasswordValid = await bcrypt.compare(currentPassword, userResult.password);
+      const storedPassword = userResult.rows[0].password;
+      const isPasswordValid = verifyPassword(currentPassword, storedPassword);
+      
       if (!isPasswordValid) {
         return res.status(401).json({ message: 'Current password is incorrect' });
       }
       
       // Hash the new password
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(newPassword, salt);
+      const hashedPassword = hashPassword(newPassword);
       
       // Update the password
       const updatedUser = await db.update(users)

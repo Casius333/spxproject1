@@ -24,27 +24,46 @@ async function createDatabaseUser(email: string, username: string, hashedPasswor
   console.log(`Creating database user: ${username} (${email})`);
   
   try {
-    // Check if user already exists
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, email)
-    });
+    // Import pool for direct SQL queries
+    const { pool } = await import('../db');
     
-    if (existingUser) {
+    // Check if user already exists using direct SQL
+    const existingUser = await pool.query(
+      `SELECT id, username, email, password, created_at, updated_at FROM users WHERE email = $1`,
+      [email]
+    );
+    
+    if (existingUser.rows.length > 0) {
       console.log(`User with email ${email} already exists in database`);
-      return existingUser;
+      return {
+        id: existingUser.rows[0].id,
+        username: existingUser.rows[0].username,
+        email: existingUser.rows[0].email,
+        password: existingUser.rows[0].password,
+        createdAt: existingUser.rows[0].created_at,
+        updatedAt: existingUser.rows[0].updated_at
+      };
     }
     
-    // Create the user
-    const [newUser] = await db.insert(users).values({
-      username,
-      email,
-      password: hashedPassword,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }).returning();
+    // Create the user using direct SQL to avoid phone_number column issue
+    const newUser = await pool.query(
+      `INSERT INTO users (username, email, password, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, username, email, password, created_at, updated_at`,
+      [username, email, hashedPassword, new Date(), new Date()]
+    );
     
     console.log(`Created database user for ${email}`);
-    return newUser;
+    
+    // Return first row from the result
+    return {
+      id: newUser.rows[0].id,
+      username: newUser.rows[0].username,
+      email: newUser.rows[0].email,
+      password: newUser.rows[0].password,
+      createdAt: newUser.rows[0].created_at,
+      updatedAt: newUser.rows[0].updated_at
+    };
   } catch (error) {
     console.error("Error creating database user:", error);
     throw error;
@@ -304,7 +323,7 @@ export async function loginUser(email: string, password: string) {
       phoneNumber = phoneResult.rows[0]?.phone_number || '';
     } catch (error) {
       // If phone_number column doesn't exist, just use empty string
-      console.log('Phone number column might not exist yet:', error.message);
+      console.log('Phone number column might not exist yet:', error instanceof Error ? error.message : 'Unknown error');
     }
     
     const user = {
