@@ -6,7 +6,7 @@ import { BalanceProvider } from "@/contexts/balance-context";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AuthModalProvider } from "@/contexts/auth-modal-context";
 import { Header } from "@/components/ui/header";
-import { SidebarNav } from "@/components/ui/sidebar-nav";
+import { SidebarNav, SidebarProvider } from "@/components/ui/sidebar-nav";
 import { ProtectedRoute } from "@/lib/protected-route";
 import Home from "@/pages/home";
 import Game from "@/pages/game";
@@ -52,10 +52,10 @@ function MainLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen flex-col">
       <Header />
       <div className="flex flex-1 overflow-hidden">
-        <SidebarNav />
         <main className="flex-1 overflow-y-auto pt-4 pb-12">
           {children}
         </main>
+        <SidebarNav />
       </div>
     </div>
   );
@@ -66,12 +66,14 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <AuthModalProvider>
-          <BalanceProvider initialBalance={1250}>
-            <MainLayout>
-              <Router />
-            </MainLayout>
-            <Toaster />
-          </BalanceProvider>
+          <SidebarProvider>
+            <BalanceProvider initialBalance={1250}>
+              <MainLayout>
+                <Router />
+              </MainLayout>
+              <Toaster />
+            </BalanceProvider>
+          </SidebarProvider>
         </AuthModalProvider>
       </AuthProvider>
     </QueryClientProvider>
