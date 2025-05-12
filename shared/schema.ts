@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, decimal, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, decimal, timestamp, date, json, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
@@ -68,7 +68,7 @@ export const transactions = pgTable("transactions", {
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
-// Relations
+// Base relations
 export const categoriesRelations = relations(categories, ({ many }) => ({
   games: many(games)
 }));
@@ -115,3 +115,171 @@ export type UserBalance = typeof userBalance.$inferSelect;
 
 export type TransactionInsert = z.infer<typeof transactionsInsertSchema>;
 export type Transaction = typeof transactions.$inferSelect;
+
+// Admin users table
+export const adminUsers = pgTable("admin_users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  role: text("role").notNull().default("admin"), // admin, super_admin
+  isActive: boolean("is_active").default(true).notNull(),
+  lastLogin: timestamp("last_login"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// Promotions table for deposit bonuses
+export const promotions = pgTable("promotions", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  bonusType: text("bonus_type").notNull(), // percentage, fixed_amount
+  bonusValue: decimal("bonus_value", { precision: 10, scale: 2 }).notNull(),
+  minDeposit: decimal("min_deposit", { precision: 10, scale: 2 }).notNull(),
+  maxBonus: decimal("max_bonus", { precision: 10, scale: 2 }),
+  turnoverRequirement: decimal("turnover_requirement", { precision: 5, scale: 2 }).notNull(), // Multiplier for wagering requirement
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  imageUrl: text("image_url"),
+  createdBy: integer("created_by").references(() => adminUsers.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// Player activity logs
+export const playerActivity = pgTable("player_activity", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  activityType: text("activity_type").notNull(), // login, game_play, deposit, withdrawal
+  details: json("details"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+// Deposits table
+export const deposits = pgTable("deposits", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  method: text("method").notNull(), // credit_card, bank_transfer, crypto
+  status: text("status").notNull().default("pending"), // pending, completed, failed
+  transactionId: text("transaction_id"),
+  promotionId: integer("promotion_id").references(() => promotions.id),
+  bonusAmount: decimal("bonus_amount", { precision: 12, scale: 2 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// Withdrawals table
+export const withdrawals = pgTable("withdrawals", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  method: text("method").notNull(), // bank_transfer, crypto
+  status: text("status").notNull().default("pending"), // pending, approved, rejected, completed
+  rejectionReason: text("rejection_reason"),
+  bankDetails: json("bank_details"),
+  cryptoAddress: text("crypto_address"),
+  approvedBy: integer("approved_by").references(() => adminUsers.id),
+  processedAt: timestamp("processed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// Admin action logs
+export const adminActionLogs = pgTable("admin_action_logs", {
+  id: serial("id").primaryKey(),
+  adminId: integer("admin_id").references(() => adminUsers.id).notNull(),
+  actionType: text("action_type").notNull(), // user_update, balance_adjustment, promotion_create, etc.
+  details: json("details").notNull(),
+  ipAddress: text("ip_address"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+// Affiliate table (placeholder for future development)
+export const affiliates = pgTable("affiliates", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  code: text("code").notNull().unique(),
+  commission: decimal("commission", { precision: 5, scale: 2 }).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// New schemas for validation
+export const adminUsersInsertSchema = createInsertSchema(adminUsers, {
+  username: (schema) => schema.min(3, "Username must be at least 3 characters"),
+  email: (schema) => schema.email("Email must be valid"),
+  password: (schema) => schema.min(8, "Password must be at least 8 characters"),
+  role: (schema) => z.enum(["admin", "super_admin"])
+});
+
+export const promotionsInsertSchema = createInsertSchema(promotions, {
+  name: (schema) => schema.min(3, "Name must be at least 3 characters"),
+  bonusType: (schema) => z.enum(["percentage", "fixed_amount"]),
+  bonusValue: (schema) => schema.refine(val => parseFloat(val) > 0, "Bonus value must be positive"),
+  minDeposit: (schema) => schema.refine(val => parseFloat(val) > 0, "Minimum deposit must be positive"),
+  turnoverRequirement: (schema) => schema.refine(val => parseFloat(val) > 0, "Turnover requirement must be positive")
+});
+
+export const depositsInsertSchema = createInsertSchema(deposits);
+export const withdrawalsInsertSchema = createInsertSchema(withdrawals);
+export const playerActivityInsertSchema = createInsertSchema(playerActivity);
+export const adminActionLogsInsertSchema = createInsertSchema(adminActionLogs);
+export const affiliatesInsertSchema = createInsertSchema(affiliates);
+
+// Types for TypeScript
+export type AdminUserInsert = z.infer<typeof adminUsersInsertSchema>;
+export type AdminUser = typeof adminUsers.$inferSelect;
+
+export type PromotionInsert = z.infer<typeof promotionsInsertSchema>;
+export type Promotion = typeof promotions.$inferSelect;
+
+export type DepositInsert = z.infer<typeof depositsInsertSchema>;
+export type Deposit = typeof deposits.$inferSelect;
+
+export type WithdrawalInsert = z.infer<typeof withdrawalsInsertSchema>;
+export type Withdrawal = typeof withdrawals.$inferSelect;
+
+export type PlayerActivityInsert = z.infer<typeof playerActivityInsertSchema>;
+export type PlayerActivity = typeof playerActivity.$inferSelect;
+
+export type AdminActionLogInsert = z.infer<typeof adminActionLogsInsertSchema>;
+export type AdminActionLog = typeof adminActionLogs.$inferSelect;
+
+export type AffiliateInsert = z.infer<typeof affiliatesInsertSchema>;
+export type Affiliate = typeof affiliates.$inferSelect;
+
+// Admin-specific relations - defined after all tables have been created
+export const adminUsersRelations = relations(adminUsers, ({ many }) => ({
+  promotions: many(promotions),
+  adminActionLogs: many(adminActionLogs),
+  approvedWithdrawals: many(withdrawals, { relationName: "approver" })
+}));
+
+export const promotionsRelations = relations(promotions, ({ one, many }) => ({
+  createdByAdmin: one(adminUsers, { fields: [promotions.createdBy], references: [adminUsers.id] }),
+  deposits: many(deposits)
+}));
+
+export const depositsRelations = relations(deposits, ({ one }) => ({
+  user: one(users, { fields: [deposits.userId], references: [users.id] }),
+  promotion: one(promotions, { fields: [deposits.promotionId], references: [promotions.id] })
+}));
+
+export const withdrawalsRelations = relations(withdrawals, ({ one }) => ({
+  user: one(users, { fields: [withdrawals.userId], references: [users.id] }),
+  approvedByAdmin: one(adminUsers, { fields: [withdrawals.approvedBy], references: [adminUsers.id], relationName: "approver" })
+}));
+
+export const playerActivityRelations = relations(playerActivity, ({ one }) => ({
+  user: one(users, { fields: [playerActivity.userId], references: [users.id] })
+}));
+
+export const adminActionLogsRelations = relations(adminActionLogs, ({ one }) => ({
+  admin: one(adminUsers, { fields: [adminActionLogs.adminId], references: [adminUsers.id] })
+}));
