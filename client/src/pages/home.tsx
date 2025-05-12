@@ -5,7 +5,6 @@ import { CategoryFilter, Category, Provider } from '@/components/category-filter
 import { GameGrid } from '@/components/game-grid';
 import { CarouselBanner } from '@/components/ui/carousel-banner';
 import { PromotionBanner } from '@/components/ui/promotion-banner';
-import { RecentWins } from '@/components/win-notification';
 
 export default function Home() {
   const [location] = useLocation();
@@ -90,39 +89,30 @@ export default function Home() {
           />
         </div>
         
-        {/* Main Content with Recent Wins sidebar */}
-        <div className="flex flex-col md:flex-row gap-4">
+        {/* Main Content */}
+        <div className="space-y-1">
           {/* Games Grid */}
-          <div className="flex-1 space-y-1">
-            {searchQuery ? (
-              <GameGrid 
-                title={`Search Results for "${searchQuery}"`}
-                filter="search"
-                searchQuery={searchQuery}
-                limit={24}
-              />
-            ) : selectedProvider ? (
-              <GameGrid 
-                title=""
-                filter="provider"
-                providerId={selectedProvider}
-                limit={24}
-              />
-            ) : (
-              <GameGrid 
-                title=""
-                filter={selectedCategory} 
-                limit={24}
-              />
-            )}
-          </div>
-          
-          {/* Recent Wins Sidebar - Only show on desktop */}
-          <div className="hidden lg:block w-64">
-            <div className="sticky top-4">
-              <RecentWins />
-            </div>
-          </div>
+          {searchQuery ? (
+            <GameGrid 
+              title={`Search Results for "${searchQuery}"`}
+              filter="search"
+              searchQuery={searchQuery}
+              limit={24}
+            />
+          ) : selectedProvider ? (
+            <GameGrid 
+              title=""
+              filter="provider"
+              providerId={selectedProvider}
+              limit={24}
+            />
+          ) : (
+            <GameGrid 
+              title=""
+              filter={selectedCategory} 
+              limit={24}
+            />
+          )}
         </div>
       </div>
     </div>
