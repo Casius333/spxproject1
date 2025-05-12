@@ -1,4 +1,5 @@
 import { Express, Request, Response, NextFunction } from 'express';
+import { createHash } from 'crypto';
 import { db } from '../db';
 import { adminUsers, users, transactions, games, promotions, affiliates } from '@shared/schema';
 import { eq, sql, desc, and, gt, lt, count } from 'drizzle-orm';
@@ -12,8 +13,25 @@ export function registerAdminRoutes(app: Express) {
     try {
       const { username, password } = req.body;
       
+      console.log('Login attempt for username:', username);
+      
       if (!username || !password) {
         return res.status(400).json({ message: 'Username and password are required' });
+      }
+      
+      // Check if admin exists in db
+      const adminCheck = await db.select().from(adminUsers).where(eq(adminUsers.username, username));
+      console.log('Admin found in database:', adminCheck.length > 0 ? 'Yes' : 'No');
+      
+      if (adminCheck.length > 0) {
+        // For debug only - log the stored password hash
+        console.log('Stored hashed password:', adminCheck[0].password);
+        console.log('Hashing input password...');
+        
+        // Hash the input password and compare
+        const hashedInput = createHash('sha256').update(password).digest('hex');
+        console.log('Input password hash:', hashedInput);
+        console.log('Passwords match:', hashedInput === adminCheck[0].password);
       }
       
       const result = await loginAdmin(username, password);
