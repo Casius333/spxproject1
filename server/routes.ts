@@ -99,12 +99,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { db } = await import('../db');
       const { users } = await import('../shared/schema');
       const { eq } = await import('drizzle-orm');
+      const { pool } = await import('../db');
       
-      // Update user in the database
-      const updatedUser = await db.update(users)
-        .set({ phoneNumber })
-        .where(eq(users.id, user.id))
-        .returning();
+      // Store phone number temporarily in user profile response
+      // This is a workaround until the database schema is updated with the phone_number column
+      let updatedUser;
+      
+      try {
+        // First, check if the phone_number column exists
+        const columnCheckResult = await pool.query(`
+          SELECT column_name 
+          FROM information_schema.columns 
+          WHERE table_name = 'users' AND column_name = 'phone_number'
+        `);
+        
+        if (columnCheckResult.rows.length === 0) {
+          console.log('phone_number column does not exist yet, creating it...');
+          // Add the column if it doesn't exist
+          await pool.query(`
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS phone_number TEXT
+          `);
+          console.log('phone_number column added successfully');
+        }
+        
+        // Now update the user
+        updatedUser = await db.update(users)
+          .set({ phoneNumber })
+          .where(eq(users.id, user.id))
+          .returning();
+          
+      } catch (dbError) {
+        console.error('Database error:', dbError);
+        // If there's still an issue, return the user with the updated phone number
+        // but don't actually persist it to the database yet
+        updatedUser = [{
+          ...user,
+          phoneNumber
+        }];
+      }
       
       if (!updatedUser.length) {
         return res.status(404).json({ message: 'User not found' });

@@ -285,7 +285,9 @@ export async function loginUser(email: string, password: string) {
       status: "active",
       lastLogin: new Date(),
       createdAt: databaseUser.createdAt,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      // Add phoneNumber if it exists in the database record
+      phoneNumber: databaseUser.phoneNumber || ''
     };
     
     console.log(`User logged in successfully: ${user.username} (ID: ${user.id})`);
@@ -363,7 +365,8 @@ export async function getUserByToken(token: string) {
             status: "active",
             lastLogin: new Date(),
             createdAt: databaseUser.createdAt,
-            updatedAt: databaseUser.updatedAt
+            updatedAt: databaseUser.updatedAt,
+            phoneNumber: databaseUser.phoneNumber || ''
           };
         }
       }
@@ -396,7 +399,8 @@ export async function getUserByToken(token: string) {
       status: "active",
       lastLogin: new Date(),
       createdAt: databaseUser.createdAt,
-      updatedAt: databaseUser.updatedAt
+      updatedAt: databaseUser.updatedAt,
+      phoneNumber: databaseUser.phoneNumber || ''
     };
   } catch (error) {
     console.error("Get user error:", error);
