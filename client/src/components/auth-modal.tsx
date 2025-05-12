@@ -173,8 +173,8 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
         <DialogDescription id="auth-modal-description" className="sr-only">
           Sign in to your account or create a new one
         </DialogDescription>
-        <DialogClose asChild className="absolute right-5 top-[18px] z-10">
-          <div className="cursor-pointer h-7 w-7 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">
+        <DialogClose asChild className="absolute right-6 top-[23px] z-10">
+          <div className="cursor-pointer h-6 w-6 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">
             <X className="h-4 w-4 text-gray-300 hover:text-white" />
             <span className="sr-only">Close</span>
           </div>
