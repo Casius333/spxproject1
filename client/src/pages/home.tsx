@@ -90,30 +90,39 @@ export default function Home() {
           />
         </div>
         
-        {/* Main Content */}
-        <div className="space-y-1">
-          {/* Games Grid - No Title */}
-          {searchQuery ? (
-            <GameGrid 
-              title={`Search Results for "${searchQuery}"`}
-              filter="search"
-              searchQuery={searchQuery}
-              limit={24}
-            />
-          ) : selectedProvider ? (
-            <GameGrid 
-              title=""
-              filter="provider"
-              providerId={selectedProvider}
-              limit={24}
-            />
-          ) : (
-            <GameGrid 
-              title=""
-              filter={selectedCategory} 
-              limit={24}
-            />
-          )}
+        {/* Main Content with Recent Wins sidebar */}
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Games Grid */}
+          <div className="flex-1 space-y-1">
+            {searchQuery ? (
+              <GameGrid 
+                title={`Search Results for "${searchQuery}"`}
+                filter="search"
+                searchQuery={searchQuery}
+                limit={24}
+              />
+            ) : selectedProvider ? (
+              <GameGrid 
+                title=""
+                filter="provider"
+                providerId={selectedProvider}
+                limit={24}
+              />
+            ) : (
+              <GameGrid 
+                title=""
+                filter={selectedCategory} 
+                limit={24}
+              />
+            )}
+          </div>
+          
+          {/* Recent Wins Sidebar - Only show on desktop */}
+          <div className="hidden lg:block w-64">
+            <div className="sticky top-4">
+              <RecentWins />
+            </div>
+          </div>
         </div>
       </div>
     </div>
