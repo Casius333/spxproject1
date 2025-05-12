@@ -69,16 +69,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <TooltipProvider delayDuration={100}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Link href={item.href}>
-                        <a
-                          className={cn(
-                            "flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg mx-2",
-                            location === item.href && "bg-gray-700 text-white"
-                          )}
-                        >
-                          <item.icon size={20} />
-                          {expanded && <span className="ml-4">{item.label}</span>}
-                        </a>
+                      <Link 
+                        href={item.href}
+                        className={cn(
+                          "flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg mx-2",
+                          location === item.href && "bg-gray-700 text-white"
+                        )}
+                      >
+                        <item.icon size={20} />
+                        {expanded && <span className="ml-4">{item.label}</span>}
                       </Link>
                     </TooltipTrigger>
                     {!expanded && (

@@ -18,6 +18,7 @@ import ProfilePage from "@/pages/profile";
 import TransactionHistoryPage from "@/pages/transaction-history";
 import NotFound from "@/pages/not-found";
 import AdminLoginPage from "@/pages/admin/login";
+import AdminDashboardPage from "@/pages/admin/index";
 
 // Main application routes
 function Router() {
@@ -47,17 +48,10 @@ function Router() {
       {/* Admin routes */}
       <Route path="/admin/login" component={AdminLoginPage} />
       
-      {/* Temporary admin dashboard placeholder - will be replaced with proper components */}
+      {/* Admin dashboard */}
       <AdminProtectedRoute 
         path="/admin" 
-        component={function AdminDashboardPlaceholder() {
-          return (
-            <div className="p-8">
-              <h1 className="text-3xl font-bold mb-4">Admin Dashboard</h1>
-              <p>This is a placeholder for the admin dashboard. The full implementation is in progress.</p>
-            </div>
-          );
-        }} 
+        component={AdminDashboardPage} 
       />
       
       {/* 404 fallback */}
