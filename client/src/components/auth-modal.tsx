@@ -105,6 +105,11 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
       }, 300);
     }
   }, [isOpen]);
+  
+  // Update active tab when defaultTab changes
+  useEffect(() => {
+    setActiveTab(defaultTab);
+  }, [defaultTab]);
 
   // Login form
   const loginForm = useForm<z.infer<typeof loginSchema>>({
