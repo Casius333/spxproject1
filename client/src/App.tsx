@@ -48,11 +48,13 @@ function Router() {
       {/* Admin routes */}
       <Route path="/admin/login" component={AdminLoginPage} />
       
-      {/* Admin dashboard */}
-      <AdminProtectedRoute 
-        path="/admin" 
-        component={AdminDashboardPage} 
-      />
+      {/* Admin dashboard and sub-routes */}
+      <AdminProtectedRoute path="/admin" component={AdminDashboardPage} />
+      <AdminProtectedRoute path="/admin/reports" component={AdminDashboardPage} />
+      <AdminProtectedRoute path="/admin/players" component={AdminDashboardPage} />
+      <AdminProtectedRoute path="/admin/promotions" component={AdminDashboardPage} />
+      <AdminProtectedRoute path="/admin/affiliates" component={AdminDashboardPage} />
+      <AdminProtectedRoute path="/admin/settings" component={AdminDashboardPage} />
       
       {/* 404 fallback */}
       <Route component={NotFound} />
