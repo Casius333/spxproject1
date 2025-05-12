@@ -83,9 +83,7 @@ export function Header() {
             <>
               {/* Register and Login Buttons for non-logged in users */}
               <Button 
-                size="sm"
-                variant="outline"
-                className="text-white border-primary hover:bg-primary/20"
+                className="bg-transparent border border-primary hover:bg-primary/20 text-white font-bold transition-all duration-300"
                 onClick={() => openAuthModal('register')}
               >
                 <UserPlus className="mr-1 h-4 w-4" />
