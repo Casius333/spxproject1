@@ -203,14 +203,27 @@ export async function loginUser(email: string, password: string) {
     let skipSupabaseAuth = false;
     let needsEmailVerification = false;
     
-    // First, retrieve user from our database
-    const databaseUser = await db.query.users.findFirst({
-      where: eq(users.email, email)
-    });
+    // First, retrieve user from our database using direct SQL query
+    // to avoid the phone_number column issue
+    const { pool } = await import('../db');
+    const userResult = await pool.query(
+      `SELECT id, email, username, password, created_at, updated_at 
+       FROM users WHERE email = $1`,
+      [email]
+    );
     
-    if (!databaseUser) {
+    if (userResult.rows.length === 0) {
       throw new Error("User not found in application database");
     }
+    
+    const databaseUser = {
+      id: userResult.rows[0].id,
+      email: userResult.rows[0].email,
+      username: userResult.rows[0].username,
+      password: userResult.rows[0].password,
+      createdAt: userResult.rows[0].created_at,
+      updatedAt: userResult.rows[0].updated_at
+    };
     
     // Try to authenticate with Supabase
     try {
@@ -277,6 +290,23 @@ export async function loginUser(email: string, password: string) {
       .where(eq(users.id, databaseUser.id));
     
     // Create a user response object
+    // Try to get phone_number if it exists
+    let phoneNumber = '';
+    try {
+      // Use pool to directly query the phone_number column if it exists
+      const { pool } = await import('../db');
+      const phoneResult = await pool.query(
+        `SELECT phone_number FROM users WHERE id = $1`,
+        [databaseUser.id]
+      );
+      
+      // Use optional chaining to safely access the phone_number
+      phoneNumber = phoneResult.rows[0]?.phone_number || '';
+    } catch (error) {
+      // If phone_number column doesn't exist, just use empty string
+      console.log('Phone number column might not exist yet:', error.message);
+    }
+    
     const user = {
       id: databaseUser.id,
       email: databaseUser.email,
@@ -286,8 +316,7 @@ export async function loginUser(email: string, password: string) {
       lastLogin: new Date(),
       createdAt: databaseUser.createdAt,
       updatedAt: new Date(),
-      // Add phoneNumber if it exists in the database record
-      phoneNumber: databaseUser.phoneNumber || ''
+      phoneNumber
     };
     
     console.log(`User logged in successfully: ${user.username} (ID: ${user.id})`);
@@ -351,23 +380,49 @@ export async function getUserByToken(token: string) {
       if (parts.length >= 2) {
         const userId = parseInt(parts[1], 10);
         
-        // Find user by ID
-        const databaseUser = await db.query.users.findFirst({
-          where: eq(users.id, userId)
-        });
+        // Find user by ID using direct SQL to avoid phone_number column issue
+        const { pool } = await import('../db');
+        const userResult = await pool.query(
+          `SELECT id, email, username, created_at, updated_at
+           FROM users WHERE id = $1`,
+          [userId]
+        );
         
-        if (databaseUser) {
-          return {
-            id: databaseUser.id,
-            email: databaseUser.email,
-            username: databaseUser.username,
-            role: "user",
-            status: "active",
-            lastLogin: new Date(),
-            createdAt: databaseUser.createdAt,
-            updatedAt: databaseUser.updatedAt,
-            phoneNumber: databaseUser.phoneNumber || ''
-          };
+        if (userResult.rows.length > 0) {
+          try {
+            // Try to get phone_number if it exists
+            const phoneResult = await pool.query(
+              `SELECT phone_number FROM users WHERE id = $1`,
+              [userId]
+            );
+            
+            const phoneNumber = phoneResult.rows[0]?.phone_number || '';
+            
+            return {
+              id: userResult.rows[0].id,
+              email: userResult.rows[0].email,
+              username: userResult.rows[0].username,
+              role: "user",
+              status: "active",
+              lastLogin: new Date(),
+              createdAt: userResult.rows[0].created_at,
+              updatedAt: userResult.rows[0].updated_at,
+              phoneNumber: phoneNumber
+            };
+          } catch (error) {
+            // If can't get phone_number, return without it
+            return {
+              id: userResult.rows[0].id,
+              email: userResult.rows[0].email,
+              username: userResult.rows[0].username,
+              role: "user",
+              status: "active",
+              lastLogin: new Date(),
+              createdAt: userResult.rows[0].created_at,
+              updatedAt: userResult.rows[0].updated_at,
+              phoneNumber: ''
+            };
+          }
         }
       }
       
@@ -381,27 +436,53 @@ export async function getUserByToken(token: string) {
       return null;
     }
     
-    // Find user in our database
-    const databaseUser = await db.query.users.findFirst({
-      where: eq(users.email, data.user.email || '')
-    });
+    // Find user in our database using direct SQL to avoid phone_number column issue
+    const { pool } = await import('../db');
+    const userResult = await pool.query(
+      `SELECT id, email, username, created_at, updated_at
+       FROM users WHERE email = $1`,
+      [data.user.email || '']
+    );
     
-    if (!databaseUser) {
+    if (userResult.rows.length === 0) {
       return null;
     }
     
-    // Create a user response object
-    return {
-      id: databaseUser.id,
-      email: databaseUser.email,
-      username: databaseUser.username,
-      role: "user",
-      status: "active",
-      lastLogin: new Date(),
-      createdAt: databaseUser.createdAt,
-      updatedAt: databaseUser.updatedAt,
-      phoneNumber: databaseUser.phoneNumber || ''
-    };
+    // Try to get phone_number if it exists
+    try {
+      const phoneResult = await pool.query(
+        `SELECT phone_number FROM users WHERE id = $1`,
+        [userResult.rows[0].id]
+      );
+      
+      const phoneNumber = phoneResult.rows[0]?.phone_number || '';
+      
+      // Create a user response object
+      return {
+        id: userResult.rows[0].id,
+        email: userResult.rows[0].email,
+        username: userResult.rows[0].username,
+        role: "user",
+        status: "active",
+        lastLogin: new Date(),
+        createdAt: userResult.rows[0].created_at,
+        updatedAt: userResult.rows[0].updated_at,
+        phoneNumber: phoneNumber
+      };
+    } catch (error) {
+      // If we can't get phone_number, return user without it
+      return {
+        id: userResult.rows[0].id,
+        email: userResult.rows[0].email,
+        username: userResult.rows[0].username,
+        role: "user",
+        status: "active",
+        lastLogin: new Date(),
+        createdAt: userResult.rows[0].created_at,
+        updatedAt: userResult.rows[0].updated_at,
+        phoneNumber: ''
+      };
+    }
   } catch (error) {
     console.error("Get user error:", error);
     return null;
