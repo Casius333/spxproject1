@@ -6,14 +6,14 @@ import { eq } from 'drizzle-orm';
 import * as crypto from 'crypto';
 
 // Function to generate a secure password hash
-function hashPassword(password: string): string {
+export function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = crypto.createHash('sha256').update(password + salt).digest('hex');
   return `${hash}.${salt}`;
 }
 
 // Function to verify a password against a hash
-function verifyPassword(plainPassword: string, hashedPassword: string): boolean {
+export function verifyPassword(plainPassword: string, hashedPassword: string): boolean {
   const [hash, salt] = hashedPassword.split('.');
   const calculatedHash = crypto.createHash('sha256').update(plainPassword + salt).digest('hex');
   return hash === calculatedHash;
@@ -24,27 +24,46 @@ async function createDatabaseUser(email: string, username: string, hashedPasswor
   console.log(`Creating database user: ${username} (${email})`);
   
   try {
-    // Check if user already exists
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, email)
-    });
+    // Import pool for direct SQL queries
+    const { pool } = await import('../db');
     
-    if (existingUser) {
+    // Check if user already exists using direct SQL
+    const existingUser = await pool.query(
+      `SELECT id, username, email, password, created_at, updated_at FROM users WHERE email = $1`,
+      [email]
+    );
+    
+    if (existingUser.rows.length > 0) {
       console.log(`User with email ${email} already exists in database`);
-      return existingUser;
+      return {
+        id: existingUser.rows[0].id,
+        username: existingUser.rows[0].username,
+        email: existingUser.rows[0].email,
+        password: existingUser.rows[0].password,
+        createdAt: existingUser.rows[0].created_at,
+        updatedAt: existingUser.rows[0].updated_at
+      };
     }
     
-    // Create the user
-    const [newUser] = await db.insert(users).values({
-      username,
-      email,
-      password: hashedPassword,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }).returning();
+    // Create the user using direct SQL to avoid phone_number column issue
+    const newUser = await pool.query(
+      `INSERT INTO users (username, email, password, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, username, email, password, created_at, updated_at`,
+      [username, email, hashedPassword, new Date(), new Date()]
+    );
     
     console.log(`Created database user for ${email}`);
-    return newUser;
+    
+    // Return first row from the result
+    return {
+      id: newUser.rows[0].id,
+      username: newUser.rows[0].username,
+      email: newUser.rows[0].email,
+      password: newUser.rows[0].password,
+      createdAt: newUser.rows[0].created_at,
+      updatedAt: newUser.rows[0].updated_at
+    };
   } catch (error) {
     console.error("Error creating database user:", error);
     throw error;
@@ -203,14 +222,27 @@ export async function loginUser(email: string, password: string) {
     let skipSupabaseAuth = false;
     let needsEmailVerification = false;
     
-    // First, retrieve user from our database
-    const databaseUser = await db.query.users.findFirst({
-      where: eq(users.email, email)
-    });
+    // First, retrieve user from our database using direct SQL query
+    // to avoid the phone_number column issue
+    const { pool } = await import('../db');
+    const userResult = await pool.query(
+      `SELECT id, email, username, password, created_at, updated_at 
+       FROM users WHERE email = $1`,
+      [email]
+    );
     
-    if (!databaseUser) {
+    if (userResult.rows.length === 0) {
       throw new Error("User not found in application database");
     }
+    
+    const databaseUser = {
+      id: userResult.rows[0].id,
+      email: userResult.rows[0].email,
+      username: userResult.rows[0].username,
+      password: userResult.rows[0].password,
+      createdAt: userResult.rows[0].created_at,
+      updatedAt: userResult.rows[0].updated_at
+    };
     
     // Try to authenticate with Supabase
     try {
@@ -277,6 +309,23 @@ export async function loginUser(email: string, password: string) {
       .where(eq(users.id, databaseUser.id));
     
     // Create a user response object
+    // Try to get phone_number if it exists
+    let phoneNumber = '';
+    try {
+      // Use pool to directly query the phone_number column if it exists
+      const { pool } = await import('../db');
+      const phoneResult = await pool.query(
+        `SELECT phone_number FROM users WHERE id = $1`,
+        [databaseUser.id]
+      );
+      
+      // Use optional chaining to safely access the phone_number
+      phoneNumber = phoneResult.rows[0]?.phone_number || '';
+    } catch (error) {
+      // If phone_number column doesn't exist, just use empty string
+      console.log('Phone number column might not exist yet:', error instanceof Error ? error.message : 'Unknown error');
+    }
+    
     const user = {
       id: databaseUser.id,
       email: databaseUser.email,
@@ -285,7 +334,8 @@ export async function loginUser(email: string, password: string) {
       status: "active",
       lastLogin: new Date(),
       createdAt: databaseUser.createdAt,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      phoneNumber
     };
     
     console.log(`User logged in successfully: ${user.username} (ID: ${user.id})`);
@@ -349,22 +399,49 @@ export async function getUserByToken(token: string) {
       if (parts.length >= 2) {
         const userId = parseInt(parts[1], 10);
         
-        // Find user by ID
-        const databaseUser = await db.query.users.findFirst({
-          where: eq(users.id, userId)
-        });
+        // Find user by ID using direct SQL to avoid phone_number column issue
+        const { pool } = await import('../db');
+        const userResult = await pool.query(
+          `SELECT id, email, username, created_at, updated_at
+           FROM users WHERE id = $1`,
+          [userId]
+        );
         
-        if (databaseUser) {
-          return {
-            id: databaseUser.id,
-            email: databaseUser.email,
-            username: databaseUser.username,
-            role: "user",
-            status: "active",
-            lastLogin: new Date(),
-            createdAt: databaseUser.createdAt,
-            updatedAt: databaseUser.updatedAt
-          };
+        if (userResult.rows.length > 0) {
+          try {
+            // Try to get phone_number if it exists
+            const phoneResult = await pool.query(
+              `SELECT phone_number FROM users WHERE id = $1`,
+              [userId]
+            );
+            
+            const phoneNumber = phoneResult.rows[0]?.phone_number || '';
+            
+            return {
+              id: userResult.rows[0].id,
+              email: userResult.rows[0].email,
+              username: userResult.rows[0].username,
+              role: "user",
+              status: "active",
+              lastLogin: new Date(),
+              createdAt: userResult.rows[0].created_at,
+              updatedAt: userResult.rows[0].updated_at,
+              phoneNumber: phoneNumber
+            };
+          } catch (error) {
+            // If can't get phone_number, return without it
+            return {
+              id: userResult.rows[0].id,
+              email: userResult.rows[0].email,
+              username: userResult.rows[0].username,
+              role: "user",
+              status: "active",
+              lastLogin: new Date(),
+              createdAt: userResult.rows[0].created_at,
+              updatedAt: userResult.rows[0].updated_at,
+              phoneNumber: ''
+            };
+          }
         }
       }
       
@@ -378,26 +455,53 @@ export async function getUserByToken(token: string) {
       return null;
     }
     
-    // Find user in our database
-    const databaseUser = await db.query.users.findFirst({
-      where: eq(users.email, data.user.email || '')
-    });
+    // Find user in our database using direct SQL to avoid phone_number column issue
+    const { pool } = await import('../db');
+    const userResult = await pool.query(
+      `SELECT id, email, username, created_at, updated_at
+       FROM users WHERE email = $1`,
+      [data.user.email || '']
+    );
     
-    if (!databaseUser) {
+    if (userResult.rows.length === 0) {
       return null;
     }
     
-    // Create a user response object
-    return {
-      id: databaseUser.id,
-      email: databaseUser.email,
-      username: databaseUser.username,
-      role: "user",
-      status: "active",
-      lastLogin: new Date(),
-      createdAt: databaseUser.createdAt,
-      updatedAt: databaseUser.updatedAt
-    };
+    // Try to get phone_number if it exists
+    try {
+      const phoneResult = await pool.query(
+        `SELECT phone_number FROM users WHERE id = $1`,
+        [userResult.rows[0].id]
+      );
+      
+      const phoneNumber = phoneResult.rows[0]?.phone_number || '';
+      
+      // Create a user response object
+      return {
+        id: userResult.rows[0].id,
+        email: userResult.rows[0].email,
+        username: userResult.rows[0].username,
+        role: "user",
+        status: "active",
+        lastLogin: new Date(),
+        createdAt: userResult.rows[0].created_at,
+        updatedAt: userResult.rows[0].updated_at,
+        phoneNumber: phoneNumber
+      };
+    } catch (error) {
+      // If we can't get phone_number, return user without it
+      return {
+        id: userResult.rows[0].id,
+        email: userResult.rows[0].email,
+        username: userResult.rows[0].username,
+        role: "user",
+        status: "active",
+        lastLogin: new Date(),
+        createdAt: userResult.rows[0].created_at,
+        updatedAt: userResult.rows[0].updated_at,
+        phoneNumber: ''
+      };
+    }
   } catch (error) {
     console.error("Get user error:", error);
     return null;

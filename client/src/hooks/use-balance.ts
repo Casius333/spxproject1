@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSocketIO } from '@/hooks/use-socket-io';
+import { useAuth } from '@/hooks/use-auth';
 
 interface UseBalanceOptions {
   initialBalance?: number;
@@ -20,6 +22,29 @@ export function useBalance(options: UseBalanceOptions = {}): UseBalanceReturn {
   const [balance, setBalance] = useState<number>(initialBalance);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  
+  // Set up Socket.IO for real-time balance updates
+  const { on } = useSocketIO({
+    autoConnect: true,
+    autoAuthenticate: true
+  });
+  
+  // Listen for balance updates via Socket.IO
+  useEffect(() => {
+    // Handler for balance change events
+    const handleBalanceChange = (data: { balance: number }) => {
+      if (data.balance !== undefined) {
+        setBalance(data.balance);
+        queryClient.invalidateQueries({ queryKey: ['/api/balance'] });
+      }
+    };
+    
+    // Subscribe to balance change events
+    on('balance_changed', handleBalanceChange);
+    
+    // Cleanup is handled by useSocketIO hook
+  }, [on, queryClient]);
   
   // Fetch initial balance
   useEffect(() => {
@@ -36,6 +61,11 @@ export function useBalance(options: UseBalanceOptions = {}): UseBalanceReturn {
       });
   }, []);
 
+  // Get the emit function from Socket.IO
+  const { emit } = useSocketIO({
+    autoConnect: true
+  });
+
   const balanceMutation = useMutation({
     mutationFn: async ({ amount, action }: { amount: number, action: 'bet' | 'win' }) => {
       const response = await apiRequest('POST', '/api/balance', { amount, action });
@@ -45,6 +75,36 @@ export function useBalance(options: UseBalanceOptions = {}): UseBalanceReturn {
     onSuccess: (data) => {
       setBalance(data.balance);
       queryClient.invalidateQueries({ queryKey: ['/api/balance'] });
+      
+      // Emit balance update event to sync across devices
+      if (user) {
+        emit('balance_update', { 
+          userId: user.id,
+          balance: data.balance 
+        });
+        
+        // If this is a win, also emit a win notification
+        if (data.lastTransaction?.type === 'win' && data.lastTransaction.amount > 0) {
+          const winAmount = data.lastTransaction.amount;
+          // Only broadcast larger wins (over $10)
+          if (winAmount >= 10) {
+            emit('win', {
+              username: user.username || 'Player',
+              amount: winAmount,
+              game: 'Slots'
+            });
+          }
+          
+          // For jackpots (wins over $1000), broadcast to everyone
+          if (winAmount >= 1000) {
+            emit('jackpot', {
+              username: user.username || 'Player',
+              amount: winAmount,
+              game: 'Slots'
+            });
+          }
+        }
+      }
     },
     onError: (error) => {
       toast({

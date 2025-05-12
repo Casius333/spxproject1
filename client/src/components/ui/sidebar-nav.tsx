@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/use-auth";
+import { useProfileDialog } from "@/contexts/profile-dialog-context";
 import { Menu, Home, Wallet, User, LogOut, CreditCard, Gift } from "lucide-react";
 
 // Create sidebar context
@@ -61,6 +62,7 @@ export function SidebarNav({ className }: SidebarNavProps) {
   const { user, logoutMutation } = useAuth();
   const isMobile = useMobile();
   const { isOpen, toggleSidebar } = useSidebar();
+  const { openProfile } = useProfileDialog();
 
   // Determine if an item is active
   const isActiveLink = (href: string) => {
@@ -73,6 +75,13 @@ export function SidebarNav({ className }: SidebarNavProps) {
     if (href === '/logout') {
       e.preventDefault();
       logoutMutation.mutate();
+      toggleSidebar();
+      return;
+    }
+    
+    if (href === '/profile') {
+      e.preventDefault();
+      openProfile();
       toggleSidebar();
       return;
     }
@@ -109,7 +118,21 @@ export function SidebarNav({ className }: SidebarNavProps) {
           <nav className="space-y-1 p-4 py-3">
             {NAV_ITEMS.map((item) => (
               <div key={item.href} onClick={(e) => handleNavItemClick(item.href, e)}>
-                {item.href !== '/logout' ? (
+                {item.href === '/profile' ? (
+                  <div
+                    className={cn(
+                      "flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-primary/10 transition-colors relative group cursor-pointer",
+                      "text-white hover:text-primary"
+                    )}
+                  >
+                    <span className="flex items-center justify-center mr-3 text-primary">
+                      {item.icon}
+                    </span>
+                    <span className="transition-opacity">
+                      {item.label}
+                    </span>
+                  </div>
+                ) : item.href !== '/logout' ? (
                   <Link href={item.href}>
                     <div
                       className={cn(

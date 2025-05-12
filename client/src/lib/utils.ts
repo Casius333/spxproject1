@@ -25,10 +25,16 @@ export function shuffleArray<T>(array: T[]): T[] {
   return newArray;
 }
 
-// Create websocket connection URL
+// Create websocket connection URL (legacy WebSocket)
 export function getWebSocketUrl(): string {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   return `${protocol}//${window.location.host}/ws`;
+}
+
+// Create Socket.IO connection URL
+export function getSocketIOUrl(): string {
+  const protocol = window.location.protocol === "https:" ? "https:" : "http:";
+  return `${protocol}//${window.location.host}`;
 }
 
 // Format big numbers to shorter form (e.g., 1,000,000 -> 1M)
@@ -53,4 +59,24 @@ export function getDeviceType(): 'mobile' | 'tablet' | 'desktop' {
   if (width < 768) return 'mobile';
   if (width < 1024) return 'tablet';
   return 'desktop';
+}
+
+// Format date to readable string
+export function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return 'N/A';
+  
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(dateObj.getTime())) return 'Invalid date';
+    
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(dateObj);
+  } catch (error) {
+    return 'Invalid date';
+  }
 }

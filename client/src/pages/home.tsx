@@ -91,7 +91,7 @@ export default function Home() {
         
         {/* Main Content */}
         <div className="space-y-1">
-          {/* Games Grid - No Title */}
+          {/* Games Grid */}
           {searchQuery ? (
             <GameGrid 
               title={`Search Results for "${searchQuery}"`}
