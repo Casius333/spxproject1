@@ -157,7 +157,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
             </div>
             <span className="text-foreground font-semibold">{user.email}</span>
           </div>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col space-y-2">
             <div className="flex items-center">
               <Smartphone className="h-4 w-4 text-primary mr-2" />
               <span className="text-muted-foreground">Mobile number</span>
@@ -172,12 +172,12 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                   {...mobileForm.register("mobileNumber")}
                   type="text"
                   placeholder="Enter mobile number"
-                  className="bg-dark/70 border border-border/60 rounded-md p-1 text-sm text-foreground w-40 focus:outline-none"
+                  className="bg-dark/70 border border-border/60 rounded-md p-1 text-sm text-foreground flex-1 min-w-0 focus:outline-none"
                 />
                 <Button 
                   type="submit"
                   size="sm"
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground h-7 px-2 text-xs"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground h-7 px-2 text-xs shrink-0"
                   disabled={mobileMutation.isPending}
                 >
                   {mobileMutation.isPending ? (
@@ -186,15 +186,15 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                 </Button>
               </form>
             ) : (
-              <div className="flex items-center gap-2">
-                <span className="text-foreground font-semibold">
+              <div className="flex items-center justify-between w-full">
+                <span className="text-foreground font-semibold text-sm truncate mr-2">
                   {user.phoneNumber || "Not registered"}
                 </span>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsEditingMobile(true)}
-                  className="h-6 w-6 p-0 text-primary hover:bg-transparent"
+                  className="h-6 px-2 py-0 text-primary hover:bg-transparent shrink-0"
                 >
                   <span className="text-xs underline">
                     {user.phoneNumber ? "Edit" : "Register"}
