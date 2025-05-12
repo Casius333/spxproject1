@@ -11,7 +11,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Shield, Phone, Mail, Lock } from "lucide-react";
+import { Loader2, Shield, Phone, Mail, Lock, User } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 // Form validation schemas
