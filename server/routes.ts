@@ -4,6 +4,7 @@ import { Server as SocketIOServer } from "socket.io";
 import { gamesController } from "./controllers/games";
 import { balanceController } from "./controllers/balance";
 import { registerUser, loginUser, logoutUser, getUserByToken, authenticate, verifyOtp } from "./auth-service";
+import { registerAdminRoutes } from "./admin-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup JWT authentication routes
@@ -431,6 +432,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/balance', balanceController.getBalance);
   app.post('/api/balance', balanceController.updateBalance);
   app.get('/api/transactions', balanceController.getTransactions);
+  
+  // Register admin routes
+  registerAdminRoutes(app);
   
   return httpServer;
 }
