@@ -79,6 +79,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update user profile (phone number)
+  app.patch('/api/user/profile', async (req: Request, res: Response) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    const { phoneNumber } = req.body;
+    
+    if (!token) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+    
+    try {
+      // Get user from token
+      const user = await getUserByToken(token);
+      if (!user) {
+        return res.status(401).json({ message: 'Invalid token' });
+      }
+      
+      // Import db and users from the schema
+      const { db } = await import('../db');
+      const { users } = await import('../shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      // Update user in the database
+      const updatedUser = await db.update(users)
+        .set({ phoneNumber })
+        .where(eq(users.id, user.id))
+        .returning();
+      
+      if (!updatedUser.length) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      res.status(200).json(updatedUser[0]);
+    } catch (error: any) {
+      console.error('Update user profile error:', error);
+      res.status(500).json({ message: error?.message || 'Failed to update profile' });
+    }
+  });
+  
+  // Change user password
+  app.post('/api/user/change-password', async (req: Request, res: Response) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    const { currentPassword, newPassword } = req.body;
+    
+    if (!token) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+    
+    try {
+      // Get user from token
+      const user = await getUserByToken(token);
+      if (!user) {
+        return res.status(401).json({ message: 'Invalid token' });
+      }
+      
+      // Import necessary modules
+      const { db } = await import('../db');
+      const { users } = await import('../shared/schema');
+      const { eq } = await import('drizzle-orm');
+      const bcrypt = await import('bcryptjs');
+      
+      // Fetch complete user record with password
+      const userResult = await db.query.users.findFirst({
+        where: eq(users.id, user.id),
+      });
+      
+      if (!userResult || !userResult.password) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      // Verify current password
+      const isPasswordValid = await bcrypt.compare(currentPassword, userResult.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ message: 'Current password is incorrect' });
+      }
+      
+      // Hash the new password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+      
+      // Update the password
+      const updatedUser = await db.update(users)
+        .set({ password: hashedPassword })
+        .where(eq(users.id, user.id))
+        .returning();
+      
+      if (!updatedUser.length) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      res.status(200).json({ message: 'Password updated successfully' });
+    } catch (error: any) {
+      console.error('Change password error:', error);
+      res.status(500).json({ message: error?.message || 'Failed to change password' });
+    }
+  });
+  
   // Protected route middleware
   app.use('/api/protected', authenticate);
   
