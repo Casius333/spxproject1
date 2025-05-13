@@ -10,6 +10,8 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   phoneNumber: text("phone_number"),
+  active: boolean("active").default(true).notNull(),
+  notes: text("notes"),
   // Note: role, status, lastLogin are only in our API response but not the actual database
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()

@@ -7,6 +7,7 @@ interface AdminUser {
   username: string;
   email: string;
   role: string;
+  active: boolean;
   lastLogin?: string;
 }
 
