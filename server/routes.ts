@@ -828,9 +828,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Get breakdown of balance components
         const balanceBreakdown = await balanceController.getBalanceBreakdown(user.id, totalBalance);
         
-        // Broadcast balance update to connected clients
+        // Broadcast balance update to connected clients using both event types
+        // For devices connected with balance_changed handler
         io.emit('balance_changed', {
           balance: totalBalance,
+          ...balanceBreakdown
+        });
+        
+        // For devices connected with balance_update handler
+        io.emit('balance_update', {
+          balance: totalBalance,
+          type: 'bonus',
+          amount: amountToDeduct,
           ...balanceBreakdown
         });
       }
@@ -1103,9 +1112,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Get breakdown of balance components
           const balanceBreakdown = await balanceController.getBalanceBreakdown(user.id, totalBalance);
           
-          // Broadcast balance update to connected clients
+          // Broadcast balance update to connected clients using both event types
+          // For devices connected with balance_changed handler
           io.emit('balance_changed', {
             balance: totalBalance,
+            ...balanceBreakdown
+          });
+          
+          // For devices connected with balance_update handler
+          io.emit('balance_update', {
+            balance: totalBalance,
+            type: 'bonus',
+            amount: parseFloat(userPromotion.bonusAmount),
             ...balanceBreakdown
           });
         }
