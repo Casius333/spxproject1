@@ -90,8 +90,11 @@ export function SidebarNav({ className }: SidebarNavProps) {
     
     if (href === '/deposit') {
       e.preventDefault();
-      setIsDepositDialogOpen(true);
+      // First close the sidebar, then open the dialog after a short delay
       toggleSidebar();
+      setTimeout(() => {
+        setIsDepositDialogOpen(true);
+      }, 100);
       return;
     }
     
@@ -157,8 +160,12 @@ export function SidebarNav({ className }: SidebarNavProps) {
                       "text-white hover:text-primary"
                     )}
                     onClick={() => {
-                      setIsDepositDialogOpen(true);
+                      // First close the sidebar before opening dialog
                       toggleSidebar();
+                      // Short delay before opening dialog for better visual transition
+                      setTimeout(() => {
+                        setIsDepositDialogOpen(true);
+                      }, 100);
                     }}
                   >
                     <span className="flex items-center justify-center mr-3 text-primary">

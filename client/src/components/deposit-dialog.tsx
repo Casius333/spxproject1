@@ -158,7 +158,7 @@ const DepositDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] fixed-center">
         <DialogHeader>
           <DialogTitle>Make a Deposit</DialogTitle>
           <DialogDescription>
