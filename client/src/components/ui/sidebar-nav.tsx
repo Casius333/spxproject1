@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfileDialog } from "@/contexts/profile-dialog-context";
+import DepositDialog from "@/components/deposit-dialog";
 import { Menu, Home, Wallet, User, LogOut, CreditCard, Gift } from "lucide-react";
 
 // Create sidebar context
@@ -63,6 +64,7 @@ export function SidebarNav({ className }: SidebarNavProps) {
   const isMobile = useMobile();
   const { isOpen, toggleSidebar } = useSidebar();
   const { openProfile } = useProfileDialog();
+  const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
 
   // Determine if an item is active
   const isActiveLink = (href: string) => {
@@ -86,6 +88,13 @@ export function SidebarNav({ className }: SidebarNavProps) {
       return;
     }
     
+    if (href === '/deposit') {
+      e.preventDefault();
+      setIsDepositDialogOpen(true);
+      toggleSidebar();
+      return;
+    }
+    
     // For regular navigation links, close the sidebar
     toggleSidebar();
   };
@@ -104,6 +113,12 @@ export function SidebarNav({ className }: SidebarNavProps) {
           onClick={toggleSidebar}
         ></div>
       )}
+      
+      {/* Deposit Dialog */}
+      <DepositDialog 
+        open={isDepositDialogOpen} 
+        onOpenChange={setIsDepositDialogOpen} 
+      />
 
       {/* Floating Sidebar */}
       <aside
