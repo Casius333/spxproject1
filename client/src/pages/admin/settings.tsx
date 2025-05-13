@@ -111,7 +111,7 @@ const mockAdminUsers: AdminUser[] = [
     email: "support@luckypunt.com",
     role: "support",
     lastLogin: "2025-05-11T09:15:00Z",
-    isActive: true
+    active: true
   }
 ];
 
@@ -571,8 +571,8 @@ export default function SettingsPage() {
                             <td className="py-3 capitalize">{user.role}</td>
                             <td className="py-3">{formatDate(user.lastLogin)}</td>
                             <td className="py-3">
-                              <span className={`px-2 py-1 rounded-full text-xs ${user.isActive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                                {user.isActive ? 'Active' : 'Inactive'}
+                              <span className={`px-2 py-1 rounded-full text-xs ${user.active ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                                {user.active ? 'Active' : 'Inactive'}
                               </span>
                             </td>
                             <td className="py-3 text-right">
