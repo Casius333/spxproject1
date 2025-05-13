@@ -206,7 +206,7 @@ export const affiliates = pgTable("affiliates", {
   name: text("name").notNull(),
   code: text("code").notNull().unique(),
   commission: decimal("commission", { precision: 5, scale: 2 }).notNull(),
-  isActive: boolean("is_active").default(true).notNull(),
+  active: boolean("active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
