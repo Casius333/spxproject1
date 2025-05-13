@@ -11,11 +11,13 @@ import { Menu, Home, Wallet, User, LogOut, CreditCard, Gift } from "lucide-react
 interface SidebarContextType {
   isOpen: boolean;
   toggleSidebar: () => void;
+  closeSidebar: () => void;
 }
 
 export const SidebarContext = createContext<SidebarContextType>({
   isOpen: false,
   toggleSidebar: () => {},
+  closeSidebar: () => {},
 });
 
 export const useSidebar = () => useContext(SidebarContext);
@@ -33,8 +35,13 @@ export function SidebarProvider({ children }: SidebarProviderProps) {
     setIsOpen(prev => !prev);
   };
   
+  const closeSidebar = () => {
+    console.log("Closing sidebar");
+    setIsOpen(false);
+  };
+  
   return (
-    <SidebarContext.Provider value={{ isOpen, toggleSidebar }}>
+    <SidebarContext.Provider value={{ isOpen, toggleSidebar, closeSidebar }}>
       {children}
     </SidebarContext.Provider>
   );
@@ -62,7 +69,7 @@ export function SidebarNav({ className }: SidebarNavProps) {
   const [location, navigate] = useLocation();
   const { user, logoutMutation } = useAuth();
   const isMobile = useMobile();
-  const { isOpen, toggleSidebar } = useSidebar();
+  const { isOpen, toggleSidebar, closeSidebar } = useSidebar();
   const { openProfile } = useProfileDialog();
   const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
 
@@ -74,32 +81,35 @@ export function SidebarNav({ className }: SidebarNavProps) {
 
   // Handle sidebar item clicks
   const handleNavItemClick = (href: string, e: React.MouseEvent<HTMLDivElement>) => {
+    // Close sidebar completely first
+    closeSidebar();
+    
     if (href === '/logout') {
       e.preventDefault();
-      logoutMutation.mutate();
-      toggleSidebar();
+      // Short delay to ensure sidebar is closed first
+      setTimeout(() => {
+        logoutMutation.mutate();
+      }, 100);
       return;
     }
     
     if (href === '/profile') {
       e.preventDefault();
-      openProfile();
-      toggleSidebar();
+      // Short delay to ensure sidebar is closed first
+      setTimeout(() => {
+        openProfile();
+      }, 100);
       return;
     }
     
     if (href === '/deposit') {
       e.preventDefault();
-      // First close the sidebar, then open the dialog after a short delay
-      toggleSidebar();
+      // Short delay to ensure sidebar is closed first
       setTimeout(() => {
         setIsDepositDialogOpen(true);
       }, 100);
       return;
     }
-    
-    // For regular navigation links, close the sidebar
-    toggleSidebar();
   };
 
   // Only show sidebar for logged-in users
@@ -160,8 +170,8 @@ export function SidebarNav({ className }: SidebarNavProps) {
                       "text-white hover:text-primary"
                     )}
                     onClick={() => {
-                      // First close the sidebar before opening dialog
-                      toggleSidebar();
+                      // Hide the sidebar completely before opening dialog
+                      closeSidebar();
                       // Short delay before opening dialog for better visual transition
                       setTimeout(() => {
                         setIsDepositDialogOpen(true);
