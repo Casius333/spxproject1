@@ -838,6 +838,19 @@ export default function PromotionsPage() {
                 "overflow-hidden",
                 !promo.active && "opacity-70"
               )}>
+                {promo.imageUrl && (
+                  <div className="w-full h-40 overflow-hidden">
+                    <img 
+                      src={promo.imageUrl} 
+                      alt={promo.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Hide the image if it fails to load
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <CardTitle>{promo.name}</CardTitle>

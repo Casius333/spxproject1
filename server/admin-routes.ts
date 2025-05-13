@@ -794,6 +794,7 @@ export function registerAdminRoutes(app: Express) {
       if (daysOfWeek !== undefined) updateData.daysOfWeek = daysOfWeek;
       if (timezone !== undefined) updateData.timezone = timezone;
       if (active !== undefined) updateData.active = active;
+      if (req.body.imageUrl !== undefined) updateData.imageUrl = req.body.imageUrl;
       
       // Update promotion
       const updatedPromotion = await db.update(promotions)
