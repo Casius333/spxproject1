@@ -7,9 +7,11 @@ import { formatCurrency } from '@/lib/utils';
 import { Coins, ChevronDown, LogIn, UserPlus, Menu } from 'lucide-react';
 import { Button } from './button';
 import { useSidebar } from './sidebar-nav';
+import DepositDialog from '@/components/deposit-dialog';
 
 export function Header() {
   const [isBalanceHovered, setIsBalanceHovered] = useState(false);
+  const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
   const { balance, isLoading } = useBalanceContext();
   const { user, logoutMutation } = useAuth();
   const { openAuthModal } = useAuthModal();
@@ -57,7 +59,10 @@ export function Header() {
                       <span className="text-muted-foreground">Available Balance:</span>
                       <span className="font-bold text-white">{formatCurrency(balance)}</span>
                     </div>
-                    <button className="w-full bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary text-white rounded-md py-2 text-sm font-bold transition-all duration-300 hover:shadow-lg hover:shadow-primary/30">
+                    <button 
+                      onClick={() => setIsDepositDialogOpen(true)}
+                      className="w-full bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary text-white rounded-md py-2 text-sm font-bold transition-all duration-300 hover:shadow-lg hover:shadow-primary/30"
+                    >
                       DEPOSIT NOW
                     </button>
                   </div>
@@ -101,6 +106,13 @@ export function Header() {
           )}
         </div>
       </div>
+      
+      {/* Deposit Dialog */}
+      <DepositDialog 
+        isOpen={isDepositDialogOpen}
+        onClose={() => setIsDepositDialogOpen(false)}
+        selectedPromotion={null}
+      />
     </header>
   );
 }
