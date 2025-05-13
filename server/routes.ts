@@ -363,9 +363,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Join a room specific to this user
         socket.join(`user:${data.userId}`);
         
-        // Emit to all of this user's connected devices
+        // Emit to all of this user's connected devices using both event types
         io.to(`user:${data.userId}`).emit('balance_changed', {
-          balance: data.balance
+          balance: data.balance,
+          bonusBalance: data.bonusBalance,
+          realBalance: data.realBalance,
+          availableForWithdrawal: data.availableForWithdrawal,
+          hasActiveBonus: data.hasActiveBonus
+        });
+        
+        // Also emit with balance_update for backwards compatibility
+        io.to(`user:${data.userId}`).emit('balance_update', {
+          balance: data.balance,
+          bonusBalance: data.bonusBalance,
+          realBalance: data.realBalance,
+          availableForWithdrawal: data.availableForWithdrawal,
+          hasActiveBonus: data.hasActiveBonus,
+          type: data.type || 'update',
+          amount: data.amount || 0
         });
       }
     });
