@@ -150,8 +150,8 @@ export function Header() {
       
       {/* Deposit Dialog */}
       <DepositDialog 
-        isOpen={isDepositDialogOpen}
-        onClose={() => setIsDepositDialogOpen(false)}
+        open={isDepositDialogOpen}
+        onOpenChange={setIsDepositDialogOpen}
         selectedPromotion={null}
       />
     </header>

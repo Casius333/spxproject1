@@ -68,12 +68,16 @@ interface Promotion {
 }
 
 interface DepositDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  selectedPromotion: Promotion | null;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  selectedPromotion?: Promotion | null;
 }
 
-const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProps) => {
+const DepositDialog = ({ 
+  open = false, 
+  onOpenChange = () => {}, 
+  selectedPromotion = null 
+}: DepositDialogProps) => {
   const [depositMethod, setDepositMethod] = useState("card");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -86,7 +90,7 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
       const data = await res.json();
       return data.promotions || [];
     },
-    enabled: isOpen && !selectedPromotion, // Only fetch if dialog is open and no promotion selected
+    enabled: open && !selectedPromotion, // Only fetch if dialog is open and no promotion selected
   });
 
   const form = useForm<DepositFormValues>({
@@ -101,7 +105,7 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
 
   // Reset form when dialog opens with a selected promotion
   useEffect(() => {
-    if (isOpen) {
+    if (open) {
       form.reset({
         amount: "",
         method: "card",
@@ -109,7 +113,7 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
         promotionId: selectedPromotion ? String(selectedPromotion.id) : "none",
       });
     }
-  }, [isOpen, selectedPromotion, form]);
+  }, [open, selectedPromotion, form]);
 
   const depositMutation = useMutation({
     mutationFn: async (values: DepositFormValues) => {
@@ -134,7 +138,7 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
       queryClient.invalidateQueries({ queryKey: ["/api/promotions/active"] });
       
       // Close the dialog
-      onClose();
+      onOpenChange(false);
       
       // Reset the form
       form.reset();
@@ -153,7 +157,7 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Make a Deposit</DialogTitle>
@@ -393,7 +397,7 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
               <Button
                 type="button"
                 variant="outline"
-                onClick={onClose}
+                onClick={() => onOpenChange(false)}
                 disabled={depositMutation.isPending}
               >
                 Cancel

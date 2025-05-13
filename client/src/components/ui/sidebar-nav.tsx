@@ -150,6 +150,24 @@ export function SidebarNav({ className }: SidebarNavProps) {
                       {item.label}
                     </span>
                   </div>
+                ) : item.href === '/deposit' ? (
+                  <div
+                    className={cn(
+                      "flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-primary/10 transition-colors relative group cursor-pointer",
+                      "text-white hover:text-primary"
+                    )}
+                    onClick={() => {
+                      setIsDepositDialogOpen(true);
+                      toggleSidebar();
+                    }}
+                  >
+                    <span className="flex items-center justify-center mr-3 text-primary">
+                      {item.icon}
+                    </span>
+                    <span className="transition-opacity">
+                      {item.label}
+                    </span>
+                  </div>
                 ) : item.href !== '/logout' ? (
                   <Link href={item.href}>
                     <div
