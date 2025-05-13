@@ -5,6 +5,28 @@ import { gamesController } from "./controllers/games";
 import { balanceController } from "./controllers/balance";
 import { registerUser, loginUser, logoutUser, getUserByToken, authenticate, verifyOtp } from "./auth-service";
 import { registerAdminRoutes } from "./admin-routes";
+import { db } from "../db";
+import { and, desc, eq, gt, gte, lt, lte, or, sql, asc } from "drizzle-orm";
+import { promotions, userPromotions, users, deposits, type Promotion, type UserPromotion, userPromotionsInsertSchema } from "../shared/schema";
+
+// Helper function to check if a promotion is available today
+function isPromotionAvailableToday(promotion: Promotion): boolean {
+  const timezone = promotion.timezone || 'Australia/Sydney';
+  const now = new Date();
+  const dayOfWeek = new Date(now.toLocaleString('en-US', { timeZone: timezone })).getDay();
+  
+  const daysOfWeek = Array.isArray(promotion.daysOfWeek) 
+    ? promotion.daysOfWeek 
+    : JSON.parse(promotion.daysOfWeek as unknown as string);
+  
+  return daysOfWeek.includes(dayOfWeek);
+}
+
+// Helper function to check if a user has already used a promotion today
+async function hasUserUsedPromotionToday(userId: number, promotionId: number): Promise<boolean> {
+  // For now, return false. In a real implementation, we would check the database.
+  return false;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup JWT authentication routes
