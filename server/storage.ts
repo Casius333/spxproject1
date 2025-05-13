@@ -191,35 +191,144 @@ const mockTransactions: any[] = [];
 
 // User balance
 export async function getUserBalance(): Promise<UserBalance | undefined> {
-  return mockBalance as unknown as UserBalance;
+  // Import required modules
+  const { db } = await import('../db');
+  const { userBalance, users } = await import('../shared/schema');
+  const { eq } = await import('drizzle-orm');
+  
+  try {
+    // Try to get current user from auth system (for now using fixed ID)
+    const userId = 12; // This should be the ID of the logged-in user
+    
+    // Find existing balance record
+    const balanceRecord = await db.select().from(userBalance)
+      .where(eq(userBalance.userId, userId.toString()))
+      .limit(1);
+    
+    // If no balance record exists, create one with default balance
+    if (balanceRecord.length === 0) {
+      const defaultBalance = 1000; // Default starting balance
+      
+      // Create new balance record
+      const [newBalanceRecord] = await db.insert(userBalance)
+        .values({
+          userId: userId.toString(),
+          balance: defaultBalance.toString(),
+          updatedAt: new Date(),
+        })
+        .returning();
+      
+      return newBalanceRecord;
+    }
+    
+    return balanceRecord[0];
+  } catch (error) {
+    console.error('Error getting user balance:', error);
+    // Fallback to mock data in case of error
+    return mockBalance as unknown as UserBalance;
+  }
 }
 
-export async function updateUserBalance(amount: number, type: 'bet' | 'win' | 'deposit'): Promise<UserBalance> {
-  const balanceBefore = mockBalance.balance;
+export async function updateUserBalance(userId: number = 12, amount: number, type: 'bet' | 'win' | 'deposit' | 'bonus'): Promise<UserBalance> {
+  // Import required modules
+  const { db } = await import('../db');
+  const { userBalance, transactions } = await import('../shared/schema');
+  const { eq } = await import('drizzle-orm');
   
-  if (type === 'bet') {
-    mockBalance.balance = Math.max(0, mockBalance.balance - amount);
-  } else if (type === 'win' || type === 'deposit') {
-    mockBalance.balance += amount;
+  try {
+    // Use provided userId or default to 12
+    
+    // Get current balance (will create if doesn't exist)
+    const currentBalance = await getUserBalance();
+    
+    if (!currentBalance) {
+      throw new Error('Failed to retrieve user balance');
+    }
+    
+    // Calculate new balance
+    const balanceBefore = parseFloat(currentBalance.balance.toString());
+    let newBalanceAmount: number;
+    
+    if (type === 'bet') {
+      newBalanceAmount = Math.max(0, balanceBefore - amount);
+    } else if (type === 'win' || type === 'deposit' || type === 'bonus') {
+      newBalanceAmount = balanceBefore + amount;
+    } else {
+      newBalanceAmount = balanceBefore;
+    }
+    
+    // Update balance record
+    const [updatedBalance] = await db.update(userBalance)
+      .set({
+        balance: newBalanceAmount.toString(),
+        updatedAt: new Date()
+      })
+      .where(eq(userBalance.userId, userId.toString()))
+      .returning();
+    
+    // Create transaction record
+    await db.insert(transactions)
+      .values({
+        userId: userId.toString(),
+        type: type,
+        amount: amount.toString(),
+        balanceBefore: balanceBefore.toString(),
+        balanceAfter: newBalanceAmount.toString(),
+        createdAt: new Date()
+      });
+    
+    return updatedBalance;
+  } catch (error) {
+    console.error('Error updating user balance:', error);
+    
+    // Fallback to mock data in case of error
+    const balanceBefore = mockBalance.balance;
+    
+    if (type === 'bet') {
+      mockBalance.balance = Math.max(0, mockBalance.balance - amount);
+    } else if (type === 'win' || type === 'deposit' || type === 'bonus') {
+      mockBalance.balance += amount;
+    }
+    
+    mockBalance.updatedAt = new Date();
+    
+    // Record transaction
+    mockTransactions.push({
+      id: mockTransactions.length + 1,
+      userId: getGuestUserId(),
+      type: type,
+      amount: amount,
+      balanceBefore: balanceBefore,
+      balanceAfter: mockBalance.balance,
+      createdAt: new Date()
+    });
+    
+    return mockBalance as unknown as UserBalance;
   }
-  
-  mockBalance.updatedAt = new Date();
-  
-  // Record transaction
-  mockTransactions.push({
-    id: mockTransactions.length + 1,
-    userId: getGuestUserId(),
-    type: type,
-    amount: amount,
-    balanceBefore: balanceBefore,
-    balanceAfter: mockBalance.balance,
-    createdAt: new Date()
-  });
-  
-  return mockBalance as unknown as UserBalance;
 }
 
 // Transactions
 export async function getTransactionHistory(limit: number = 20): Promise<Transaction[]> {
-  return mockTransactions.slice(0, limit) as unknown as Transaction[];
+  // Import required modules
+  const { db } = await import('../db');
+  const { transactions } = await import('../shared/schema');
+  const { desc, eq } = await import('drizzle-orm');
+  
+  try {
+    // Get current user (for now using fixed ID)
+    const userId = 12; // This should be the ID of the logged-in user
+    
+    // Get transactions for the user, ordered by newest first
+    const transactionHistory = await db.select()
+      .from(transactions)
+      .where(eq(transactions.userId, userId.toString()))
+      .orderBy(desc(transactions.createdAt))
+      .limit(limit);
+    
+    return transactionHistory;
+  } catch (error) {
+    console.error('Error getting transaction history:', error);
+    // Fallback to mock data in case of error
+    return mockTransactions.slice(0, limit) as unknown as Transaction[];
+  }
 }

@@ -365,7 +365,29 @@ async function seed() {
     } else {
       console.log("Guest user balance already exists, skipping...");
     }
-
+    
+    // Seed admin user
+    const adminUser = {
+      username: "admin",
+      email: "admin@luckypunt.com",
+      password: createHash('sha256').update('admin123').digest('hex'),
+      role: "admin",
+      active: true
+    };
+    
+    // Check if admin user already exists
+    const existingAdmin = await db.query.adminUsers.findFirst({
+      where: eq(schema.adminUsers.username, adminUser.username)
+    });
+    
+    if (!existingAdmin) {
+      console.log("Seeding admin user...");
+      const [newAdmin] = await db.insert(schema.adminUsers).values(adminUser).returning();
+      console.log(`Created admin user with ID: ${newAdmin.id}`);
+    } else {
+      console.log("Admin user already exists, skipping...");
+    }
+    
     console.log("Database seeding completed successfully!");
   } catch (error) {
     console.error("Error seeding database:", error);

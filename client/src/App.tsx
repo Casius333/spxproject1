@@ -7,39 +7,61 @@ import { WinNotificationProvider } from "@/components/win-notification";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AuthModalProvider } from "@/contexts/auth-modal-context";
 import { ProfileDialogProvider } from "@/contexts/profile-dialog-context";
+import { AdminProvider } from "@/contexts/admin-context";
 import { Header } from "@/components/ui/header";
 import { SidebarNav, SidebarProvider } from "@/components/ui/sidebar-nav";
 import { ProtectedRoute } from "@/lib/protected-route";
+import { AdminProtectedRoute } from "@/lib/admin-protected-route";
 import Home from "@/pages/home";
 import Game from "@/pages/game";
 import ProfilePage from "@/pages/profile";
 import TransactionHistoryPage from "@/pages/transaction-history";
+import PromotionsPage from "@/pages/promotions";
 import NotFound from "@/pages/not-found";
-import AdminDashboard from "@/pages/admin";
-import AdminGames from "@/pages/admin/games";
-import AdminUsers from "@/pages/admin/users";
+import AdminLoginPage from "@/pages/admin/login";
+import AdminDashboardPage from "@/pages/admin/index";
+import PlayersPage from "@/pages/admin/players";
+import ReportsPage from "@/pages/admin/reports";
+import AdminPromotionsPage from "@/pages/admin/promotions";
+import AffiliatesPage from "@/pages/admin/affiliates";
+import SettingsPage from "@/pages/admin/settings";
 
 // Main application routes
 function Router() {
+  const [location] = useLocation();
+  const isAdminRoute = location.startsWith('/admin');
+  
   return (
     <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/game/:id" component={Game} />
-      <Route path="/category/:slug" component={Home} />
-      <Route path="/jackpots" component={Home} />
-      <Route path="/popular" component={Home} />
-      <Route path="/new-games" component={Home} />
-      <Route path="/featured" component={Home} />
-      <Route path="/premium" component={Home} />
-      
-      {/* Protected user routes */}
-      <ProtectedRoute path="/profile" component={ProfilePage} />
-      <ProtectedRoute path="/transaction-history" component={TransactionHistoryPage} />
+      {/* Regular casino routes - not accessible from admin section */}
+      {!isAdminRoute && (
+        <>
+          <Route path="/" component={Home} />
+          <Route path="/game/:id" component={Game} />
+          <Route path="/category/:slug" component={Home} />
+          <Route path="/jackpots" component={Home} />
+          <Route path="/popular" component={Home} />
+          <Route path="/new-games" component={Home} />
+          <Route path="/featured" component={Home} />
+          <Route path="/premium" component={Home} />
+          
+          {/* Protected user routes */}
+          <ProtectedRoute path="/profile" component={ProfilePage} />
+          <ProtectedRoute path="/transaction-history" component={TransactionHistoryPage} />
+          <Route path="/promotions" component={PromotionsPage} />
+        </>
+      )}
       
       {/* Admin routes */}
-      <Route path="/admin" component={AdminDashboard} />
-      <Route path="/admin/games" component={AdminGames} />
-      <Route path="/admin/users" component={AdminUsers} />
+      <Route path="/admin/login" component={AdminLoginPage} />
+      
+      {/* Admin dashboard and sub-routes */}
+      <AdminProtectedRoute path="/admin" component={AdminDashboardPage} />
+      <AdminProtectedRoute path="/admin/reports" component={ReportsPage} />
+      <AdminProtectedRoute path="/admin/players" component={PlayersPage} />
+      <AdminProtectedRoute path="/admin/promotions" component={AdminPromotionsPage} />
+      <AdminProtectedRoute path="/admin/affiliates" component={AffiliatesPage} />
+      <AdminProtectedRoute path="/admin/settings" component={SettingsPage} />
       
       {/* 404 fallback */}
       <Route component={NotFound} />
@@ -73,20 +95,22 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AuthModalProvider>
-          <SidebarProvider>
-            <ProfileDialogProvider>
-              <BalanceProvider initialBalance={1250}>
-                <WinNotificationProvider>
-                  <MainLayout>
-                    <Router />
-                  </MainLayout>
-                  <Toaster />
-                </WinNotificationProvider>
-              </BalanceProvider>
-            </ProfileDialogProvider>
-          </SidebarProvider>
-        </AuthModalProvider>
+        <AdminProvider>
+          <AuthModalProvider>
+            <SidebarProvider>
+              <ProfileDialogProvider>
+                <BalanceProvider initialBalance={1250}>
+                  <WinNotificationProvider>
+                    <MainLayout>
+                      <Router />
+                    </MainLayout>
+                    <Toaster />
+                  </WinNotificationProvider>
+                </BalanceProvider>
+              </ProfileDialogProvider>
+            </SidebarProvider>
+          </AuthModalProvider>
+        </AdminProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
