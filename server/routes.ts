@@ -34,13 +34,18 @@ async function hasUserUsedPromotionToday(userId: number, promotionId: number): P
     todayStart.setHours(0, 0, 0, 0);
     
     // Check if the user has any active or completed promotion from today
+    // Only count active or completed promotions as "used" for the day
     const result = await db.select()
       .from(userPromotions)
       .where(
         and(
           eq(userPromotions.userId, userId),
           eq(userPromotions.promotionId, promotionId),
-          gte(userPromotions.createdAt, todayStart)
+          gte(userPromotions.createdAt, todayStart),
+          or(
+            eq(userPromotions.status, 'active'),
+            eq(userPromotions.status, 'completed')
+          )
         )
       );
     
