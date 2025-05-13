@@ -888,6 +888,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Get breakdown of balance components
         const balanceBreakdown = await balanceController.getBalanceBreakdown(user.id, totalBalance);
         
+        console.log('After promotion cancellation, broadcasting balance update:');
+        console.log('- Total balance:', totalBalance);
+        console.log('- Balance breakdown:', JSON.stringify(balanceBreakdown));
+        console.log('- Deducted amount:', amountToDeduct);
+        
         // Use the helper function to broadcast balance update
         await broadcastBalanceUpdate(
           io,
@@ -895,7 +900,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalBalance,
           balanceBreakdown,
           'bonus',
-          amountToDeduct
+          -amountToDeduct // Using negative value to indicate it's a deduction
         );
       }
       
