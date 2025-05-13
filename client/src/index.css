@@ -247,4 +247,17 @@
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
   }
+  
+  /* Ensure dialog backdrop has higher z-index than sidebar */
+  [data-radix-dialog-overlay] {
+    z-index: 49 !important;
+  }
+  
+  [data-radix-dialog-content] {
+    z-index: 50 !important;
+  }
+  
+  [data-radix-popper-content-wrapper] {
+    z-index: 51 !important;
+  }
 }

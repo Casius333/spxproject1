@@ -156,9 +156,21 @@ const DepositDialog = ({
     depositMutation.mutate(values);
   };
 
+  // Custom onOpenChange handler to ensure proper backdrop and sidebar interaction
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // Ensure dialog is fully closed before any other actions
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 10);
+    } else {
+      onOpenChange(true);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] fixed-center">
+    <Dialog open={open} onOpenChange={handleOpenChange} modal={true}>
+      <DialogContent className="sm:max-w-[500px] fixed-center z-50">
         <DialogHeader>
           <DialogTitle>Make a Deposit</DialogTitle>
           <DialogDescription>
