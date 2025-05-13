@@ -711,14 +711,14 @@ export function registerAdminRoutes(app: Express) {
   app.patch(`${adminApiPrefix}/promotions/:id/status`, adminAuth, requireRole(['admin', 'super_admin']), async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { isActive } = req.body;
+      const { active } = req.body;
       
       if (!id || isNaN(parseInt(id, 10))) {
         return res.status(400).json({ message: 'Invalid promotion ID' });
       }
       
-      if (isActive === undefined) {
-        return res.status(400).json({ message: 'isActive status is required' });
+      if (active === undefined) {
+        return res.status(400).json({ message: 'active status is required' });
       }
       
       // Check if promotion exists
@@ -731,14 +731,14 @@ export function registerAdminRoutes(app: Express) {
       // Update promotion status
       const updatedPromotion = await db.update(promotions)
         .set({ 
-          isActive,
+          active,
           updatedAt: new Date()
         })
         .where(eq(promotions.id, parseInt(id, 10)))
         .returning();
       
       return res.status(200).json({
-        message: `Promotion ${isActive ? 'activated' : 'deactivated'} successfully`,
+        message: `Promotion ${active ? 'activated' : 'deactivated'} successfully`,
         promotion: updatedPromotion[0]
       });
     } catch (error: any) {

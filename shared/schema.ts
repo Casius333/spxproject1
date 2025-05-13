@@ -142,7 +142,7 @@ export const promotions = pgTable("promotions", {
   maxUsagePerDay: integer("max_usage_per_day").default(1), // Maximum number of times a user can use this promotion per day
   daysOfWeek: json("days_of_week").default([0,1,2,3,4,5,6]), // Array of days when promotion is available (0=Sunday, 1=Monday, etc)
   timezone: text("timezone").default("Australia/Sydney").notNull(), // Timezone for availability checks
-  isActive: boolean("is_active").default(true).notNull(),
+  active: boolean("active").default(true).notNull(),
   imageUrl: text("image_url"),
   createdBy: integer("created_by").references(() => adminUsers.id).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

@@ -7,7 +7,7 @@ import { Promotion } from "@shared/schema";
  */
 export function isPromotionAvailableToday(promotion: Promotion): boolean {
   // If promotion is not active, it's not available
-  if (!promotion.isActive) {
+  if (!promotion.active) {
     return false;
   }
 
@@ -38,12 +38,26 @@ export function isPromotionAvailableToday(promotion: Promotion): boolean {
  * @returns boolean indicating if the user can use the promotion today
  */
 export async function canUserUsePromotion(promotion: Promotion, userId: number): Promise<boolean> {
-  // This is a placeholder for actual implementation
-  // In a real implementation, you would check against a database of promotion usage
+  // First check if the promotion is available today
+  if (!isPromotionAvailableToday(promotion)) {
+    return false;
+  }
   
-  // Simulation of usage check - always return true for now
-  // TODO: Implement actual check against database
-  return true;
+  // Check if user has reached the daily usage limit
+  // This is a placeholder for actual implementation
+  // In a real implementation, you would check against a database of promotion usage records
+  
+  // For now, we'll simulate the check by always returning true
+  // In a production environment, you would:
+  // 1. Get today's date in the promotion's timezone
+  // 2. Query the database for count of times this user used this promotion today
+  // 3. Compare that count to the promotion's maxUsagePerDay limit
+  
+  // Simulation of usage check
+  const currentUsageCount = 0; // Placeholder - would come from database
+  const maxUsage = promotion.maxUsagePerDay || 1; // Default to 1 if not specified
+  
+  return currentUsageCount < maxUsage;
 }
 
 /**
