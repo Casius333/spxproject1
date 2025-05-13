@@ -1374,7 +1374,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Update user balance with bonus amount if applicable
           if (bonusAmount > 0) {
             // Update balance
-            const bonusBalanceUpdate = await updateUserBalance(bonusAmount, 'bonus');
+            const bonusBalanceUpdate = await updateUserBalance(user.id, bonusAmount, 'bonus');
             
             // Broadcast bonus balance update
             io.emit('balance_update', { 
