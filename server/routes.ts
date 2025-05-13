@@ -1007,11 +1007,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
       // If there was a bonus amount, we should deduct it from the user's balance
       if (parseFloat(userPromotion.bonusAmount) > 0) {
-        // Import the balance controller
-        const { updateUserBalance } = await import('./controllers/balance');
+        // Import balance storage functionality
+        const { updateUserBalance } = await import('./storage');
         
-        // Deduct the bonus amount
-        await updateUserBalance(-parseFloat(userPromotion.bonusAmount), 'bonus_revoked');
+        // Deduct the bonus amount (negative value reduces balance)
+        await updateUserBalance(-parseFloat(userPromotion.bonusAmount), 'bonus');
       }
       
       res.status(200).json({
