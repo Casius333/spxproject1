@@ -1308,17 +1308,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get balance breakdown for more detailed balance information
       const { getBalanceBreakdown } = await import('./controllers/balance');
       const totalBalance = parseFloat(updatedBalance.balance.toString());
-      const balanceBreakdown = await getBalanceBreakdown(user.id, totalBalance);
       
-      // Use standardized helper function to broadcast balance update
-      await broadcastBalanceUpdate(
-        io,
-        user.id,
-        totalBalance,
-        balanceBreakdown,
-        'deposit',
-        parseFloat(amount)
-      );
+      // First balance breakdown might not have promotions included yet
+      let balanceBreakdown = await getBalanceBreakdown(user.id, totalBalance);
+      
+      // If a promotion is being applied, the balance breakdown will be updated again later
+      // and reflected in the final response
       
       // If a promotion was selected, activate it
       // Variable to track promotion data
@@ -1447,19 +1442,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
           // Update user balance with bonus amount if applicable
           if (bonusAmount > 0) {
-            // Update balance
+            // Update balance with bonus amount
             const bonusBalanceUpdate = await updateUserBalance(user.id, bonusAmount, 'bonus');
             
-            // Broadcast bonus balance update
-            io.emit('balance_update', { 
-              balance: parseFloat(bonusBalanceUpdate.balance.toString()),
-              type: 'bonus',
-              amount: bonusAmount
-            });
+            // Get updated balance breakdown with bonus included
+            const bonusBalance = parseFloat(bonusBalanceUpdate.balance.toString());
+            const bonusBalanceBreakdown = await getBalanceBreakdown(user.id, bonusBalance);
+            
+            // Use standardized helper function to broadcast bonus update
+            await broadcastBalanceUpdate(
+              io,
+              user.id,
+              bonusBalance,
+              bonusBalanceBreakdown,
+              'bonus',
+              bonusAmount
+            );
             
             // Update the reference for the response with the latest balance
             updatedBalance = bonusBalanceUpdate;
-            console.log('Applied bonus to balance:', bonusAmount);
+            console.log('Applied bonus to balance:', bonusAmount, 'Updated breakdown:', bonusBalanceBreakdown);
           }
           
           // Include the activated promotion in the response
@@ -1492,9 +1494,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Using deposit with promotion in response');
       }
       
+      // Get final balance breakdown after all operations are complete
+      // This is important because the promotion might have been added after the initial balance update
+      const finalBalance = parseFloat(updatedBalance.balance.toString());
+      const finalBalanceBreakdown = await getBalanceBreakdown(user.id, finalBalance);
+      
+      // Broadcast final balance update with complete information
+      await broadcastBalanceUpdate(
+        io,
+        user.id,
+        finalBalance,
+        finalBalanceBreakdown,
+        'deposit',
+        parseFloat(amount)
+      );
+      
       res.status(201).json({
         message: 'Deposit successful',
-        deposit: responseDeposit
+        deposit: responseDeposit,
+        balance: {
+          total: finalBalance,
+          ...finalBalanceBreakdown
+        }
       });
     } catch (error: any) {
       console.error('Deposit error:', error);
