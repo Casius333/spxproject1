@@ -502,7 +502,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Get all active promotions
       const activePromotions = await db.query.promotions.findMany({
-        where: eq(promotions.isActive, true),
+        where: eq(promotions.active, true),
         orderBy: [desc(promotions.createdAt)]
       });
       
@@ -640,7 +640,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Verify promotion is active
-      if (!promotion.isActive) {
+      if (!promotion.active) {
         return res.status(400).json({ message: 'Promotion is not active' });
       }
       
@@ -1274,7 +1274,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Include the activated promotion in the response
-          deposit.activatedPromotion = userPromotion;
+          const depositWithPromotion = {
+            ...deposit,
+            activatedPromotion: userPromotion
+          };
           
         } catch (promoError: any) {
           console.error('Failed to activate promotion:', promoError);
@@ -1282,9 +1285,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Check if a promotion was applied
+      let responseDeposit = deposit;
+      
+      if (promotionId && typeof depositWithPromotion !== 'undefined') {
+        responseDeposit = depositWithPromotion;
+      }
+      
       res.status(201).json({
         message: 'Deposit successful',
-        deposit
+        deposit: responseDeposit
       });
     } catch (error: any) {
       console.error('Deposit error:', error);

@@ -5,8 +5,8 @@ import { z } from "zod";
 // Validation schema for balance update
 const updateBalanceSchema = z.object({
   amount: z.number().positive("Amount must be positive"),
-  action: z.enum(["bet", "win", "deposit"], {
-    errorMap: () => ({ message: "Action must be one of: bet, win, deposit" }),
+  action: z.enum(["bet", "win", "deposit", "bonus"], {
+    errorMap: () => ({ message: "Action must be one of: bet, win, deposit, bonus" }),
   }),
 });
 
