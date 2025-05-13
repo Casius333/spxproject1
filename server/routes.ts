@@ -1122,20 +1122,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If a promotion was selected, activate it
       if (promotionId) {
         try {
-          // Make internal request to activate promotion
-          // This would normally be a separate request, but we'll do it directly here
-          const { promotionId, depositId, depositAmount } = {
-            promotionId: promotionId,
-            depositId: deposit.id,
-            depositAmount: amount
-          };
+          // Get promotion ID as a number
+          const promotionIdNumber = parseInt(promotionId);
+          
+          // Prepare data for activation
+          const depositId = deposit.id;
+          const depositAmount = amount;
           
           // Fetch the promotion
           const [promotion] = await db.select()
             .from(promotions)
             .where(
               and(
-                eq(promotions.id, promotionId),
+                eq(promotions.id, promotionIdNumber),
                 eq(promotions.active, true)
               )
             );
