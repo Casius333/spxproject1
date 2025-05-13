@@ -234,7 +234,7 @@ export default function AuthPage() {
           <div className="flex items-center mb-6">
             <Dice5 className="text-primary text-6xl mr-4" />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-              LUCKY SPIN CASINO
+              LUCKYPUNT CASINO
             </h1>
           </div>
           <div className="text-center mb-8">

@@ -34,7 +34,7 @@ export function Header() {
         <div className="flex items-center justify-center">
           <Link href="/" className="flex items-center group">
             <span className="font-heading font-bold text-3xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              LUCKY SPIN
+              LUCKYPUNT
             </span>
           </Link>
         </div>
