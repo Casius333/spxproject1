@@ -1135,6 +1135,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Get all transactions since the promotion was activated
+      // These would be wins that need to be forfeited
+      const promotionWins = await db.select()
+        .from(transactions)
+        .where(
+          and(
+            eq(transactions.userId, user.id.toString()),
+            eq(transactions.type, 'win'),
+            gte(transactions.createdAt, userPromotion.createdAt)
+          )
+        );
+      
+      // Calculate total winnings during the bonus period
+      let totalWinnings = 0;
+      for (const win of promotionWins) {
+        totalWinnings += parseFloat(win.amount.toString());
+      }
+      
+      // Get bonus amount from the user promotion
+      const bonusAmount = parseFloat(userPromotion.bonusAmount);
+      
+      // Calculate total amount to deduct (bonus + winnings)
+      const amountToDeduct = bonusAmount + totalWinnings;
+      console.log('Cancelling promotion:', { 
+        bonusAmount, 
+        totalWinnings, 
+        amountToDeduct
+      });
+      
       // Update the user promotion status to cancelled
       const [updatedPromotion] = await db.update(userPromotions)
         .set({
@@ -1145,13 +1174,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
         
       // If there was a bonus amount, we should deduct it from the user's balance
-      if (parseFloat(userPromotion.bonusAmount) > 0) {
+      if (amountToDeduct > 0) {
         // Import balance storage and controller functionality
-        const { updateUserBalance } = await import('./storage');
         const { balanceController } = await import('./controllers/balance');
         
-        // Deduct the bonus amount (negative value reduces balance)
-        await updateUserBalance(user.id, -parseFloat(userPromotion.bonusAmount), 'bonus');
+        // Deduct the bonus amount and any winnings (negative amount reduces balance)
+        await balanceController.updateUserBalance(user.id, -amountToDeduct, 'bonus');
+        
+        // Record a transaction for this deduction
+        await db.insert(transactions)
+          .values({
+            userId: user.id.toString(),
+            type: 'bonus',
+            amount: (-amountToDeduct).toString(),
+            balanceBefore: '0', // This will be calculated in updateUserBalance
+            balanceAfter: '0',  // This will be calculated in updateUserBalance
+            createdAt: new Date()
+          });
         
         // Notify the client about the cancellation via Socket.IO
         // Send current socket broadcast to update balance in real-time
@@ -1172,14 +1211,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             totalBalance, 
             balanceBreakdown, 
             'bonus', 
-            parseFloat(userPromotion.bonusAmount)
+            amountToDeduct
           );
         }
       }
       
       res.status(200).json({
-        message: 'Promotion cancelled successfully',
-        userPromotion: updatedPromotion
+        message: 'Promotion cancelled successfully. Bonus funds and associated winnings have been deducted.',
+        userPromotion: updatedPromotion,
+        deductedAmount: amountToDeduct
       });
     } catch (error: any) {
       console.error('Cancel promotion error:', error);
