@@ -158,7 +158,7 @@ export default function PromotionsPage() {
   const [formData, setFormData] = useState<PromotionFormData>({
     name: "",
     description: "",
-    bonusType: "deposit_match",
+    bonusType: "bonus",
     bonusValue: "",
     maxBonus: "",
     minDeposit: "",
@@ -365,7 +365,7 @@ export default function PromotionsPage() {
     setFormData({
       name: "",
       description: "",
-      bonusType: "deposit_match",
+      bonusType: "bonus",
       bonusValue: "",
       maxBonus: "",
       minDeposit: "",
@@ -439,9 +439,8 @@ export default function PromotionsPage() {
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="deposit_match">Deposit Match (%)</SelectItem>
-                      <SelectItem value="free_spins">Free Spins</SelectItem>
-                      <SelectItem value="fixed_amount">Fixed Amount</SelectItem>
+                      <SelectItem value="bonus">Bonus (%)</SelectItem>
+                      <SelectItem value="freespin">Free Spins</SelectItem>
                       <SelectItem value="cashback">Cashback (%)</SelectItem>
                     </SelectContent>
                   </Select>
@@ -619,10 +618,9 @@ export default function PromotionsPage() {
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="deposit_match">Deposit Match</SelectItem>
-                      <SelectItem value="free_spins">Free Spins</SelectItem>
-                      <SelectItem value="cashback">Cashback</SelectItem>
-                      <SelectItem value="fixed_amount">Fixed Amount</SelectItem>
+                      <SelectItem value="bonus">Bonus (%)</SelectItem>
+                      <SelectItem value="freespin">Free Spins</SelectItem>
+                      <SelectItem value="cashback">Cashback (%)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

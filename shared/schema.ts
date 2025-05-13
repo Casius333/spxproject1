@@ -146,7 +146,7 @@ export const promotions = pgTable("promotions", {
   timezone: text("timezone").default("Australia/Sydney").notNull(), // Timezone for availability checks
   active: boolean("active").default(true).notNull(),
   imageUrl: text("image_url"),
-  createdBy: integer("created_by").references(() => adminUsers.id).notNull(),
+  createdBy: integer("created_by").references(() => adminUsers.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
@@ -223,7 +223,7 @@ export const adminUsersInsertSchema = createInsertSchema(adminUsers, {
 
 export const promotionsInsertSchema = createInsertSchema(promotions, {
   name: (schema) => schema.min(3, "Name must be at least 3 characters"),
-  bonusType: (schema) => z.enum(["percentage", "fixed_amount"]),
+  bonusType: (schema) => z.enum(["bonus", "cashback", "freespin"]),
   bonusValue: (schema) => schema.refine(val => parseFloat(val) > 0, "Bonus value must be positive"),
   minDeposit: (schema) => schema.refine(val => parseFloat(val) > 0, "Minimum deposit must be positive"),
   turnoverRequirement: (schema) => schema.refine(val => parseFloat(val) > 0, "Turnover requirement must be positive"),
