@@ -52,6 +52,7 @@ import {
   Trash,
   AlertCircle
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -569,6 +570,163 @@ export default function PromotionsPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          
+          {/* Edit Promotion Dialog */}
+          <Dialog open={showEditPromotionDialog} onOpenChange={setShowEditPromotionDialog}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit Promotion</DialogTitle>
+                <DialogDescription>
+                  Update the promotion details below.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-name">Promotion Name</Label>
+                  <Input
+                    id="edit-name"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    placeholder="e.g., Welcome Bonus"
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-description">Description</Label>
+                  <Textarea
+                    id="edit-description"
+                    value={formData.description}
+                    onChange={(e) => handleInputChange("description", e.target.value)}
+                    placeholder="Describe the promotion..."
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-bonus-type">Bonus Type</Label>
+                  <Select
+                    value={formData.bonusType}
+                    onValueChange={(value) => handleInputChange("bonusType", value)}
+                  >
+                    <SelectTrigger id="edit-bonus-type">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="deposit_match">Deposit Match</SelectItem>
+                      <SelectItem value="free_spins">Free Spins</SelectItem>
+                      <SelectItem value="cashback">Cashback</SelectItem>
+                      <SelectItem value="fixed_amount">Fixed Amount</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-bonus-value">Value</Label>
+                    <Input
+                      id="edit-bonus-value"
+                      value={formData.bonusValue}
+                      onChange={(e) => handleInputChange("bonusValue", e.target.value)}
+                      placeholder={formData.bonusType === "free_spins" ? "Number of spins" : "Percentage/Amount"}
+                    />
+                  </div>
+                  
+                  {formData.bonusType !== "fixed_amount" && (
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-max-bonus">Max Bonus</Label>
+                      <Input
+                        id="edit-max-bonus"
+                        value={formData.maxBonus}
+                        onChange={(e) => handleInputChange("maxBonus", e.target.value)}
+                        placeholder="Maximum bonus amount"
+                      />
+                    </div>
+                  )}
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-min-deposit">Minimum Deposit</Label>
+                  <Input
+                    id="edit-min-deposit"
+                    value={formData.minDeposit}
+                    onChange={(e) => handleInputChange("minDeposit", e.target.value)}
+                    placeholder="Minimum qualifying deposit"
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-wager-requirement">Wager Requirement</Label>
+                  <Input
+                    id="edit-wager-requirement"
+                    value={formData.wagerRequirement}
+                    onChange={(e) => handleInputChange("wagerRequirement", e.target.value)}
+                    placeholder="Wagering requirement (e.g., 35)"
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-usage-limit">Daily Usage Limit</Label>
+                  <Input
+                    id="edit-usage-limit"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={formData.maxUsagePerDay}
+                    onChange={(e) => handleInputChange("maxUsagePerDay", parseInt(e.target.value))}
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label>Available Days</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, index) => (
+                      <Button
+                        key={index}
+                        type="button"
+                        variant={formData.daysOfWeek.includes(index) ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          const updatedDays = formData.daysOfWeek.includes(index)
+                            ? formData.daysOfWeek.filter(d => d !== index)
+                            : [...formData.daysOfWeek, index].sort();
+                          handleInputChange("daysOfWeek", updatedDays);
+                        }}
+                      >
+                        {day}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="edit-active"
+                    checked={formData.active}
+                    onCheckedChange={(checked: boolean | "indeterminate") => 
+                      handleInputChange("active", checked === true)
+                    }
+                  />
+                  <Label htmlFor="edit-active" className="text-sm font-normal">
+                    Active promotion
+                  </Label>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => {
+                  setShowEditPromotionDialog(false);
+                  setEditingPromotion(null);
+                }}>
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  onClick={handleUpdatePromotion}
+                  disabled={updateMutation.isPending}
+                >
+                  {updateMutation.isPending ? 'Updating...' : 'Update Promotion'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Filters and search */}
@@ -676,12 +834,12 @@ export default function PromotionsPage() {
                       </span>
                     </div>
                     
-                    {promo.usageCount > 0 && (
+                    {promo.usageCount && promo.usageCount > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Usage</span>
                         <span>
                           {promo.usageCount} claims 
-                          {promo.totalValue > 0 && ` (${formatCurrency(promo.totalValue)})`}
+                          {promo.totalValue && promo.totalValue > 0 && ` (${formatCurrency(promo.totalValue)})`}
                         </span>
                       </div>
                     )}
