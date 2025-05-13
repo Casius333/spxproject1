@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import {
   Card,
   CardContent,
@@ -107,7 +108,27 @@ const mockPromotions = [
   }
 ];
 
-// Define promotion form type
+// Define promotion type
+interface Promotion {
+  id: number;
+  name: string;
+  description: string;
+  bonusType: string;
+  bonusValue: string;
+  maxBonus: string;
+  minDeposit: string;
+  wagerRequirement: number | string;
+  maxUsagePerDay: number;
+  daysOfWeek: number[];
+  timezone: string;
+  active: boolean;
+  usageCount?: number;
+  totalValue?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Define promotion form data type
 interface PromotionFormData {
   name: string;
   description: string;
@@ -143,14 +164,46 @@ export default function PromotionsPage() {
     active: true
   });
 
-  // In a real implementation, we would fetch this data from the API
+  // Query client for cache invalidation
+  const queryClient = useQueryClient();
+  
+  // Fetch promotions from the API
   const { data: promotions, isLoading } = useQuery({
     queryKey: ['/api/admin/promotions'],
-    queryFn: () => Promise.resolve(mockPromotions),
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('GET', '/api/admin/promotions');
+        return response.json();
+      } catch (error) {
+        console.error('Failed to fetch promotions:', error);
+        // Fall back to mock data if API fails
+        return mockPromotions;
+      }
+    },
+  });
+  
+  // Mutation for updating promotion status
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, active }: { id: number, active: boolean }) => {
+      const response = await apiRequest('PATCH', `/api/admin/promotions/${id}/status`, { active });
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate the promotions query to refetch the updated data
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/promotions'] });
+    },
+    onError: (error) => {
+      console.error('Failed to update promotion status:', error);
+      toast({
+        title: "Update failed",
+        description: "Failed to update promotion status. Please try again.",
+        variant: "destructive",
+      });
+    }
   });
 
   // Filter promotions based on search query and status
-  const filteredPromotions = promotions ? promotions.filter(promo => {
+  const filteredPromotions = promotions ? (Array.isArray(promotions) ? promotions : promotions.promotions || []).filter((promo: Promotion) => {
     const matchesSearch = 
       searchQuery === "" || 
       promo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -223,10 +276,17 @@ export default function PromotionsPage() {
 
   // Handle status change
   const handleStatusChange = (promoId: number, active: boolean) => {
-    toast({
-      title: `Promotion ${active ? 'activated' : 'deactivated'}`,
-      description: `Promotion #${promoId} has been ${active ? 'activated' : 'deactivated'}.`,
-    });
+    statusMutation.mutate(
+      { id: promoId, active },
+      {
+        onSuccess: (data) => {
+          toast({
+            title: `Promotion ${active ? 'activated' : 'deactivated'}`,
+            description: `Promotion #${promoId} has been ${active ? 'activated' : 'deactivated'}.`,
+          });
+        }
+      }
+    );
   };
 
   // Handle form input change
