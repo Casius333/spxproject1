@@ -12,7 +12,14 @@ import DepositDialog from '@/components/deposit-dialog';
 export function Header() {
   const [isBalanceHovered, setIsBalanceHovered] = useState(false);
   const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
-  const { balance, isLoading } = useBalanceContext();
+  const { 
+    balance, 
+    realBalance, 
+    bonusBalance, 
+    availableForWithdrawal, 
+    hasActiveBonus, 
+    isLoading 
+  } = useBalanceContext();
   const { user, logoutMutation } = useAuth();
   const { openAuthModal } = useAuthModal();
   const { toggleSidebar } = useSidebar();

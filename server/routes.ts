@@ -7,7 +7,7 @@ import { registerUser, loginUser, logoutUser, getUserByToken, authenticate, veri
 import { registerAdminRoutes } from "./admin-routes";
 import { db } from "../db";
 import { and, desc, eq, gt, gte, lt, lte, or, sql, asc } from "drizzle-orm";
-import { promotions, userPromotions, users, deposits, type Promotion, type UserPromotion, userPromotionsInsertSchema } from "../shared/schema";
+import { promotions, userPromotions, users, deposits, transactions, type Promotion, type UserPromotion, userPromotionsInsertSchema } from "../shared/schema";
 
 // Helper function to check if a promotion is available today
 function isPromotionAvailableToday(promotion: Promotion): boolean {
