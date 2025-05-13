@@ -227,7 +227,11 @@ export const promotionsInsertSchema = createInsertSchema(promotions, {
   turnoverRequirement: (schema) => schema.refine(val => parseFloat(val) > 0, "Turnover requirement must be positive"),
   maxUsagePerDay: (schema) => schema.refine(val => val > 0, "Usage limit must be positive"),
   daysOfWeek: (schema) => schema.refine(
-    val => Array.isArray(val) && val.length > 0 && val.every(day => day >= 0 && day <= 6),
+    val => {
+      if (!Array.isArray(val)) return false;
+      if (val.length === 0) return false;
+      return val.every(day => typeof day === 'number' && day >= 0 && day <= 6);
+    },
     "Days of week must be valid (0-6)"
   ),
   timezone: (schema) => schema.refine(

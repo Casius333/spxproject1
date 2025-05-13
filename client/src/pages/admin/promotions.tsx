@@ -164,10 +164,52 @@ export default function PromotionsPage() {
     return matchesSearch && matchesStatus;
   }) : [];
 
-  // Format date for display
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "No End Date";
-    return format(new Date(dateString), "PPP");
+  // Format available days for display
+  const formatAvailableDays = (daysOfWeek: number[]) => {
+    if (!daysOfWeek || daysOfWeek.length === 0) {
+      return "No days selected";
+    }
+    
+    // If all days are selected
+    if (daysOfWeek.length === 7 && 
+        daysOfWeek.includes(0) && 
+        daysOfWeek.includes(1) && 
+        daysOfWeek.includes(2) && 
+        daysOfWeek.includes(3) && 
+        daysOfWeek.includes(4) && 
+        daysOfWeek.includes(5) && 
+        daysOfWeek.includes(6)) {
+      return "Every day";
+    }
+    
+    // If only weekdays (Monday to Friday)
+    if (daysOfWeek.length === 5 && 
+        daysOfWeek.includes(1) && 
+        daysOfWeek.includes(2) && 
+        daysOfWeek.includes(3) && 
+        daysOfWeek.includes(4) && 
+        daysOfWeek.includes(5) &&
+        !daysOfWeek.includes(0) && 
+        !daysOfWeek.includes(6)) {
+      return "Weekdays only";
+    }
+    
+    // If only weekends (Saturday and Sunday)
+    if (daysOfWeek.length === 2 && 
+        daysOfWeek.includes(0) && 
+        daysOfWeek.includes(6) &&
+        !daysOfWeek.includes(1) && 
+        !daysOfWeek.includes(2) && 
+        !daysOfWeek.includes(3) && 
+        !daysOfWeek.includes(4) && 
+        !daysOfWeek.includes(5)) {
+      return "Weekends only";
+    }
+    
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const selectedDays = daysOfWeek.sort().map(day => dayNames[day]);
+    
+    return selectedDays.join(", ");
   };
 
   // Format currency
@@ -209,8 +251,9 @@ export default function PromotionsPage() {
       maxBonus: "",
       minDeposit: "",
       wagerRequirement: "",
-      startDate: new Date(),
-      endDate: undefined,
+      maxUsagePerDay: 1,
+      daysOfWeek: [0, 1, 2, 3, 4, 5, 6], // Default to all days
+      timezone: "Australia/Sydney",
       active: true
     });
   };
@@ -326,57 +369,59 @@ export default function PromotionsPage() {
                   </div>
                 </div>
                 
+                {/* Usage Configuration */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label>Start Date</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "justify-start text-left font-normal",
-                            !formData.startDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarDays className="mr-2 h-4 w-4" />
-                          {formData.startDate ? format(formData.startDate, "PPP") : <span>Pick a date</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <CalendarComponent
-                          mode="single"
-                          selected={formData.startDate}
-                          onSelect={(date) => handleInputChange("startDate", date)}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <Label htmlFor="maxUsagePerDay">Max Usage Per Day</Label>
+                    <Input
+                      id="maxUsagePerDay"
+                      type="number"
+                      min="1"
+                      value={formData.maxUsagePerDay}
+                      onChange={(e) => handleInputChange("maxUsagePerDay", parseInt(e.target.value))}
+                      placeholder="e.g., 1"
+                    />
                   </div>
-                  
+
                   <div className="grid gap-2">
-                    <Label>End Date</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "justify-start text-left font-normal",
-                            !formData.endDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarDays className="mr-2 h-4 w-4" />
-                          {formData.endDate ? format(formData.endDate, "PPP") : <span>No end date</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <CalendarComponent
-                          mode="single"
-                          selected={formData.endDate}
-                          onSelect={(date) => handleInputChange("endDate", date)}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <Label htmlFor="timezone">Timezone</Label>
+                    <Select
+                      value={formData.timezone}
+                      onValueChange={(value) => handleInputChange("timezone", value)}
+                    >
+                      <SelectTrigger id="timezone">
+                        <SelectValue placeholder="Select timezone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Australia/Sydney">Australia/Sydney</SelectItem>
+                        <SelectItem value="Australia/Melbourne">Australia/Melbourne</SelectItem>
+                        <SelectItem value="Australia/Brisbane">Australia/Brisbane</SelectItem>
+                        <SelectItem value="Australia/Perth">Australia/Perth</SelectItem>
+                        <SelectItem value="Australia/Adelaide">Australia/Adelaide</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Available Days */}
+                <div className="grid gap-2 mt-4">
+                  <Label>Available Days</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day, index) => (
+                      <Badge 
+                        key={index}
+                        variant={formData.daysOfWeek.includes(index) ? "default" : "outline"}
+                        className="cursor-pointer"
+                        onClick={() => {
+                          const newDays = formData.daysOfWeek.includes(index)
+                            ? formData.daysOfWeek.filter(d => d !== index)
+                            : [...formData.daysOfWeek, index];
+                          handleInputChange("daysOfWeek", newDays);
+                        }}
+                      >
+                        {day}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
                 
@@ -493,11 +538,20 @@ export default function PromotionsPage() {
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500 flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        Dates
+                        Available
                       </span>
                       <span className="text-right">
-                        {formatDate(promo.startDate)}
-                        {promo.endDate && <span> — {formatDate(promo.endDate)}</span>}
+                        {formatAvailableDays(promo.daysOfWeek)}
+                      </span>
+                    </div>
+                    
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        Usage Limit
+                      </span>
+                      <span className="text-right">
+                        {promo.maxUsagePerDay} per day
                       </span>
                     </div>
                     

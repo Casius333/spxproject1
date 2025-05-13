@@ -683,12 +683,17 @@ export function registerAdminRoutes(app: Express) {
       const newPromotion = await db.insert(promotions).values({
         name,
         description,
-        type,
-        value: value.toString(),
-        code: code || null,
-        startDate: startDate ? new Date(startDate) : new Date(),
-        endDate: endDate ? new Date(endDate) : null,
-        isActive: isActive !== undefined ? isActive : true,
+        bonusType: type,
+        bonusValue: value.toString(),
+        maxBonus: req.body.maxBonus?.toString() || "0",
+        minDeposit: req.body.minDeposit?.toString() || "0",
+        wagerRequirement: parseInt(req.body.wagerRequirement?.toString() || "0"),
+        maxUsagePerDay: req.body.maxUsagePerDay || 1,
+        daysOfWeek: req.body.daysOfWeek || [0,1,2,3,4,5,6], // Default to all days
+        timezone: req.body.timezone || "Australia/Sydney",
+        active: isActive !== undefined ? isActive : true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
         createdBy: req.user?.id || null
       }).returning();
       
