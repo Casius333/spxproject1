@@ -86,6 +86,7 @@ export function useBalance(options: UseBalanceOptions = {}): UseBalanceReturn {
       availableForWithdrawal?: number,
       hasActiveBonus?: boolean
     }) => {
+      console.log('balance_changed event received:', data);
       if (data.balance !== undefined) {
         setBalance(data.balance);
         
@@ -93,18 +94,31 @@ export function useBalance(options: UseBalanceOptions = {}): UseBalanceReturn {
         if (data.bonusBalance !== undefined) {
           setBonusBalance(data.bonusBalance);
           setRealBalance(data.balance - data.bonusBalance);
+        } else {
+          // If no bonus balance provided, assume it's all real money
+          setRealBalance(data.balance);
+          setBonusBalance(0);
         }
         
         // Update available for withdrawal if provided
         if (data.availableForWithdrawal !== undefined) {
           setAvailableForWithdrawal(data.availableForWithdrawal);
+        } else {
+          // If no withdrawal info, assume same as real balance (if no active bonus)
+          if (data.hasActiveBonus !== true) {
+            setAvailableForWithdrawal(data.bonusBalance !== undefined ? data.balance - data.bonusBalance : data.balance);
+          }
         }
         
         // Update active bonus flag if provided
         if (data.hasActiveBonus !== undefined) {
           setHasActiveBonus(data.hasActiveBonus);
+        } else if (data.bonusBalance !== undefined) {
+          // If hasActiveBonus not provided but bonusBalance is, infer from bonus amount
+          setHasActiveBonus(data.bonusBalance > 0);
         }
         
+        // Refresh the balance data in react-query cache
         queryClient.invalidateQueries({ queryKey: ['/api/balance'] });
       }
     };
@@ -118,6 +132,7 @@ export function useBalance(options: UseBalanceOptions = {}): UseBalanceReturn {
       availableForWithdrawal?: number,
       hasActiveBonus?: boolean
     }) => {
+      console.log('balance_update event received:', data);
       if (data.balance !== undefined) {
         setBalance(data.balance);
         
@@ -125,25 +140,44 @@ export function useBalance(options: UseBalanceOptions = {}): UseBalanceReturn {
         if (data.bonusBalance !== undefined) {
           setBonusBalance(data.bonusBalance);
           setRealBalance(data.balance - data.bonusBalance);
+        } else {
+          // If no bonus balance provided, assume it's all real money
+          setRealBalance(data.balance);
+          setBonusBalance(0);
         }
         
         // Update available for withdrawal if provided
         if (data.availableForWithdrawal !== undefined) {
           setAvailableForWithdrawal(data.availableForWithdrawal);
+        } else {
+          // If no withdrawal info, assume same as real balance (if no active bonus)
+          if (data.hasActiveBonus !== true) {
+            setAvailableForWithdrawal(data.bonusBalance !== undefined ? data.balance - data.bonusBalance : data.balance);
+          }
         }
         
         // Update active bonus flag if provided
         if (data.hasActiveBonus !== undefined) {
           setHasActiveBonus(data.hasActiveBonus);
+        } else if (data.bonusBalance !== undefined) {
+          // If hasActiveBonus not provided but bonusBalance is, infer from bonus amount
+          setHasActiveBonus(data.bonusBalance > 0);
         }
         
+        // Always refresh the balance after a socket update
         queryClient.invalidateQueries({ queryKey: ['/api/balance'] });
         
-        // Show toast notification for deposit
+        // Show toast notification for specific events
         if (data.type === 'deposit') {
           toast({
             title: 'Deposit Successful',
             description: `$${data.amount.toFixed(2)} has been added to your account.`,
+            variant: 'default',
+          });
+        } else if (data.type === 'bonus' && data.amount < 0) {
+          toast({
+            title: 'Promotion Cancelled',
+            description: `$${Math.abs(data.amount).toFixed(2)} bonus funds have been removed from your account.`,
             variant: 'default',
           });
         }

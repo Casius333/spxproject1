@@ -32,37 +32,36 @@ export async function broadcastBalanceUpdate(
   type: 'bet' | 'win' | 'deposit' | 'bonus' | 'update' = 'update',
   amount: number = 0
 ) {
-  if (!io) return;
+  if (!io) {
+    console.log('No Socket.IO instance available for balance update broadcast');
+    return;
+  }
+  
+  // Ensure we have all required data
+  const payload = {
+    balance: totalBalance,
+    userId,
+    type,
+    amount,
+    bonusBalance: balanceBreakdown.bonusBalance || 0,
+    availableForWithdrawal: balanceBreakdown.availableForWithdrawal !== undefined ? 
+      balanceBreakdown.availableForWithdrawal : 
+      (balanceBreakdown.hasActiveBonus ? 0 : totalBalance - (balanceBreakdown.bonusBalance || 0)),
+    hasActiveBonus: balanceBreakdown.hasActiveBonus || false
+  };
+  
+  console.log(`Broadcasting balance update: ${JSON.stringify(payload)}`);
   
   // Broadcast to all connected clients (global events)
   // For devices connected with balance_changed handler
-  io.emit('balance_changed', {
-    balance: totalBalance,
-    userId,
-    ...balanceBreakdown
-  });
+  io.emit('balance_changed', payload);
   
   // For devices connected with balance_update handler
-  io.emit('balance_update', {
-    balance: totalBalance,
-    userId,
-    type,
-    amount,
-    ...balanceBreakdown
-  });
+  io.emit('balance_update', payload);
   
   // Also broadcast to user-specific room for multi-device syncing
-  io.to(`user:${userId}`).emit('balance_changed', {
-    balance: totalBalance,
-    ...balanceBreakdown
-  });
-  
-  io.to(`user:${userId}`).emit('balance_update', {
-    balance: totalBalance,
-    type,
-    amount,
-    ...balanceBreakdown
-  });
+  io.to(`user:${userId}`).emit('balance_changed', payload);
+  io.to(`user:${userId}`).emit('balance_update', payload);
 }
 
 // Helper function to check if a user has already used a promotion today
@@ -369,6 +368,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
     path: '/socket.io'
   });
+  
+  // Make the io instance available throughout the app
+  app.set('socketio', io);
   
   // Socket.IO connections
   io.on('connection', (socket) => {
