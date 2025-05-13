@@ -70,57 +70,6 @@ export const transactions = pgTable("transactions", {
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
-// Base relations
-export const categoriesRelations = relations(categories, ({ many }) => ({
-  games: many(games)
-}));
-
-export const gamesRelations = relations(games, ({ one }) => ({
-  category: one(categories, { fields: [games.categoryId], references: [categories.id] })
-}));
-
-// Schemas for validation
-export const categoriesInsertSchema = createInsertSchema(categories, {
-  name: (schema) => schema.min(2, "Name must be at least 2 characters"),
-  slug: (schema) => schema.min(2, "Slug must be at least 2 characters")
-});
-
-export const gamesInsertSchema = createInsertSchema(games, {
-  title: (schema) => schema.min(2, "Title must be at least 2 characters"),
-  slug: (schema) => schema.min(2, "Slug must be at least 2 characters"),
-  provider: (schema) => schema.min(2, "Provider must be at least 2 characters"),
-  image: (schema) => schema.url("Image must be a valid URL")
-});
-
-export const usersInsertSchema = createInsertSchema(users, {
-  username: (schema) => schema.min(3, "Username must be at least 3 characters"),
-  email: (schema) => schema.email("Email must be valid"),
-  password: (schema) => schema.min(6, "Password must be at least 6 characters"),
-  phoneNumber: (schema) => schema.optional()
-});
-
-export const userBalanceInsertSchema = createInsertSchema(userBalance);
-export const transactionsInsertSchema = createInsertSchema(transactions);
-export const userPromotionsInsertSchema = createInsertSchema(userPromotions, {
-  status: (schema) => z.enum(["active", "completed", "cancelled"])
-});
-
-// Types for TypeScript
-export type UserInsert = z.infer<typeof usersInsertSchema>;
-export type User = typeof users.$inferSelect;
-
-export type CategoryInsert = z.infer<typeof categoriesInsertSchema>;
-export type Category = typeof categories.$inferSelect;
-
-export type GameInsert = z.infer<typeof gamesInsertSchema>;
-export type Game = typeof games.$inferSelect;
-
-export type UserBalanceInsert = z.infer<typeof userBalanceInsertSchema>;
-export type UserBalance = typeof userBalance.$inferSelect;
-
-export type TransactionInsert = z.infer<typeof transactionsInsertSchema>;
-export type Transaction = typeof transactions.$inferSelect;
-
 // Admin users table
 export const adminUsers = pgTable("admin_users", {
   id: serial("id").primaryKey(),
@@ -231,6 +180,57 @@ export const affiliates = pgTable("affiliates", {
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
+// Base relations
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  games: many(games)
+}));
+
+export const gamesRelations = relations(games, ({ one }) => ({
+  category: one(categories, { fields: [games.categoryId], references: [categories.id] })
+}));
+
+// Schemas for validation
+export const categoriesInsertSchema = createInsertSchema(categories, {
+  name: (schema) => schema.min(2, "Name must be at least 2 characters"),
+  slug: (schema) => schema.min(2, "Slug must be at least 2 characters")
+});
+
+export const gamesInsertSchema = createInsertSchema(games, {
+  title: (schema) => schema.min(2, "Title must be at least 2 characters"),
+  slug: (schema) => schema.min(2, "Slug must be at least 2 characters"),
+  provider: (schema) => schema.min(2, "Provider must be at least 2 characters"),
+  image: (schema) => schema.url("Image must be a valid URL")
+});
+
+export const usersInsertSchema = createInsertSchema(users, {
+  username: (schema) => schema.min(3, "Username must be at least 3 characters"),
+  email: (schema) => schema.email("Email must be valid"),
+  password: (schema) => schema.min(6, "Password must be at least 6 characters"),
+  phoneNumber: (schema) => schema.optional()
+});
+
+export const userBalanceInsertSchema = createInsertSchema(userBalance);
+export const transactionsInsertSchema = createInsertSchema(transactions);
+export const userPromotionsInsertSchema = createInsertSchema(userPromotions, {
+  status: (schema) => z.enum(["active", "completed", "cancelled"])
+});
+
+// Types for TypeScript
+export type UserInsert = z.infer<typeof usersInsertSchema>;
+export type User = typeof users.$inferSelect;
+
+export type CategoryInsert = z.infer<typeof categoriesInsertSchema>;
+export type Category = typeof categories.$inferSelect;
+
+export type GameInsert = z.infer<typeof gamesInsertSchema>;
+export type Game = typeof games.$inferSelect;
+
+export type UserBalanceInsert = z.infer<typeof userBalanceInsertSchema>;
+export type UserBalance = typeof userBalance.$inferSelect;
+
+export type TransactionInsert = z.infer<typeof transactionsInsertSchema>;
+export type Transaction = typeof transactions.$inferSelect;
+
 // New schemas for validation
 export const adminUsersInsertSchema = createInsertSchema(adminUsers, {
   username: (schema) => schema.min(3, "Username must be at least 3 characters"),
@@ -323,4 +323,10 @@ export const playerActivityRelations = relations(playerActivity, ({ one }) => ({
 
 export const adminActionLogsRelations = relations(adminActionLogs, ({ one }) => ({
   admin: one(adminUsers, { fields: [adminActionLogs.adminId], references: [adminUsers.id] })
+}));
+
+export const userPromotionsRelations = relations(userPromotions, ({ one }) => ({
+  user: one(users, { fields: [userPromotions.userId], references: [users.id] }),
+  promotion: one(promotions, { fields: [userPromotions.promotionId], references: [promotions.id] }),
+  deposit: one(deposits, { fields: [userPromotions.depositId], references: [deposits.id] })
 }));
