@@ -1305,12 +1305,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { updateUserBalance } = await import('./storage');
       let updatedBalance = await updateUserBalance(user.id, parseFloat(amount), 'deposit');
       
-      // Broadcast balance update to all connected clients
-      io.emit('balance_update', { 
-        balance: parseFloat(updatedBalance.balance.toString()),
-        type: 'deposit',
-        amount: parseFloat(amount)
-      });
+      // Get balance breakdown for more detailed balance information
+      const { getBalanceBreakdown } = await import('./controllers/balance');
+      const totalBalance = parseFloat(updatedBalance.balance.toString());
+      const balanceBreakdown = await getBalanceBreakdown(user.id, totalBalance);
+      
+      // Use standardized helper function to broadcast balance update
+      await broadcastBalanceUpdate(
+        io,
+        user.id,
+        totalBalance,
+        balanceBreakdown,
+        'deposit',
+        parseFloat(amount)
+      );
       
       // If a promotion was selected, activate it
       // Variable to track promotion data
