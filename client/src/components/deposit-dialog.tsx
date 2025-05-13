@@ -95,18 +95,18 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
       amount: "",
       method: "card",
       usePromotion: !!selectedPromotion,
-      promotionId: selectedPromotion ? String(selectedPromotion.id) : undefined,
+      promotionId: selectedPromotion ? String(selectedPromotion.id) : "none",
     },
   });
 
   // Reset form when dialog opens with a selected promotion
   useEffect(() => {
-    if (isOpen && selectedPromotion) {
+    if (isOpen) {
       form.reset({
         amount: "",
         method: "card",
-        usePromotion: true,
-        promotionId: String(selectedPromotion.id),
+        usePromotion: !!selectedPromotion,
+        promotionId: selectedPromotion ? String(selectedPromotion.id) : "none",
       });
     }
   }, [isOpen, selectedPromotion, form]);
@@ -161,27 +161,18 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
             Add funds to your account to start playing.
             {selectedPromotion && (
               <div className="mt-2">
-                <span className="block text-primary font-medium">
-                  {selectedPromotion.name} promotion will be applied to this deposit.
-                </span>
-                <div className="mt-2 text-sm rounded-lg border p-3">
-                  <p className="text-muted-foreground mb-2">{selectedPromotion.description}</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <span className="font-medium">Bonus:</span> {selectedPromotion.bonusValue}%
-                    </div>
-                    <div>
-                      <span className="font-medium">Min Deposit:</span> ${parseFloat(selectedPromotion.minDeposit).toFixed(2)}
-                    </div>
-                    {selectedPromotion.maxBonus && (
-                      <div>
-                        <span className="font-medium">Max Bonus:</span> ${parseFloat(selectedPromotion.maxBonus).toFixed(2)}
-                      </div>
-                    )}
-                    <div>
-                      <span className="font-medium">Wagering:</span> {selectedPromotion.turnoverRequirement}x
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-primary font-medium">
+                    {selectedPromotion.name}
+                  </span>
+                  <span className="text-primary-light font-medium">{selectedPromotion.bonusValue}% bonus</span>
+                </div>
+                <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 mt-1">
+                  <span><span className="font-medium">Min:</span> ${parseFloat(selectedPromotion.minDeposit).toFixed(2)}</span>
+                  {selectedPromotion.maxBonus && (
+                    <span><span className="font-medium">Max:</span> ${parseFloat(selectedPromotion.maxBonus).toFixed(2)}</span>
+                  )}
+                  <span><span className="font-medium">Wagering:</span> {selectedPromotion.turnoverRequirement}x</span>
                 </div>
               </div>
             )}
@@ -392,101 +383,74 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
             {!selectedPromotion && (
               <FormField
                 control={form.control}
-                name="usePromotion"
+                name="promotionId"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Apply Promotion</FormLabel>
-                      <FormDescription>
-                        Apply a promotion to this deposit
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
+                  <FormItem>
+                    <FormLabel>Select Promotion (Optional)</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        // Also set usePromotion to true if a promotion is selected, false otherwise
+                        form.setValue("usePromotion", value !== "none");
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="No promotion" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">No promotion</SelectItem>
+                        {isLoadingPromotions ? (
+                          <SelectItem value="loading" disabled>
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            Loading promotions...
+                          </SelectItem>
+                        ) : availablePromotions && availablePromotions.length > 0 ? (
+                          availablePromotions.map((promo) => (
+                            <SelectItem key={promo.id} value={String(promo.id)}>
+                              {promo.name} - {promo.bonusValue}%
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="none" disabled>No promotions available</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
             )}
-
-            {/* Promotion selection (only shown if usePromotion is true) */}
-            {form.watch("usePromotion") && !selectedPromotion && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="promotionId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Select Promotion</FormLabel>
-                      <Select
-                        defaultValue={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a promotion" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {isLoadingPromotions ? (
-                            <SelectItem value="loading">
-                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                              Loading promotions...
-                            </SelectItem>
-                          ) : availablePromotions && availablePromotions.length > 0 ? (
-                            availablePromotions.map((promo) => (
-                              <SelectItem key={promo.id} value={String(promo.id)}>
-                                {promo.name} - {promo.bonusValue}%
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem value="none">No promotions available</SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                {/* Selected promotion details */}
-                {form.watch("promotionId") && availablePromotions && (
-                  <div className="rounded-lg border p-4 mt-2">
-                    {(() => {
-                      const selectedPromoId = form.watch("promotionId");
-                      const promo = availablePromotions.find(p => String(p.id) === selectedPromoId);
-                      
-                      if (!promo) return null;
-                      
-                      return (
-                        <>
-                          <h4 className="font-semibold text-primary">{promo.name}</h4>
-                          <p className="text-sm text-muted-foreground mb-2">{promo.description}</p>
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div>
-                              <span className="font-medium">Bonus:</span> {promo.bonusValue}%
-                            </div>
-                            <div>
-                              <span className="font-medium">Min Deposit:</span> ${parseFloat(promo.minDeposit).toFixed(2)}
-                            </div>
-                            {promo.maxBonus && (
-                              <div>
-                                <span className="font-medium">Max Bonus:</span> ${parseFloat(promo.maxBonus).toFixed(2)}
-                              </div>
-                            )}
-                            <div>
-                              <span className="font-medium">Wagering:</span> {promo.turnoverRequirement}x
-                            </div>
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-                )}
-              </>
+            
+            {/* Selected promotion details */}
+            {form.watch("promotionId") && form.watch("promotionId") !== "none" && availablePromotions && !selectedPromotion && (
+              <div className="rounded-lg border p-3 mt-2 bg-muted/30">
+                {(() => {
+                  const selectedPromoId = form.watch("promotionId");
+                  const promo = availablePromotions.find(p => String(p.id) === selectedPromoId);
+                  
+                  if (!promo) return null;
+                  
+                  return (
+                    <div className="text-sm">
+                      <div className="flex justify-between items-center mb-1">
+                        <h4 className="font-semibold text-primary">{promo.name}</h4>
+                        <div className="font-medium text-primary-light">{promo.bonusValue}% bonus</div>
+                      </div>
+                      <p className="text-muted-foreground mb-1 text-xs">{promo.description}</p>
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs mt-2">
+                        <div><span className="font-medium">Min:</span> ${parseFloat(promo.minDeposit).toFixed(2)}</div>
+                        {promo.maxBonus && (
+                          <div><span className="font-medium">Max:</span> ${parseFloat(promo.maxBonus).toFixed(2)}</div>
+                        )}
+                        <div><span className="font-medium">Wagering:</span> {promo.turnoverRequirement}x</div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             )}
 
             <DialogFooter>
