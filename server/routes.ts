@@ -1089,6 +1089,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'Not authenticated' });
       }
       
+      // Verify the deposits table exists
+      try {
+        await db.select().from(deposits).limit(1);
+      } catch (error) {
+        console.error('Failed to query deposits table:', error);
+        return res.status(500).json({ message: 'Database configuration issue with deposits table' });
+      }
+      
       // Create the deposit
       const [deposit] = await db.insert(deposits)
         .values({
@@ -1096,7 +1104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           amount: amount.toString(),
           method,
           status: 'completed', // Auto-complete for now
-          promotionId: promotionId || null
+          promotionId: promotionId ? parseInt(promotionId) : null
         })
         .returning();
         
