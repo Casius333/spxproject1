@@ -82,71 +82,28 @@ const mockPromotions = [
     maxBonus: "500",
     minDeposit: "20",
     active: true,
-    startDate: "2025-01-01T00:00:00Z",
-    endDate: "2025-12-31T23:59:59Z",
+    maxUsagePerDay: 1,
+    daysOfWeek: [0, 1, 2, 3, 4, 5, 6], // Available every day
+    timezone: "Australia/Sydney",
     wagerRequirement: 35,
     usageCount: 423,
     totalValue: 156750.00
   },
   { 
-    id: 2, 
-    name: "Free Spins Friday", 
-    description: "Get 50 free spins on 'Lucky Dragon' every Friday with a deposit of $25 or more",
-    bonusType: "free_spins",
-    bonusValue: "50",
-    maxBonus: null,
-    minDeposit: "25",
-    active: true,
-    startDate: "2025-03-01T00:00:00Z",
-    endDate: "2025-12-31T23:59:59Z",
-    wagerRequirement: 25,
-    usageCount: 386,
-    totalValue: 12860.00
-  },
-  { 
     id: 3, 
     name: "Reload Bonus", 
-    description: "50% bonus on deposits up to $200, available once per week",
+    description: "50% bonus on deposits up to $200, available once per day on weekdays",
     bonusType: "deposit_match",
     bonusValue: "50",
     maxBonus: "200",
     minDeposit: "50",
     active: true,
-    startDate: "2025-02-15T00:00:00Z",
-    endDate: "2025-12-31T23:59:59Z",
+    maxUsagePerDay: 1,
+    daysOfWeek: [1, 2, 3, 4, 5], // Monday to Friday
+    timezone: "Australia/Sydney",
     wagerRequirement: 30,
     usageCount: 542,
     totalValue: 64350.00
-  },
-  { 
-    id: 4, 
-    name: "Refer a Friend", 
-    description: "Get $50 when you refer a friend who makes a deposit",
-    bonusType: "fixed_amount",
-    bonusValue: "50",
-    maxBonus: "50",
-    minDeposit: null,
-    active: true,
-    startDate: "2025-01-01T00:00:00Z",
-    endDate: null,
-    wagerRequirement: 20,
-    usageCount: 187,
-    totalValue: 9350.00
-  },
-  { 
-    id: 5, 
-    name: "Summer Special", 
-    description: "75% bonus on deposits up to $300 during summer months",
-    bonusType: "deposit_match",
-    bonusValue: "75",
-    maxBonus: "300",
-    minDeposit: "30",
-    active: false,
-    startDate: "2025-06-01T00:00:00Z",
-    endDate: "2025-08-31T23:59:59Z",
-    wagerRequirement: 40,
-    usageCount: 0,
-    totalValue: 0
   }
 ];
 
@@ -159,8 +116,9 @@ interface PromotionFormData {
   maxBonus: string;
   minDeposit: string;
   wagerRequirement: string;
-  startDate: Date | undefined;
-  endDate: Date | undefined;
+  maxUsagePerDay: number;
+  daysOfWeek: number[];
+  timezone: string;
   active: boolean;
 }
 
@@ -179,8 +137,9 @@ export default function PromotionsPage() {
     maxBonus: "",
     minDeposit: "",
     wagerRequirement: "",
-    startDate: new Date(),
-    endDate: undefined,
+    maxUsagePerDay: 1,
+    daysOfWeek: [0, 1, 2, 3, 4, 5, 6], // Default to all days
+    timezone: "Australia/Sydney",
     active: true
   });
 

@@ -139,8 +139,9 @@ export const promotions = pgTable("promotions", {
   minDeposit: decimal("min_deposit", { precision: 10, scale: 2 }).notNull(),
   maxBonus: decimal("max_bonus", { precision: 10, scale: 2 }),
   turnoverRequirement: decimal("turnover_requirement", { precision: 5, scale: 2 }).notNull(), // Multiplier for wagering requirement
-  startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date").notNull(),
+  maxUsagePerDay: integer("max_usage_per_day").default(1), // Maximum number of times a user can use this promotion per day
+  daysOfWeek: json("days_of_week").default([0,1,2,3,4,5,6]), // Array of days when promotion is available (0=Sunday, 1=Monday, etc)
+  timezone: text("timezone").default("Australia/Sydney").notNull(), // Timezone for availability checks
   isActive: boolean("is_active").default(true).notNull(),
   imageUrl: text("image_url"),
   createdBy: integer("created_by").references(() => adminUsers.id).notNull(),
@@ -223,7 +224,16 @@ export const promotionsInsertSchema = createInsertSchema(promotions, {
   bonusType: (schema) => z.enum(["percentage", "fixed_amount"]),
   bonusValue: (schema) => schema.refine(val => parseFloat(val) > 0, "Bonus value must be positive"),
   minDeposit: (schema) => schema.refine(val => parseFloat(val) > 0, "Minimum deposit must be positive"),
-  turnoverRequirement: (schema) => schema.refine(val => parseFloat(val) > 0, "Turnover requirement must be positive")
+  turnoverRequirement: (schema) => schema.refine(val => parseFloat(val) > 0, "Turnover requirement must be positive"),
+  maxUsagePerDay: (schema) => schema.refine(val => val > 0, "Usage limit must be positive"),
+  daysOfWeek: (schema) => schema.refine(
+    val => Array.isArray(val) && val.length > 0 && val.every(day => day >= 0 && day <= 6),
+    "Days of week must be valid (0-6)"
+  ),
+  timezone: (schema) => schema.refine(
+    val => val.includes("/"), 
+    "Timezone must be in Continent/City format"
+  )
 });
 
 export const depositsInsertSchema = createInsertSchema(deposits);
