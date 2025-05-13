@@ -22,6 +22,49 @@ function isPromotionAvailableToday(promotion: Promotion): boolean {
   return daysOfWeek.includes(dayOfWeek);
 }
 
+// Helper function to broadcast balance updates via Socket.IO
+// Export this so it can be imported from other files
+export async function broadcastBalanceUpdate(
+  io: SocketIOServer, 
+  userId: number, 
+  totalBalance: number, 
+  balanceBreakdown: any, 
+  type: 'bet' | 'win' | 'deposit' | 'bonus' | 'update' = 'update',
+  amount: number = 0
+) {
+  if (!io) return;
+  
+  // Broadcast to all connected clients (global events)
+  // For devices connected with balance_changed handler
+  io.emit('balance_changed', {
+    balance: totalBalance,
+    userId,
+    ...balanceBreakdown
+  });
+  
+  // For devices connected with balance_update handler
+  io.emit('balance_update', {
+    balance: totalBalance,
+    userId,
+    type,
+    amount,
+    ...balanceBreakdown
+  });
+  
+  // Also broadcast to user-specific room for multi-device syncing
+  io.to(`user:${userId}`).emit('balance_changed', {
+    balance: totalBalance,
+    ...balanceBreakdown
+  });
+  
+  io.to(`user:${userId}`).emit('balance_update', {
+    balance: totalBalance,
+    type,
+    amount,
+    ...balanceBreakdown
+  });
+}
+
 // Helper function to check if a user has already used a promotion today
 async function hasUserUsedPromotionToday(userId: number, promotionId: number): Promise<boolean> {
   try {
@@ -843,20 +886,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Get breakdown of balance components
         const balanceBreakdown = await balanceController.getBalanceBreakdown(user.id, totalBalance);
         
-        // Broadcast balance update to connected clients using both event types
-        // For devices connected with balance_changed handler
-        io.emit('balance_changed', {
-          balance: totalBalance,
-          ...balanceBreakdown
-        });
-        
-        // For devices connected with balance_update handler
-        io.emit('balance_update', {
-          balance: totalBalance,
-          type: 'bonus',
-          amount: amountToDeduct,
-          ...balanceBreakdown
-        });
+        // Use the helper function to broadcast balance update
+        await broadcastBalanceUpdate(
+          io,
+          user.id,
+          totalBalance,
+          balanceBreakdown,
+          'bonus',
+          amountToDeduct
+        );
       }
       
       res.status(200).json({
@@ -1127,20 +1165,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Get breakdown of balance components
           const balanceBreakdown = await balanceController.getBalanceBreakdown(user.id, totalBalance);
           
-          // Broadcast balance update to connected clients using both event types
-          // For devices connected with balance_changed handler
-          io.emit('balance_changed', {
-            balance: totalBalance,
-            ...balanceBreakdown
-          });
-          
-          // For devices connected with balance_update handler
-          io.emit('balance_update', {
-            balance: totalBalance,
-            type: 'bonus',
-            amount: parseFloat(userPromotion.bonusAmount),
-            ...balanceBreakdown
-          });
+          // Use the helper function to broadcast balance update
+          await broadcastBalanceUpdate(
+            io, 
+            user.id, 
+            totalBalance, 
+            balanceBreakdown, 
+            'bonus', 
+            parseFloat(userPromotion.bonusAmount)
+          );
         }
       }
       

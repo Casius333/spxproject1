@@ -168,6 +168,28 @@ export const balanceController = {
       // Get bonus balance and other details
       const balanceDetails = await getBalanceBreakdown(userId, totalBalance);
       
+      // Broadcast balance update via Socket.IO if available
+      const io = req.app.get('socketio');
+      if (io) {
+        try {
+          // Import the broadcastBalanceUpdate function from routes.ts
+          const { broadcastBalanceUpdate } = await import('../routes');
+          
+          // Broadcast the update
+          await broadcastBalanceUpdate(
+            io,
+            userId,
+            totalBalance,
+            balanceDetails,
+            action,
+            amount
+          );
+        } catch (socketError) {
+          console.error('Failed to broadcast balance update:', socketError);
+          // Continue anyway - socket error shouldn't prevent API response
+        }
+      }
+      
       return res.status(200).json({
         balance: totalBalance,
         ...balanceDetails,
