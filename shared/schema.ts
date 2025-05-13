@@ -101,6 +101,9 @@ export const usersInsertSchema = createInsertSchema(users, {
 
 export const userBalanceInsertSchema = createInsertSchema(userBalance);
 export const transactionsInsertSchema = createInsertSchema(transactions);
+export const userPromotionsInsertSchema = createInsertSchema(userPromotions, {
+  status: (schema) => z.enum(["active", "completed", "cancelled"])
+});
 
 // Types for TypeScript
 export type UserInsert = z.infer<typeof usersInsertSchema>;
@@ -136,7 +139,7 @@ export const promotions = pgTable("promotions", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  bonusType: text("bonus_type").notNull(), // percentage, fixed_amount
+  bonusType: text("bonus_type").notNull(), // bonus, cashback, freespin
   bonusValue: decimal("bonus_value", { precision: 10, scale: 2 }).notNull(),
   minDeposit: decimal("min_deposit", { precision: 10, scale: 2 }).notNull(),
   maxBonus: decimal("max_bonus", { precision: 10, scale: 2 }),
@@ -200,6 +203,21 @@ export const adminActionLogs = pgTable("admin_action_logs", {
   details: json("details").notNull(),
   ipAddress: text("ip_address"),
   createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+// User promotions table for tracking active promotions
+export const userPromotions = pgTable("user_promotions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  promotionId: integer("promotion_id").references(() => promotions.id).notNull(),
+  depositId: integer("deposit_id").references(() => deposits.id).notNull(),
+  bonusAmount: decimal("bonus_amount", { precision: 12, scale: 2 }).notNull(),
+  turnoverRequirement: decimal("turnover_requirement", { precision: 12, scale: 2 }).notNull(), // Total amount to wager
+  wageringProgress: decimal("wagering_progress", { precision: 12, scale: 2 }).default("0").notNull(), // Amount wagered so far
+  status: text("status").notNull().default("active"), // active, completed, cancelled
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
 // Affiliate table (placeholder for future development)
@@ -273,6 +291,9 @@ export type AdminActionLog = typeof adminActionLogs.$inferSelect;
 
 export type AffiliateInsert = z.infer<typeof affiliatesInsertSchema>;
 export type Affiliate = typeof affiliates.$inferSelect;
+
+export type UserPromotionInsert = z.infer<typeof userPromotionsInsertSchema>;
+export type UserPromotion = typeof userPromotions.$inferSelect;
 
 // Admin-specific relations - defined after all tables have been created
 export const adminUsersRelations = relations(adminUsers, ({ many }) => ({
