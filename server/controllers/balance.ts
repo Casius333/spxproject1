@@ -94,7 +94,7 @@ async function calculateBetBreakdown(userId: number, betAmount: number, totalBal
 // Direct export of the function for direct imports
 export async function updateUserBalance(userId: number, amount: number, type: 'bet' | 'win' | 'deposit' | 'bonus'): Promise<any> {
   try {
-    return await storage.updateUserBalance(amount, type);
+    return await storage.updateUserBalance(userId, amount, type);
   } catch (error) {
     console.error("Error updating user balance:", error);
     throw error;
@@ -162,7 +162,7 @@ export const balanceController = {
       }
       
       // Update balance
-      const updatedBalance = await storage.updateUserBalance(amount, action);
+      const updatedBalance = await storage.updateUserBalance(userId, amount, action);
       const totalBalance = parseFloat(updatedBalance.balance.toString());
       
       // Get bonus balance and other details

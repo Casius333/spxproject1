@@ -1089,7 +1089,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { balanceController } = await import('./controllers/balance');
         
         // Deduct the bonus amount (negative value reduces balance)
-        await updateUserBalance(-parseFloat(userPromotion.bonusAmount), 'bonus');
+        await updateUserBalance(user.id, -parseFloat(userPromotion.bonusAmount), 'bonus');
         
         // Notify the client about the cancellation via Socket.IO
         // Send current socket broadcast to update balance in real-time
@@ -1237,7 +1237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
       // Update user balance
       const { updateUserBalance } = await import('./storage');
-      let updatedBalance = await updateUserBalance(parseFloat(amount), 'deposit');
+      let updatedBalance = await updateUserBalance(user.id, parseFloat(amount), 'deposit');
       
       // Broadcast balance update to all connected clients
       io.emit('balance_update', { 

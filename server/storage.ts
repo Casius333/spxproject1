@@ -229,15 +229,14 @@ export async function getUserBalance(): Promise<UserBalance | undefined> {
   }
 }
 
-export async function updateUserBalance(amount: number, type: 'bet' | 'win' | 'deposit' | 'bonus'): Promise<UserBalance> {
+export async function updateUserBalance(userId: number = 12, amount: number, type: 'bet' | 'win' | 'deposit' | 'bonus'): Promise<UserBalance> {
   // Import required modules
   const { db } = await import('../db');
   const { userBalance, transactions } = await import('../shared/schema');
   const { eq } = await import('drizzle-orm');
   
   try {
-    // Get current user (for now using fixed ID)
-    const userId = 12; // This should be the ID of the logged-in user
+    // Use provided userId or default to 12
     
     // Get current balance (will create if doesn't exist)
     const currentBalance = await getUserBalance();
