@@ -372,7 +372,7 @@ async function seed() {
       email: "admin@luckypunt.com",
       password: createHash('sha256').update('admin123').digest('hex'),
       role: "admin",
-      isActive: true
+      active: true
     };
     
     // Check if admin user already exists
