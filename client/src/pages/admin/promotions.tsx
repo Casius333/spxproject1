@@ -51,7 +51,8 @@ import {
   XCircle,
   Edit,
   Trash,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
@@ -901,6 +902,18 @@ export default function PromotionsPage() {
                         <span>{formatCurrency(parseFloat(promo.minDeposit))}</span>
                       </div>
                     )}
+                    
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500 flex items-center gap-1">
+                        <RefreshCw className="h-4 w-4" />
+                        Turnover
+                      </span>
+                      <span className="text-right">
+                        {typeof promo.turnoverRequirement === 'number' 
+                          ? promo.turnoverRequirement 
+                          : parseFloat(promo.turnoverRequirement || '0').toFixed(1)}x
+                      </span>
+                    </div>
                     
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500 flex items-center gap-1">

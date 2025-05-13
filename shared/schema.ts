@@ -239,6 +239,10 @@ export const promotionsInsertSchema = createInsertSchema(promotions, {
   timezone: (schema) => schema.refine(
     val => val.includes("/"), 
     "Timezone must be in Continent/City format"
+  ),
+  imageUrl: (schema) => schema.nullable().optional().refine(
+    val => !val || val.startsWith('http'), 
+    "Image URL must be a valid URL starting with http"
   )
 });
 
