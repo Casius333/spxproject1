@@ -16,6 +16,8 @@ const updateBalanceSchema = z.object({
 // Function to check if user has active promotions
 async function getUserActivePromotions(userId: number) {
   try {
+    console.log(`Checking active promotions for user ${userId}`);
+    
     // Find active promotions for the user
     const activePromotions = await db.select()
       .from(userPromotions)
@@ -25,6 +27,15 @@ async function getUserActivePromotions(userId: number) {
           eq(userPromotions.status, 'active')
         )
       );
+    
+    console.log(`Found ${activePromotions.length} active promotions for user ${userId}`);
+    
+    // Additionally log each promotion's details for debugging
+    if (activePromotions.length > 0) {
+      activePromotions.forEach((promo, index) => {
+        console.log(`Promotion ${index + 1}: ID=${promo.id}, bonusAmount=${promo.bonusAmount}, status=${promo.status}`);
+      });
+    }
     
     return activePromotions;
   } catch (error) {
@@ -42,9 +53,14 @@ export async function getBalanceBreakdown(userId: number, totalBalance: number) 
     let bonusBalance = 0;
     let hasActiveBonus = false;
     
+    // Log for debugging
+    console.log(`Getting balance breakdown for user ${userId}, found ${activePromotions.length} active promotions`);
+    
     // Sum up all bonus amounts from active promotions
     for (const promotion of activePromotions) {
-      bonusBalance += parseFloat(promotion.bonusAmount);
+      const bonusAmount = parseFloat(promotion.bonusAmount);
+      console.log(`Found active promotion with bonus amount: ${bonusAmount}`);
+      bonusBalance += bonusAmount;
       hasActiveBonus = true;
     }
     
@@ -55,7 +71,11 @@ export async function getBalanceBreakdown(userId: number, totalBalance: number) 
     const realBalance = totalBalance - bonusBalance;
     
     // When bonus is active, no funds are available for withdrawal
+    // IMPORTANT: This is the key fix - when a user has an active bonus, 
+    // they should not be able to withdraw ANY funds until the wagering is complete
     const availableForWithdrawal = hasActiveBonus ? 0 : realBalance;
+    
+    console.log(`Balance breakdown: Total: ${totalBalance}, Real: ${realBalance}, Bonus: ${bonusBalance}, Available: ${availableForWithdrawal}, HasBonus: ${hasActiveBonus}`);
     
     return {
       bonusBalance,
@@ -66,11 +86,12 @@ export async function getBalanceBreakdown(userId: number, totalBalance: number) 
   } catch (error) {
     console.error("Error calculating balance breakdown:", error);
     
-    // Default to all real money if there's an error
+    // Default to all real money if there's an error, but no withdrawal if there was an error
+    // This is safer than allowing potential withdrawal of locked funds
     return {
       bonusBalance: 0,
       realBalance: totalBalance,
-      availableForWithdrawal: totalBalance,
+      availableForWithdrawal: 0, // Changed to 0 as a safety measure
       hasActiveBonus: false
     };
   }
