@@ -581,7 +581,7 @@ export default function SettingsPage() {
                                 size="sm"
                                 disabled={user.id === admin?.id}
                               >
-                                {user.isActive ? 'Deactivate' : 'Activate'}
+                                {user.active ? 'Deactivate' : 'Activate'}
                               </Button>
                             </td>
                           </tr>

@@ -633,7 +633,7 @@ export function registerAdminRoutes(app: Express) {
       // Update player status
       const updatedPlayer = await db.update(users)
         .set({ 
-          isActive: status === 'active',
+          active: status === 'active',
           notes: reason || `Account ${status === 'active' ? 'unlocked' : 'locked'} by admin ID: ${adminId}`
         })
         .where(eq(users.id, parseInt(id, 10)))

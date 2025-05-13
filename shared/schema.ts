@@ -36,7 +36,7 @@ export const games = pgTable("games", {
   isPopular: boolean("is_popular").default(false),
   isNew: boolean("is_new").default(false),
   isJackpot: boolean("is_jackpot").default(false),
-  isActive: boolean("is_active").default(true).notNull(),
+  active: boolean("active").default(true).notNull(),
   category: text("category"), // String representation for filtering (e.g., "slots", "table", "live")
   jackpotAmount: decimal("jackpot_amount", { precision: 12, scale: 2 }),
   rtp: decimal("rtp", { precision: 5, scale: 2 }),

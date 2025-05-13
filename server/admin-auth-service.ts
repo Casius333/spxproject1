@@ -83,7 +83,7 @@ export function verifyToken(token: string): any {
 export async function loginAdmin(username: string, password: string): Promise<{ admin: AdminUser; token: string } | null> {
   const admin = await getAdminByUsername(username);
   
-  if (!admin || !admin.isActive) {
+  if (!admin || !admin.active) {
     return null;
   }
   
