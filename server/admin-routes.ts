@@ -669,7 +669,7 @@ export function registerAdminRoutes(app: Express) {
   // Create promotion
   app.post(`${adminApiPrefix}/promotions`, adminAuth, requireRole(['admin', 'super_admin']), async (req: Request, res: Response) => {
     try {
-      const { name, description, type, value, code, startDate, endDate, isActive } = req.body;
+      const { name, description, type, value, code, startDate, endDate, active } = req.body;
       
       if (!name || !description || !type || !value) {
         return res.status(400).json({ message: 'Missing required fields' });
@@ -691,7 +691,7 @@ export function registerAdminRoutes(app: Express) {
         maxUsagePerDay: req.body.maxUsagePerDay || 1,
         daysOfWeek: req.body.daysOfWeek || [0,1,2,3,4,5,6], // Default to all days
         timezone: req.body.timezone || "Australia/Sydney",
-        active: isActive !== undefined ? isActive : true,
+        active: active !== undefined ? active : true,
         createdAt: new Date(),
         updatedAt: new Date(),
         createdBy: req.user?.id || null
