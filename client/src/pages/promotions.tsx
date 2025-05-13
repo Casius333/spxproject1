@@ -125,30 +125,7 @@ const PromotionsPage: React.FC = () => {
     },
   });
 
-  // Helper mutation for testing wagering progress updates
-  const updateProgressMutation = useMutation({
-    mutationFn: async ({ userPromotionId, wagerAmount }: { userPromotionId: number, wagerAmount: number }) => {
-      const res = await apiRequest('POST', '/api/promotions/update-progress', {
-        userPromotionId,
-        wagerAmount,
-      });
-      return res.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/promotions/active'] });
-      toast({
-        title: data.message,
-        description: "Wagering progress has been updated.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update wagering progress.",
-        variant: "destructive",
-      });
-    },
-  });
+  // We removed the updateProgressMutation as it was only for development
 
   const handleActivatePromotion = (promotion: Promotion) => {
     setSelectedPromotion(promotion);
@@ -166,13 +143,7 @@ const PromotionsPage: React.FC = () => {
     }
   };
 
-  // Helper function to simulate wagering progress (for development purposes)
-  const simulateWager = (activePromotion: ActivePromotion) => {
-    updateProgressMutation.mutate({
-      userPromotionId: activePromotion.id,
-      wagerAmount: 10, // Simulate a $10 wager
-    });
-  };
+  // We removed the simulateWager function as it was only for development
 
   if (!user) {
     return null; // Will redirect to auth page
@@ -184,223 +155,248 @@ const PromotionsPage: React.FC = () => {
     <div className="container mx-auto p-4 max-w-6xl">
       <h1 className="text-3xl font-bold mb-6">Promotions</h1>
       
-      <Tabs defaultValue="available" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="available">Available Promotions</TabsTrigger>
-          <TabsTrigger value="active">My Active Promotions</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="available">
-          {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : availablePromotions && availablePromotions.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {availablePromotions.map((promotion: Promotion) => (
-                <Card key={promotion.id} className="relative overflow-hidden">
-                  {promotion.imageUrl && (
-                    <div className="w-full h-48 relative overflow-hidden">
-                      <img 
-                        src={promotion.imageUrl} 
-                        alt={promotion.name} 
-                        className="w-full h-full object-cover"
-                      />
+      {/* My Active Promotions Section */}
+      <div className="mb-10">
+        <h2 className="text-2xl font-semibold mb-4">My Active Promotions</h2>
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : activePromotions && activePromotions.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {activePromotions.map((promotion: ActivePromotion) => (
+              <Card key={promotion.id} className="relative overflow-hidden">
+                {promotion.promotionImageUrl && (
+                  <div className="w-full h-48 relative overflow-hidden">
+                    <img 
+                      src={promotion.promotionImageUrl} 
+                      alt={promotion.promotionName} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <CardTitle>{promotion.promotionName}</CardTitle>
+                    <Badge className="ml-2">
+                      {promotion.promotionBonusType === 'bonus' ? 'Bonus' : 'Cashback'}
+                    </Badge>
+                  </div>
+                  <CardDescription>
+                    {promotion.promotionDescription}
+                  </CardDescription>
+                </CardHeader>
+                
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Bonus Amount:</span>
+                      <span className="font-medium">${parseFloat(promotion.bonusAmount).toFixed(2)}</span>
                     </div>
-                  )}
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <CardTitle>{promotion.name}</CardTitle>
-                      <Badge className="ml-2">
-                        {promotion.bonusType === 'bonus' ? 'Bonus' : 'Cashback'}
-                      </Badge>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Wagering Progress:</span>
+                      <span className="font-medium">
+                        ${parseFloat(promotion.wageringProgress || '0').toFixed(2)} / ${parseFloat(promotion.turnoverRequirement || '0').toFixed(2)}
+                      </span>
                     </div>
-                    <CardDescription>
-                      {promotion.description}
-                    </CardDescription>
-                  </CardHeader>
-                  
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Bonus Value:</span>
-                        <span className="font-medium">{promotion.bonusValue}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Min Deposit:</span>
-                        <span className="font-medium">${parseFloat(promotion.minDeposit).toFixed(2)}</span>
-                      </div>
-                      {promotion.maxBonus && (
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">Max Bonus:</span>
-                          <span className="font-medium">${parseFloat(promotion.maxBonus).toFixed(2)}</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Turnover Requirement:</span>
-                        <span className="font-medium">{parseFloat(promotion.turnoverRequirement)}x</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                  
-                  <CardFooter className="flex justify-between">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" className="text-primary">
-                          <Info className="mr-2 h-4 w-4" />
-                          Terms
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>{promotion.name} - Terms & Conditions</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                          <p>
-                            <strong>Bonus Type:</strong> {promotion.bonusType === 'bonus' ? 'Deposit Match' : 'Cashback'}
-                          </p>
-                          <p>
-                            <strong>Bonus Value:</strong> {promotion.bonusValue}%
-                          </p>
-                          <p>
-                            <strong>Minimum Deposit:</strong> ${parseFloat(promotion.minDeposit).toFixed(2)}
-                          </p>
-                          {promotion.maxBonus && (
-                            <p>
-                              <strong>Maximum Bonus:</strong> ${parseFloat(promotion.maxBonus).toFixed(2)}
-                            </p>
-                          )}
-                          <p>
-                            <strong>Turnover Requirement:</strong> {parseFloat(promotion.turnoverRequirement)}x (deposit + bonus)
-                          </p>
-                          <Separator />
-                          <p className="text-sm text-muted-foreground">
-                            By activating this promotion, you agree to the wagering requirements and terms.
-                            Bonus funds must be wagered {parseFloat(promotion.turnoverRequirement)}x before withdrawal is allowed.
-                            The casino reserves the right to cancel bonuses and any winnings if terms are violated.
-                          </p>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
                     
-                    <Button 
-                      onClick={() => handleActivatePromotion(promotion)}
-                      className="bg-primary"
-                    >
-                      <Gift className="mr-2 h-4 w-4" />
-                      Activate with Deposit
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <h3 className="text-xl">No promotions available right now.</h3>
-              <p className="text-muted-foreground mt-2">
-                Check back later for new promotions!
-              </p>
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="active">
-          {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : activePromotions && activePromotions.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {activePromotions.map((promotion: ActivePromotion) => (
-                <Card key={promotion.id} className="relative overflow-hidden">
-                  {promotion.promotionImageUrl && (
-                    <div className="w-full h-48 relative overflow-hidden">
-                      <img 
-                        src={promotion.promotionImageUrl} 
-                        alt={promotion.promotionName} 
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Progress:</span>
+                        <span>{calculateProgress(promotion).toFixed(1)}%</span>
+                      </div>
+                      <Progress value={calculateProgress(promotion)} className="h-2" />
                     </div>
-                  )}
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <CardTitle>{promotion.promotionName}</CardTitle>
-                      <Badge className="ml-2">
-                        {promotion.promotionBonusType === 'bonus' ? 'Bonus' : 'Cashback'}
-                      </Badge>
-                    </div>
-                    <CardDescription>
-                      {promotion.promotionDescription}
-                    </CardDescription>
-                  </CardHeader>
-                  
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Bonus Amount:</span>
-                        <span className="font-medium">${parseFloat(promotion.bonusAmount).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Wagering Progress:</span>
-                        <span className="font-medium">
-                          ${parseFloat(promotion.wageringProgress || '0').toFixed(2)} / ${parseFloat(promotion.turnoverRequirement || '0').toFixed(2)}
-                        </span>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>Progress:</span>
-                          <span>{calculateProgress(promotion).toFixed(1)}%</span>
-                        </div>
-                        <Progress value={calculateProgress(promotion)} className="h-2" />
-                      </div>
-                      
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Activated:</span>
-                        <span className="font-medium">
-                          {new Date(promotion.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                  
-                  <CardFooter className="flex justify-between">
-                    {/* For development testing only - would be removed in production */}
-                    <Button 
-                      variant="outline" 
-                      className="text-primary"
-                      onClick={() => simulateWager(promotion)}
-                    >
-                      Simulate Wager
-                    </Button>
                     
-                    <Button 
-                      variant="destructive" 
-                      onClick={() => handleCancelPromotion(promotion)}
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      Cancel Promotion
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <h3 className="text-xl">No active promotions</h3>
-              <p className="text-muted-foreground mt-2">
-                You don't have any active promotions at the moment.
-              </p>
-              <Button 
-                className="mt-4 bg-primary"
-                onClick={() => setLocation('#available')}
-              >
-                View Available Promotions
-              </Button>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Activated:</span>
+                      <span className="font-medium">
+                        {new Date(promotion.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+                
+                <CardFooter className="flex justify-end">
+                  <Button 
+                    variant="destructive" 
+                    onClick={() => handleCancelPromotion(promotion)}
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Cancel Promotion
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 border rounded-lg bg-muted/10">
+            <h3 className="text-xl">No active promotions</h3>
+            <p className="text-muted-foreground mt-2">
+              You don't have any active promotions at the moment.
+            </p>
+          </div>
+        )}
+      </div>
+      
+      {/* Available Promotions Section */}
+      <div className="mb-10">
+        <h2 className="text-2xl font-semibold mb-4">Available Promotions</h2>
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : availablePromotions && availablePromotions.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {availablePromotions.map((promotion: Promotion) => (
+              <Card key={promotion.id} className="relative overflow-hidden">
+                {promotion.imageUrl && (
+                  <div className="w-full h-48 relative overflow-hidden">
+                    <img 
+                      src={promotion.imageUrl} 
+                      alt={promotion.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <CardTitle>{promotion.name}</CardTitle>
+                    <Badge className="ml-2">
+                      {promotion.bonusType === 'bonus' ? 'Bonus' : 'Cashback'}
+                    </Badge>
+                  </div>
+                  <CardDescription>
+                    {promotion.description}
+                  </CardDescription>
+                </CardHeader>
+                
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Bonus Value:</span>
+                      <span className="font-medium">{promotion.bonusValue}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Min Deposit:</span>
+                      <span className="font-medium">${parseFloat(promotion.minDeposit).toFixed(2)}</span>
+                    </div>
+                    {promotion.maxBonus && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Max Bonus:</span>
+                        <span className="font-medium">${parseFloat(promotion.maxBonus).toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Turnover Requirement:</span>
+                      <span className="font-medium">{parseFloat(promotion.turnoverRequirement)}x</span>
+                    </div>
+                  </div>
+                </CardContent>
+                
+                <CardFooter className="flex justify-between">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="text-primary">
+                        <Info className="mr-2 h-4 w-4" />
+                        Terms
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>{promotion.name} - Terms & Conditions</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <p>
+                          <strong>Bonus Type:</strong> {promotion.bonusType === 'bonus' ? 'Deposit Match' : 'Cashback'}
+                        </p>
+                        <p>
+                          <strong>Bonus Value:</strong> {promotion.bonusValue}%
+                        </p>
+                        <p>
+                          <strong>Minimum Deposit:</strong> ${parseFloat(promotion.minDeposit).toFixed(2)}
+                        </p>
+                        {promotion.maxBonus && (
+                          <p>
+                            <strong>Maximum Bonus:</strong> ${parseFloat(promotion.maxBonus).toFixed(2)}
+                          </p>
+                        )}
+                        <p>
+                          <strong>Turnover Requirement:</strong> {parseFloat(promotion.turnoverRequirement)}x (deposit + bonus)
+                        </p>
+                        <Separator />
+                        <p className="text-sm text-muted-foreground">
+                          By activating this promotion, you agree to the wagering requirements and terms.
+                          Bonus funds must be wagered {parseFloat(promotion.turnoverRequirement)}x before withdrawal is allowed.
+                          The casino reserves the right to cancel bonuses and any winnings if terms are violated.
+                        </p>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  
+                  <Button 
+                    onClick={() => handleActivatePromotion(promotion)}
+                    className="bg-primary"
+                  >
+                    <Gift className="mr-2 h-4 w-4" />
+                    Activate with Deposit
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 border rounded-lg bg-muted/10">
+            <h3 className="text-xl">No promotions available right now.</h3>
+            <p className="text-muted-foreground mt-2">
+              Check back later for new promotions!
+            </p>
+          </div>
+        )}
+      </div>
+      
+      {/* Terms and Conditions Section */}
+      <div className="mt-12 border-t pt-6">
+        <h2 className="text-2xl font-semibold mb-4">Promotions Terms & Conditions</h2>
+        <div className="space-y-4 text-sm text-muted-foreground">
+          <p><strong>1. General Terms</strong></p>
+          <p>All bonuses and promotions are subject to the following terms and conditions:</p>
+          <ul className="list-disc pl-6 space-y-2">
+            <li>Bonuses can only be claimed once per player, per household, per IP address, unless otherwise stated.</li>
+            <li>LuckyPunt reserves the right to modify or cancel any promotion at any time.</li>
+            <li>All promotions are only available to players aged 18+.</li>
+            <li>Any attempt to abuse bonuses or promotions may result in the bonus being voided and possible account closure.</li>
+          </ul>
+          
+          <p className="mt-4"><strong>2. Wagering Requirements</strong></p>
+          <ul className="list-disc pl-6 space-y-2">
+            <li>All bonuses are subject to wagering requirements as specified in the promotion details.</li>
+            <li>Wagering requirements are calculated based on the bonus amount plus the qualifying deposit, unless otherwise stated.</li>
+            <li>Until wagering requirements are met, the maximum bet allowed is $5 per spin or $0.50 per line.</li>
+            <li>Different games contribute different percentages towards wagering requirements:
+              <ul className="list-disc pl-6 mt-2">
+                <li>Slots: 100%</li>
+                <li>Table Games: 10%</li>
+                <li>Live Dealer Games: 5%</li>
+              </ul>
+            </li>
+          </ul>
+          
+          <p className="mt-4"><strong>3. Bonus Funds</strong></p>
+          <ul className="list-disc pl-6 space-y-2">
+            <li>Bonus funds are kept in a separate balance from real money funds.</li>
+            <li>When you have both bonus and real money funds, real money will be used first.</li>
+            <li>Bonus funds cannot be withdrawn until wagering requirements have been met.</li>
+            <li>If you request a withdrawal before completing the wagering requirements, all bonus funds and winnings from those funds will be forfeited.</li>
+          </ul>
+          
+          <p className="mt-4"><strong>4. Expiration</strong></p>
+          <ul className="list-disc pl-6 space-y-2">
+            <li>Bonuses expire after 30 days unless otherwise stated.</li>
+            <li>All wagering requirements must be completed within this timeframe.</li>
+          </ul>
+        </div>
+      </div>
       
       {/* Deposit Dialog */}
       <DepositDialog 
