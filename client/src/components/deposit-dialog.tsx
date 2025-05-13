@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
@@ -77,6 +77,17 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
   const [depositMethod, setDepositMethod] = useState("card");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Fetch available promotions
+  const { data: availablePromotions, isLoading: isLoadingPromotions } = useQuery({
+    queryKey: ["/api/promotions/available"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/promotions/available");
+      const data = await res.json();
+      return data.promotions || [];
+    },
+    enabled: isOpen && !selectedPromotion, // Only fetch if dialog is open and no promotion selected
+  });
 
   const form = useForm<DepositFormValues>({
     resolver: zodResolver(depositFormSchema),
@@ -89,7 +100,7 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
   });
 
   // Reset form when dialog opens with a selected promotion
-  useState(() => {
+  useEffect(() => {
     if (isOpen && selectedPromotion) {
       form.reset({
         amount: "",
@@ -98,7 +109,7 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
         promotionId: String(selectedPromotion.id),
       });
     }
-  });
+  }, [isOpen, selectedPromotion, form]);
 
   const depositMutation = useMutation({
     mutationFn: async (values: DepositFormValues) => {
@@ -149,9 +160,30 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
           <DialogDescription>
             Add funds to your account to start playing.
             {selectedPromotion && (
-              <span className="block mt-2 text-primary">
-                {selectedPromotion.name} promotion will be applied to this deposit.
-              </span>
+              <div className="mt-2">
+                <span className="block text-primary font-medium">
+                  {selectedPromotion.name} promotion will be applied to this deposit.
+                </span>
+                <div className="mt-2 text-sm rounded-lg border p-3">
+                  <p className="text-muted-foreground mb-2">{selectedPromotion.description}</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="font-medium">Bonus:</span> {selectedPromotion.bonusValue}%
+                    </div>
+                    <div>
+                      <span className="font-medium">Min Deposit:</span> ${parseFloat(selectedPromotion.minDeposit).toFixed(2)}
+                    </div>
+                    {selectedPromotion.maxBonus && (
+                      <div>
+                        <span className="font-medium">Max Bonus:</span> ${parseFloat(selectedPromotion.maxBonus).toFixed(2)}
+                      </div>
+                    )}
+                    <div>
+                      <span className="font-medium">Wagering:</span> {selectedPromotion.turnoverRequirement}x
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
           </DialogDescription>
         </DialogHeader>
@@ -382,30 +414,79 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
 
             {/* Promotion selection (only shown if usePromotion is true) */}
             {form.watch("usePromotion") && !selectedPromotion && (
-              <FormField
-                control={form.control}
-                name="promotionId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Select Promotion</FormLabel>
-                    <Select
-                      defaultValue={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a promotion" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="1">Welcome Bonus - 100%</SelectItem>
-                        <SelectItem value="2">Tuesday Reload - 50%</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
+              <>
+                <FormField
+                  control={form.control}
+                  name="promotionId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Select Promotion</FormLabel>
+                      <Select
+                        defaultValue={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a promotion" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {isLoadingPromotions ? (
+                            <SelectItem value="loading">
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              Loading promotions...
+                            </SelectItem>
+                          ) : availablePromotions && availablePromotions.length > 0 ? (
+                            availablePromotions.map((promo) => (
+                              <SelectItem key={promo.id} value={String(promo.id)}>
+                                {promo.name} - {promo.bonusValue}%
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="none">No promotions available</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* Selected promotion details */}
+                {form.watch("promotionId") && availablePromotions && (
+                  <div className="rounded-lg border p-4 mt-2">
+                    {(() => {
+                      const selectedPromoId = form.watch("promotionId");
+                      const promo = availablePromotions.find(p => String(p.id) === selectedPromoId);
+                      
+                      if (!promo) return null;
+                      
+                      return (
+                        <>
+                          <h4 className="font-semibold text-primary">{promo.name}</h4>
+                          <p className="text-sm text-muted-foreground mb-2">{promo.description}</p>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <span className="font-medium">Bonus:</span> {promo.bonusValue}%
+                            </div>
+                            <div>
+                              <span className="font-medium">Min Deposit:</span> ${parseFloat(promo.minDeposit).toFixed(2)}
+                            </div>
+                            {promo.maxBonus && (
+                              <div>
+                                <span className="font-medium">Max Bonus:</span> ${parseFloat(promo.maxBonus).toFixed(2)}
+                              </div>
+                            )}
+                            <div>
+                              <span className="font-medium">Wagering:</span> {promo.turnoverRequirement}x
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
                 )}
-              />
+              </>
             )}
 
             <DialogFooter>
