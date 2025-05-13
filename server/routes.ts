@@ -1140,7 +1140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
       // Update user balance
       const { updateUserBalance } = await import('./storage');
-      const updatedBalance = await updateUserBalance(parseFloat(amount), 'deposit');
+      let updatedBalance = await updateUserBalance(parseFloat(amount), 'deposit');
       
       // Broadcast balance update to all connected clients
       io.emit('balance_update', { 

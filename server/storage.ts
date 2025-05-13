@@ -229,7 +229,7 @@ export async function getUserBalance(): Promise<UserBalance | undefined> {
   }
 }
 
-export async function updateUserBalance(amount: number, type: 'bet' | 'win' | 'deposit'): Promise<UserBalance> {
+export async function updateUserBalance(amount: number, type: 'bet' | 'win' | 'deposit' | 'bonus'): Promise<UserBalance> {
   // Import required modules
   const { db } = await import('../db');
   const { userBalance, transactions } = await import('../shared/schema');
@@ -252,7 +252,7 @@ export async function updateUserBalance(amount: number, type: 'bet' | 'win' | 'd
     
     if (type === 'bet') {
       newBalanceAmount = Math.max(0, balanceBefore - amount);
-    } else if (type === 'win' || type === 'deposit') {
+    } else if (type === 'win' || type === 'deposit' || type === 'bonus') {
       newBalanceAmount = balanceBefore + amount;
     } else {
       newBalanceAmount = balanceBefore;
@@ -287,7 +287,7 @@ export async function updateUserBalance(amount: number, type: 'bet' | 'win' | 'd
     
     if (type === 'bet') {
       mockBalance.balance = Math.max(0, mockBalance.balance - amount);
-    } else if (type === 'win' || type === 'deposit') {
+    } else if (type === 'win' || type === 'deposit' || type === 'bonus') {
       mockBalance.balance += amount;
     }
     
