@@ -148,6 +148,8 @@ export default function PromotionsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showNewPromotionDialog, setShowNewPromotionDialog] = useState(false);
+  const [showEditPromotionDialog, setShowEditPromotionDialog] = useState(false);
+  const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
   
   // New promotion form data
   const [formData, setFormData] = useState<PromotionFormData>({
@@ -197,6 +199,35 @@ export default function PromotionsPage() {
       toast({
         title: "Update failed",
         description: "Failed to update promotion status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Mutation for updating promotion details
+  const updateMutation = useMutation({
+    mutationFn: async (data: PromotionFormData & { id: number }) => {
+      const { id, ...updateData } = data;
+      const response = await apiRequest('PATCH', `/api/admin/promotions/${id}`, updateData);
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate the promotions query to refetch the updated data
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/promotions'] });
+      // Close the edit dialog
+      setShowEditPromotionDialog(false);
+      // Clear the editing promotion
+      setEditingPromotion(null);
+      toast({
+        title: "Promotion updated",
+        description: "The promotion has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      console.error('Failed to update promotion:', error);
+      toast({
+        title: "Update failed",
+        description: "Failed to update promotion. Please try again.",
         variant: "destructive",
       });
     }
@@ -288,13 +319,32 @@ export default function PromotionsPage() {
       }
     );
   };
+  
+  // Handle edit promotion
+  const handleEditPromotion = (promotion: Promotion) => {
+    setEditingPromotion(promotion);
+    setFormData({
+      name: promotion.name,
+      description: promotion.description,
+      bonusType: promotion.bonusType,
+      bonusValue: promotion.bonusValue,
+      maxBonus: promotion.maxBonus || "",
+      minDeposit: promotion.minDeposit || "",
+      wagerRequirement: String(promotion.wagerRequirement) || "",
+      maxUsagePerDay: promotion.maxUsagePerDay,
+      daysOfWeek: promotion.daysOfWeek,
+      timezone: promotion.timezone || "Australia/Sydney",
+      active: promotion.active
+    });
+    setShowEditPromotionDialog(true);
+  };
 
   // Handle form input change
   const handleInputChange = (field: keyof PromotionFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Handle form submission
+  // Handle form submission for new promotion
   const handleSubmitPromotion = () => {
     // In a real implementation, we would send this data to the API
     toast({
@@ -315,6 +365,17 @@ export default function PromotionsPage() {
       daysOfWeek: [0, 1, 2, 3, 4, 5, 6], // Default to all days
       timezone: "Australia/Sydney",
       active: true
+    });
+  };
+  
+  // Handle submitting updates to an existing promotion
+  const handleUpdatePromotion = () => {
+    if (!editingPromotion) return;
+    
+    // Send the updated data to the API
+    updateMutation.mutate({
+      ...formData,
+      id: editingPromotion.id
     });
   };
 
@@ -539,7 +600,7 @@ export default function PromotionsPage() {
         {/* Promotions cards grid */}
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {!isLoading && filteredPromotions.length > 0 ? (
-            filteredPromotions.map((promo) => (
+            filteredPromotions.map((promo: Promotion) => (
               <Card key={promo.id} className={cn(
                 "overflow-hidden",
                 !promo.active && "opacity-70"
@@ -636,7 +697,7 @@ export default function PromotionsPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEditPromotion(promo)}>
                         <Edit className="mr-2 h-4 w-4" /> 
                         Edit Details
                       </DropdownMenuItem>
