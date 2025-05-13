@@ -16,12 +16,13 @@ import Home from "@/pages/home";
 import Game from "@/pages/game";
 import ProfilePage from "@/pages/profile";
 import TransactionHistoryPage from "@/pages/transaction-history";
+import PromotionsPage from "@/pages/promotions";
 import NotFound from "@/pages/not-found";
 import AdminLoginPage from "@/pages/admin/login";
 import AdminDashboardPage from "@/pages/admin/index";
 import PlayersPage from "@/pages/admin/players";
 import ReportsPage from "@/pages/admin/reports";
-import PromotionsPage from "@/pages/admin/promotions";
+import AdminPromotionsPage from "@/pages/admin/promotions";
 import AffiliatesPage from "@/pages/admin/affiliates";
 import SettingsPage from "@/pages/admin/settings";
 
@@ -47,6 +48,7 @@ function Router() {
           {/* Protected user routes */}
           <ProtectedRoute path="/profile" component={ProfilePage} />
           <ProtectedRoute path="/transaction-history" component={TransactionHistoryPage} />
+          <Route path="/promotions" component={PromotionsPage} />
         </>
       )}
       
@@ -57,7 +59,7 @@ function Router() {
       <AdminProtectedRoute path="/admin" component={AdminDashboardPage} />
       <AdminProtectedRoute path="/admin/reports" component={ReportsPage} />
       <AdminProtectedRoute path="/admin/players" component={PlayersPage} />
-      <AdminProtectedRoute path="/admin/promotions" component={PromotionsPage} />
+      <AdminProtectedRoute path="/admin/promotions" component={AdminPromotionsPage} />
       <AdminProtectedRoute path="/admin/affiliates" component={AffiliatesPage} />
       <AdminProtectedRoute path="/admin/settings" component={SettingsPage} />
       

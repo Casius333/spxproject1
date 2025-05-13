@@ -455,6 +455,759 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/balance', balanceController.updateBalance);
   app.get('/api/transactions', balanceController.getTransactions);
   
+  // Promotions routes for users
+  app.get('/api/promotions', async (req: Request, res: Response) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    let userId: number | null = null;
+    
+    // Try to get the user ID if authenticated
+    if (token) {
+      try {
+        const user = await getUserByToken(token);
+        if (user) {
+          userId = user.id;
+        }
+      } catch (error) {
+        console.error('Error getting user from token:', error);
+        // Continue with userId as null - will just show available promotions
+      }
+    }
+    
+    try {
+      // Get all active promotions
+      const activePromotions = await db.query.promotions.findMany({
+        where: eq(promotions.isActive, true),
+        orderBy: [desc(promotions.createdAt)]
+      });
+      
+      // Filter promotions that are available today
+      const availablePromotions = activePromotions.filter(promo => 
+        isPromotionAvailableToday(promo)
+      );
+      
+      // If the user is authenticated, include information about which promotions
+      // they've already used and get their active promotions
+      let userPromotionsData: UserPromotion[] = [];
+      
+      if (userId) {
+        userPromotionsData = await db.query.userPromotions.findMany({
+          where: eq(userPromotions.userId, userId)
+        });
+      }
+      
+      // Format the response by mapping promotions with user-specific data
+      const formattedPromotions = availablePromotions.map(promo => {
+        // Find if user has this promotion active
+        const activeUserPromotion = userPromotionsData.find(
+          up => up.promotionId === promo.id && up.status === 'active'
+        );
+        
+        // Calculate turnover progress if the promotion is active
+        let progress = 0;
+        let wagered = 0;
+        if (activeUserPromotion) {
+          wagered = activeUserPromotion.wagered || 0;
+          const required = promo.turnoverRequirement || 0;
+          progress = required > 0 ? Math.min(100, (wagered / required) * 100) : 100;
+        }
+        
+        return {
+          ...promo,
+          isUsed: userPromotionsData.some(up => 
+            up.promotionId === promo.id && 
+            up.activatedAt && 
+            new Date(up.activatedAt).toDateString() === new Date().toDateString()
+          ),
+          isActive: !!activeUserPromotion,
+          progress,
+          wagered,
+          activatedAt: activeUserPromotion?.activatedAt || null
+        };
+      });
+      
+      res.status(200).json(formattedPromotions);
+    } catch (error: any) {
+      console.error('Error fetching promotions:', error);
+      res.status(500).json({ message: error?.message || 'Failed to fetch promotions' });
+    }
+  });
+  
+  // Get user's active promotions
+  app.get('/api/user/promotions', async (req: Request, res: Response) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    
+    if (!token) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    
+    try {
+      const user = await getUserByToken(token);
+      if (!user) {
+        return res.status(401).json({ message: 'Invalid token' });
+      }
+      
+      // Get user's active promotions with promotion details
+      const userActivePromotions = await db.query.userPromotions.findMany({
+        where: and(
+          eq(userPromotions.userId, user.id),
+          eq(userPromotions.status, 'active')
+        ),
+        with: {
+          promotion: true
+        }
+      });
+      
+      // Format response with progress information
+      const formattedActivePromotions = userActivePromotions.map(up => {
+        const progress = up.promotion.turnoverRequirement > 0 
+          ? Math.min(100, ((up.wagered || 0) / (up.promotion.turnoverRequirement || 1)) * 100) 
+          : 100;
+          
+        return {
+          id: up.id,
+          promotionId: up.promotionId,
+          activated: up.activatedAt,
+          wagered: up.wagered || 0,
+          requiredTurnover: up.promotion.turnoverRequirement,
+          progress,
+          promotionName: up.promotion.name,
+          bonusValue: up.promotion.bonusValue,
+          bonusType: up.promotion.bonusType,
+          description: up.promotion.description,
+          imageUrl: up.promotion.imageUrl
+        };
+      });
+      
+      res.status(200).json(formattedActivePromotions);
+    } catch (error: any) {
+      console.error('Error fetching user promotions:', error);
+      res.status(500).json({ message: error?.message || 'Failed to fetch user promotions' });
+    }
+  });
+  
+  // Activate a promotion
+  app.post('/api/promotions/:id/activate', async (req: Request, res: Response) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    const promotionId = parseInt(req.params.id);
+    
+    if (!token) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    
+    if (isNaN(promotionId)) {
+      return res.status(400).json({ message: 'Invalid promotion ID' });
+    }
+    
+    try {
+      const user = await getUserByToken(token);
+      if (!user) {
+        return res.status(401).json({ message: 'Invalid token' });
+      }
+      
+      // Get the promotion
+      const promotion = await db.query.promotions.findFirst({
+        where: eq(promotions.id, promotionId)
+      });
+      
+      if (!promotion) {
+        return res.status(404).json({ message: 'Promotion not found' });
+      }
+      
+      // Verify promotion is active
+      if (!promotion.isActive) {
+        return res.status(400).json({ message: 'Promotion is not active' });
+      }
+      
+      // Verify promotion is available today
+      if (!isPromotionAvailableToday(promotion)) {
+        return res.status(400).json({ message: 'Promotion is not available today' });
+      }
+      
+      // Check if user already has used this promotion today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const existingPromotion = await db.query.userPromotions.findFirst({
+        where: and(
+          eq(userPromotions.userId, user.id),
+          eq(userPromotions.promotionId, promotionId),
+          gte(userPromotions.activatedAt, today)
+        )
+      });
+      
+      if (existingPromotion) {
+        return res.status(400).json({ message: 'You have already activated this promotion today' });
+      }
+      
+      // Check if user already has any active promotion of this type
+      const activePromotion = await db.query.userPromotions.findFirst({
+        where: and(
+          eq(userPromotions.userId, user.id),
+          eq(userPromotions.status, 'active')
+        ),
+        with: {
+          promotion: true
+        }
+      });
+      
+      if (activePromotion && activePromotion.promotion.bonusType === promotion.bonusType) {
+        return res.status(400).json({ 
+          message: `You already have an active ${promotion.bonusType} promotion` 
+        });
+      }
+      
+      // Create a new user promotion record
+      const newUserPromotion = await db.insert(userPromotions)
+        .values({
+          userId: user.id,
+          promotionId: promotionId,
+          activatedAt: new Date(),
+          status: 'active',
+          wagered: 0
+        })
+        .returning();
+      
+      if (!newUserPromotion.length) {
+        return res.status(500).json({ message: 'Failed to activate promotion' });
+      }
+      
+      // If this is a deposit-related bonus, we'll need to apply it at deposit time
+      // For now, just mark it as active
+      
+      res.status(200).json({
+        message: 'Promotion activated successfully',
+        userPromotion: newUserPromotion[0]
+      });
+    } catch (error: any) {
+      console.error('Error activating promotion:', error);
+      res.status(500).json({ message: error?.message || 'Failed to activate promotion' });
+    }
+  });
+  
+  // Cancel an active promotion
+  app.post('/api/user/promotions/:id/cancel', async (req: Request, res: Response) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    const userPromotionId = parseInt(req.params.id);
+    
+    if (!token) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    
+    if (isNaN(userPromotionId)) {
+      return res.status(400).json({ message: 'Invalid promotion ID' });
+    }
+    
+    try {
+      const user = await getUserByToken(token);
+      if (!user) {
+        return res.status(401).json({ message: 'Invalid token' });
+      }
+      
+      // Get the user promotion
+      const userPromotion = await db.query.userPromotions.findFirst({
+        where: and(
+          eq(userPromotions.id, userPromotionId),
+          eq(userPromotions.userId, user.id)
+        )
+      });
+      
+      if (!userPromotion) {
+        return res.status(404).json({ message: 'Promotion not found or not yours' });
+      }
+      
+      // Check if promotion is already completed or cancelled
+      if (userPromotion.status !== 'active') {
+        return res.status(400).json({ message: `Promotion is already ${userPromotion.status}` });
+      }
+      
+      // Update the promotion status to cancelled
+      const updatedPromotion = await db.update(userPromotions)
+        .set({ 
+          status: 'cancelled',
+          cancelledAt: new Date() 
+        })
+        .where(eq(userPromotions.id, userPromotionId))
+        .returning();
+      
+      if (!updatedPromotion.length) {
+        return res.status(500).json({ message: 'Failed to cancel promotion' });
+      }
+      
+      res.status(200).json({
+        message: 'Promotion cancelled successfully',
+        userPromotion: updatedPromotion[0]
+      });
+    } catch (error: any) {
+      console.error('Error cancelling promotion:', error);
+      res.status(500).json({ message: error?.message || 'Failed to cancel promotion' });
+    }
+  });
+  
+  // Promotions endpoints
+  
+  // Get available promotions for the user
+  app.get('/api/promotions/available', async (req: Request, res: Response) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    
+    try {
+      // Get user from token
+      const user = token ? await getUserByToken(token) : null;
+      
+      if (!user) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+      
+      // Fetch active promotions from the database
+      const activePromotions = await db.select()
+        .from(promotions)
+        .where(eq(promotions.active, true))
+        .orderBy(asc(promotions.name));
+        
+      // Filter promotions that are available today
+      const availablePromotions = activePromotions
+        .filter(promo => isPromotionAvailableToday(promo))
+        .map(promo => ({
+          ...promo,
+          // Convert any JSON fields to objects if they're stored as strings
+          daysOfWeek: Array.isArray(promo.daysOfWeek) 
+            ? promo.daysOfWeek 
+            : JSON.parse(promo.daysOfWeek as unknown as string)
+        }));
+        
+      res.status(200).json({ promotions: availablePromotions });
+    } catch (error: any) {
+      console.error('Available promotions error:', error);
+      res.status(500).json({ message: error?.message || 'Failed to fetch promotions' });
+    }
+  });
+  
+  // Get active promotions for the current user
+  app.get('/api/promotions/active', async (req: Request, res: Response) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    
+    try {
+      // Get user from token
+      const user = token ? await getUserByToken(token) : null;
+      
+      if (!user) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+      
+      // Fetch active promotions for this user
+      const activeUserPromotions = await db.select({
+          id: userPromotions.id,
+          userId: userPromotions.userId,
+          promotionId: userPromotions.promotionId,
+          depositId: userPromotions.depositId,
+          bonusAmount: userPromotions.bonusAmount,
+          turnoverRequirement: userPromotions.turnoverRequirement,
+          wageringProgress: userPromotions.wageringProgress,
+          status: userPromotions.status,
+          completedAt: userPromotions.completedAt,
+          createdAt: userPromotions.createdAt,
+          updatedAt: userPromotions.updatedAt,
+          // Include promotion details
+          promotionName: promotions.name,
+          promotionDescription: promotions.description,
+          promotionBonusType: promotions.bonusType,
+          promotionBonusValue: promotions.bonusValue,
+          promotionImageUrl: promotions.imageUrl
+        })
+        .from(userPromotions)
+        .innerJoin(promotions, eq(userPromotions.promotionId, promotions.id))
+        .where(
+          and(
+            eq(userPromotions.userId, user.id),
+            eq(userPromotions.status, 'active')
+          )
+        )
+        .orderBy(desc(userPromotions.createdAt));
+        
+      res.status(200).json({ promotions: activeUserPromotions });
+    } catch (error: any) {
+      console.error('Active promotions error:', error);
+      res.status(500).json({ message: error?.message || 'Failed to fetch active promotions' });
+    }
+  });
+  
+  // Activate a promotion
+  app.post('/api/promotions/activate', async (req: Request, res: Response) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    const { promotionId, depositId, depositAmount } = req.body;
+    
+    if (!promotionId || !depositId || !depositAmount) {
+      return res.status(400).json({ 
+        message: 'Promotion ID, deposit ID, and deposit amount are required' 
+      });
+    }
+    
+    try {
+      // Get user from token
+      const user = token ? await getUserByToken(token) : null;
+      
+      if (!user) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+      
+      // Fetch the promotion
+      const [promotion] = await db.select()
+        .from(promotions)
+        .where(
+          and(
+            eq(promotions.id, promotionId),
+            eq(promotions.active, true)
+          )
+        );
+        
+      if (!promotion) {
+        return res.status(404).json({ message: 'Promotion not found or inactive' });
+      }
+      
+      // Check if the promotion is available today
+      if (!isPromotionAvailableToday(promotion)) {
+        return res.status(400).json({ 
+          message: 'This promotion is not available today' 
+        });
+      }
+      
+      // Check if the user has already used this promotion today
+      const hasUsedPromotion = await hasUserUsedPromotionToday(user.id, promotionId);
+      if (hasUsedPromotion) {
+        return res.status(400).json({ 
+          message: 'You have already used this promotion today' 
+        });
+      }
+      
+      // Check if deposit amount meets minimum requirement
+      if (parseFloat(depositAmount) < parseFloat(promotion.minDeposit)) {
+        return res.status(400).json({ 
+          message: `Minimum deposit amount for this promotion is ${promotion.minDeposit}` 
+        });
+      }
+      
+      // Calculate bonus amount
+      let bonusAmount = 0;
+      if (promotion.bonusType === 'bonus') {
+        // Percentage bonus
+        bonusAmount = parseFloat(depositAmount) * (parseFloat(promotion.bonusValue) / 100);
+        
+        // Cap at max bonus if defined
+        if (promotion.maxBonus && bonusAmount > parseFloat(promotion.maxBonus)) {
+          bonusAmount = parseFloat(promotion.maxBonus);
+        }
+      } else if (promotion.bonusType === 'cashback') {
+        // For cashback, we'd typically apply this after losses occur
+        // For now, we'll just note the cashback percentage for future use
+        bonusAmount = 0; // Will be calculated later when losses occur
+      }
+      
+      // Calculate turnover requirement
+      const turnoverRequirement = (parseFloat(depositAmount) + bonusAmount) * parseFloat(promotion.turnoverRequirement);
+      
+      // Create a user promotion record
+      const [userPromotion] = await db.insert(userPromotions)
+        .values({
+          userId: user.id,
+          promotionId: promotion.id,
+          depositId: depositId,
+          bonusAmount: bonusAmount.toString(),
+          turnoverRequirement: turnoverRequirement.toString(),
+          wageringProgress: "0",
+          status: 'active'
+        })
+        .returning();
+        
+      // Update user balance with bonus amount if applicable
+      if (bonusAmount > 0) {
+        // Import the balance controller
+        const { updateUserBalance } = await import('./controllers/balance');
+        
+        // Update balance
+        await updateUserBalance(bonusAmount, 'bonus');
+      }
+      
+      res.status(201).json({
+        message: 'Promotion activated successfully',
+        userPromotion
+      });
+    } catch (error: any) {
+      console.error('Activate promotion error:', error);
+      res.status(500).json({ message: error?.message || 'Failed to activate promotion' });
+    }
+  });
+  
+  // Cancel an active promotion
+  app.post('/api/promotions/cancel', async (req: Request, res: Response) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    const { userPromotionId } = req.body;
+    
+    if (!userPromotionId) {
+      return res.status(400).json({ message: 'User promotion ID is required' });
+    }
+    
+    try {
+      // Get user from token
+      const user = token ? await getUserByToken(token) : null;
+      
+      if (!user) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+      
+      // Find the user promotion
+      const [userPromotion] = await db.select()
+        .from(userPromotions)
+        .where(
+          and(
+            eq(userPromotions.id, userPromotionId),
+            eq(userPromotions.userId, user.id),
+            eq(userPromotions.status, 'active')
+          )
+        );
+        
+      if (!userPromotion) {
+        return res.status(404).json({ 
+          message: 'Active promotion not found or does not belong to you' 
+        });
+      }
+      
+      // Update the user promotion status to cancelled
+      const [updatedPromotion] = await db.update(userPromotions)
+        .set({
+          status: 'cancelled',
+          completedAt: new Date()
+        })
+        .where(eq(userPromotions.id, userPromotionId))
+        .returning();
+        
+      // If there was a bonus amount, we should deduct it from the user's balance
+      if (parseFloat(userPromotion.bonusAmount) > 0) {
+        // Import the balance controller
+        const { updateUserBalance } = await import('./controllers/balance');
+        
+        // Deduct the bonus amount
+        await updateUserBalance(-parseFloat(userPromotion.bonusAmount), 'bonus_revoked');
+      }
+      
+      res.status(200).json({
+        message: 'Promotion cancelled successfully',
+        userPromotion: updatedPromotion
+      });
+    } catch (error: any) {
+      console.error('Cancel promotion error:', error);
+      res.status(500).json({ message: error?.message || 'Failed to cancel promotion' });
+    }
+  });
+  
+  // Helper endpoint to update wagering progress (normally this would be automatic)
+  app.post('/api/promotions/update-progress', async (req: Request, res: Response) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    const { userPromotionId, wagerAmount } = req.body;
+    
+    if (!userPromotionId || !wagerAmount) {
+      return res.status(400).json({ 
+        message: 'User promotion ID and wager amount are required' 
+      });
+    }
+    
+    try {
+      // Get user from token
+      const user = token ? await getUserByToken(token) : null;
+      
+      if (!user) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+      
+      // Find the user promotion
+      const [userPromotion] = await db.select()
+        .from(userPromotions)
+        .where(
+          and(
+            eq(userPromotions.id, userPromotionId),
+            eq(userPromotions.userId, user.id),
+            eq(userPromotions.status, 'active')
+          )
+        );
+        
+      if (!userPromotion) {
+        return res.status(404).json({ 
+          message: 'Active promotion not found or does not belong to you' 
+        });
+      }
+      
+      // Calculate new wagering progress
+      const currentProgress = parseFloat(userPromotion.wageringProgress);
+      const newProgress = currentProgress + parseFloat(wagerAmount);
+      const turnoverRequirement = parseFloat(userPromotion.turnoverRequirement);
+      
+      // Check if wagering requirement is completed
+      let status = 'active';
+      let completedAt = null;
+      
+      if (newProgress >= turnoverRequirement) {
+        status = 'completed';
+        completedAt = new Date();
+      }
+      
+      // Update the user promotion
+      const [updatedPromotion] = await db.update(userPromotions)
+        .set({
+          wageringProgress: newProgress.toString(),
+          status,
+          completedAt
+        })
+        .where(eq(userPromotions.id, userPromotionId))
+        .returning();
+        
+      res.status(200).json({
+        message: status === 'completed' 
+          ? 'Wagering requirement completed!' 
+          : 'Wagering progress updated',
+        userPromotion: updatedPromotion
+      });
+    } catch (error: any) {
+      console.error('Update wagering progress error:', error);
+      res.status(500).json({ 
+        message: error?.message || 'Failed to update wagering progress' 
+      });
+    }
+  });
+  
+  // Create a deposit with optional promotion
+  app.post('/api/deposits', async (req: Request, res: Response) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    const { amount, method, promotionId } = req.body;
+    
+    if (!amount || !method) {
+      return res.status(400).json({ message: 'Amount and method are required' });
+    }
+    
+    try {
+      // Get user from token
+      const user = token ? await getUserByToken(token) : null;
+      
+      if (!user) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+      
+      // Create the deposit
+      const [deposit] = await db.insert(deposits)
+        .values({
+          userId: user.id,
+          amount: amount.toString(),
+          method,
+          status: 'completed', // Auto-complete for now
+          promotionId: promotionId || null
+        })
+        .returning();
+        
+      // Update user balance
+      const { updateUserBalance } = await import('./controllers/balance');
+      await updateUserBalance(parseFloat(amount), 'deposit');
+      
+      // If a promotion was selected, activate it
+      if (promotionId) {
+        try {
+          // Make internal request to activate promotion
+          // This would normally be a separate request, but we'll do it directly here
+          const { promotionId, depositId, depositAmount } = {
+            promotionId: promotionId,
+            depositId: deposit.id,
+            depositAmount: amount
+          };
+          
+          // Fetch the promotion
+          const [promotion] = await db.select()
+            .from(promotions)
+            .where(
+              and(
+                eq(promotions.id, promotionId),
+                eq(promotions.active, true)
+              )
+            );
+            
+          if (!promotion) {
+            return res.status(404).json({ message: 'Promotion not found or inactive' });
+          }
+          
+          // Check if the promotion is available today
+          if (!isPromotionAvailableToday(promotion)) {
+            return res.status(400).json({ 
+              message: 'This promotion is not available today' 
+            });
+          }
+          
+          // Check if the user has already used this promotion today
+          const hasUsedPromotion = await hasUserUsedPromotionToday(user.id, promotionId);
+          if (hasUsedPromotion) {
+            return res.status(400).json({ 
+              message: 'You have already used this promotion today' 
+            });
+          }
+          
+          // Check if deposit amount meets minimum requirement
+          if (parseFloat(depositAmount) < parseFloat(promotion.minDeposit)) {
+            return res.status(400).json({ 
+              message: `Minimum deposit amount for this promotion is ${promotion.minDeposit}` 
+            });
+          }
+          
+          // Calculate bonus amount
+          let bonusAmount = 0;
+          if (promotion.bonusType === 'bonus') {
+            // Percentage bonus
+            bonusAmount = parseFloat(depositAmount) * (parseFloat(promotion.bonusValue) / 100);
+            
+            // Cap at max bonus if defined
+            if (promotion.maxBonus && bonusAmount > parseFloat(promotion.maxBonus)) {
+              bonusAmount = parseFloat(promotion.maxBonus);
+            }
+          } else if (promotion.bonusType === 'cashback') {
+            // For cashback, we'd typically apply this after losses occur
+            // For now, we'll just note the cashback percentage for future use
+            bonusAmount = 0; // Will be calculated later when losses occur
+          }
+          
+          // Calculate turnover requirement
+          const turnoverRequirement = (parseFloat(depositAmount) + bonusAmount) * parseFloat(promotion.turnoverRequirement);
+          
+          // Create a user promotion record
+          const [userPromotion] = await db.insert(userPromotions)
+            .values({
+              userId: user.id,
+              promotionId: promotion.id,
+              depositId: deposit.id,
+              bonusAmount: bonusAmount.toString(),
+              turnoverRequirement: turnoverRequirement.toString(),
+              wageringProgress: "0",
+              status: 'active'
+            })
+            .returning();
+            
+          // Update user balance with bonus amount if applicable
+          if (bonusAmount > 0) {
+            // Update balance
+            await updateUserBalance(bonusAmount, 'bonus');
+          }
+          
+          // Include the activated promotion in the response
+          deposit.activatedPromotion = userPromotion;
+          
+        } catch (promoError: any) {
+          console.error('Failed to activate promotion:', promoError);
+          // Continue with the deposit even if promotion activation fails
+        }
+      }
+      
+      res.status(201).json({
+        message: 'Deposit successful',
+        deposit
+      });
+    } catch (error: any) {
+      console.error('Deposit error:', error);
+      res.status(500).json({ message: error?.message || 'Failed to process deposit' });
+    }
+  });
+  
   // Register admin routes
   registerAdminRoutes(app);
   
