@@ -24,8 +24,34 @@ function isPromotionAvailableToday(promotion: Promotion): boolean {
 
 // Helper function to check if a user has already used a promotion today
 async function hasUserUsedPromotionToday(userId: number, promotionId: number): Promise<boolean> {
-  // For now, return false. In a real implementation, we would check the database.
-  return false;
+  try {
+    console.log('Checking if user has used promotion today:', { userId, promotionId });
+    
+    // Get today's date in the promotion's timezone (defaulting to Sydney timezone)
+    const timezone = 'Australia/Sydney'; // Default timezone
+    const now = new Date();
+    const todayStart = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+    todayStart.setHours(0, 0, 0, 0);
+    
+    // Check if the user has any active or completed promotion from today
+    const result = await db.select()
+      .from(userPromotions)
+      .where(
+        and(
+          eq(userPromotions.userId, userId),
+          eq(userPromotions.promotionId, promotionId),
+          gte(userPromotions.createdAt, todayStart)
+        )
+      );
+    
+    const hasUsed = result.length > 0;
+    console.log('User has used promotion today:', hasUsed);
+    return hasUsed;
+  } catch (error) {
+    console.error('Error checking promotion usage:', error);
+    // In case of error, return false to allow the user to use the promotion
+    return false;
+  }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -1077,6 +1103,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const token = req.headers.authorization?.split(' ')[1] || '';
     const { amount, method, promotionId } = req.body;
     
+    console.log('Deposit request:', { amount, method, promotionId });
+    
     if (!amount || !method) {
       return res.status(400).json({ message: 'Amount and method are required' });
     }
@@ -1088,6 +1116,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(401).json({ message: 'Not authenticated' });
       }
+      
+      console.log('Processing deposit for user:', user.id);
       
       // Verify the deposits table exists
       try {
@@ -1122,6 +1152,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If a promotion was selected, activate it
       if (promotionId) {
         try {
+          console.log('Attempting to activate promotion ID:', promotionId);
+          
           // Get promotion ID as a number
           const promotionIdNumber = parseInt(promotionId);
           
@@ -1140,28 +1172,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
             );
             
           if (!promotion) {
-            return res.status(404).json({ message: 'Promotion not found or inactive' });
+            console.log('Promotion not found or inactive:', promotionIdNumber);
+            // Just log the error, but continue with the deposit
+            return res.status(201).json({
+              message: 'Deposit successful, but promotion was not found or inactive',
+              deposit,
+              balance: updatedBalance.balance
+            });
           }
+          
+          console.log('Found promotion:', promotion.name);
           
           // Check if the promotion is available today
           if (!isPromotionAvailableToday(promotion)) {
-            return res.status(400).json({ 
-              message: 'This promotion is not available today' 
+            console.log('Promotion not available today:', promotion.name);
+            // Just log the error, but continue with the deposit
+            return res.status(201).json({
+              message: 'Deposit successful, but the selected promotion is not available today',
+              deposit,
+              balance: updatedBalance.balance
             });
           }
           
           // Check if the user has already used this promotion today
-          const hasUsedPromotion = await hasUserUsedPromotionToday(user.id, promotionId);
+          const hasUsedPromotion = await hasUserUsedPromotionToday(user.id, promotionIdNumber);
           if (hasUsedPromotion) {
-            return res.status(400).json({ 
-              message: 'You have already used this promotion today' 
+            console.log('User already used this promotion today');
+            // Just log the error, but continue with the deposit
+            return res.status(201).json({
+              message: 'Deposit successful, but you have already used this promotion today',
+              deposit,
+              balance: updatedBalance.balance
             });
           }
           
           // Check if deposit amount meets minimum requirement
           if (parseFloat(depositAmount) < parseFloat(promotion.minDeposit)) {
-            return res.status(400).json({ 
-              message: `Minimum deposit amount for this promotion is ${promotion.minDeposit}` 
+            console.log('Deposit amount does not meet minimum requirement:', {
+              depositAmount,
+              minRequired: promotion.minDeposit
+            });
+            // Just log the error, but continue with the deposit
+            return res.status(201).json({
+              message: `Deposit successful, but minimum deposit amount for the promotion is ${promotion.minDeposit}`,
+              deposit,
+              balance: updatedBalance.balance
             });
           }
           
@@ -1175,6 +1230,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (promotion.maxBonus && bonusAmount > parseFloat(promotion.maxBonus)) {
               bonusAmount = parseFloat(promotion.maxBonus);
             }
+            
+            console.log('Calculated bonus amount:', bonusAmount);
           } else if (promotion.bonusType === 'cashback') {
             // For cashback, we'd typically apply this after losses occur
             // For now, we'll just note the cashback percentage for future use
@@ -1183,6 +1240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Calculate turnover requirement
           const turnoverRequirement = (parseFloat(depositAmount) + bonusAmount) * parseFloat(promotion.turnoverRequirement);
+          console.log('Calculated turnover requirement:', turnoverRequirement);
           
           // Create a user promotion record
           const [userPromotion] = await db.insert(userPromotions)
@@ -1197,10 +1255,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             })
             .returning();
             
+          console.log('Created user promotion record:', userPromotion.id);
+            
           // Update user balance with bonus amount if applicable
           if (bonusAmount > 0) {
             // Update balance
-            await updateUserBalance(bonusAmount, 'bonus');
+            const bonusBalanceUpdate = await updateUserBalance(bonusAmount, 'bonus');
+            
+            // Broadcast bonus balance update
+            io.emit('balance_update', { 
+              balance: parseFloat(bonusBalanceUpdate.balance.toString()),
+              type: 'bonus',
+              amount: bonusAmount
+            });
+            
+            updatedBalance = bonusBalanceUpdate; // Update the reference for the response
+            console.log('Applied bonus to balance:', bonusAmount);
           }
           
           // Include the activated promotion in the response
