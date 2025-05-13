@@ -34,7 +34,7 @@ async function getUserActivePromotions(userId: number) {
 }
 
 // Function to calculate bonus and real money breakdown
-async function getBalanceBreakdown(userId: number, totalBalance: number) {
+export async function getBalanceBreakdown(userId: number, totalBalance: number) {
   try {
     // Get active promotions to determine bonus amount
     const activePromotions = await getUserActivePromotions(userId);
@@ -89,6 +89,16 @@ async function calculateBetBreakdown(userId: number, betAmount: number, totalBal
     realMoneyUsed,
     bonusMoneyUsed
   };
+}
+
+// Direct export of the function for direct imports
+export async function updateUserBalance(userId: number, amount: number, type: 'bet' | 'win' | 'deposit' | 'bonus'): Promise<any> {
+  try {
+    return await storage.updateUserBalance(amount, type);
+  } catch (error) {
+    console.error("Error updating user balance:", error);
+    throw error;
+  }
 }
 
 export const balanceController = {
@@ -188,8 +198,7 @@ export const balanceController = {
     }
   },
   
-  // Utility function for other controllers to use
-  updateUserBalance: async (userId: number, amount: number, type: 'bet' | 'win' | 'deposit' | 'bonus'): Promise<any> => {
-    return await storage.updateUserBalance(amount, type);
-  }
+  // Expose utility functions through controller
+  getBalanceBreakdown,
+  updateUserBalance
 };

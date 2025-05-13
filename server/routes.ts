@@ -1025,8 +1025,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Import the balance controller
         const { updateUserBalance } = await import('./controllers/balance');
         
-        // Update balance
-        await updateUserBalance(bonusAmount, 'bonus');
+        // Update balance with userId (1 is a placeholder - should be from auth)
+        await updateUserBalance(1, bonusAmount, 'bonus');
       }
       
       res.status(201).json({
@@ -1084,11 +1084,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
       // If there was a bonus amount, we should deduct it from the user's balance
       if (parseFloat(userPromotion.bonusAmount) > 0) {
-        // Import balance storage functionality
+        // Import balance storage and controller functionality
         const { updateUserBalance } = await import('./storage');
+        const { balanceController } = await import('./controllers/balance');
         
         // Deduct the bonus amount (negative value reduces balance)
         await updateUserBalance(-parseFloat(userPromotion.bonusAmount), 'bonus');
+        
+        // Notify the client about the cancellation via Socket.IO
+        // Send current socket broadcast to update balance in real-time
+        const io = req.app.get('socketio');
+        if (io) {
+          // Get updated balance
+          const { getUserBalance } = await import('./storage');
+          const userBalance = await getUserBalance();
+          const totalBalance = userBalance ? parseFloat(userBalance.balance.toString()) : 0;
+          
+          // Get breakdown of balance components
+          const balanceBreakdown = await balanceController.getBalanceBreakdown(user.id, totalBalance);
+          
+          // Broadcast balance update to connected clients
+          io.emit('balance_changed', {
+            balance: totalBalance,
+            ...balanceBreakdown
+          });
+        }
       }
       
       res.status(200).json({
