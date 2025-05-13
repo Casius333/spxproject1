@@ -19,6 +19,11 @@ import TransactionHistoryPage from "@/pages/transaction-history";
 import NotFound from "@/pages/not-found";
 import AdminLoginPage from "@/pages/admin/login";
 import AdminDashboardPage from "@/pages/admin/index";
+import PlayersPage from "@/pages/admin/players";
+import ReportsPage from "@/pages/admin/reports";
+import PromotionsPage from "@/pages/admin/promotions";
+import AffiliatesPage from "@/pages/admin/affiliates";
+import SettingsPage from "@/pages/admin/settings";
 
 // Main application routes
 function Router() {
@@ -50,11 +55,11 @@ function Router() {
       
       {/* Admin dashboard and sub-routes */}
       <AdminProtectedRoute path="/admin" component={AdminDashboardPage} />
-      <AdminProtectedRoute path="/admin/reports" component={AdminDashboardPage} />
-      <AdminProtectedRoute path="/admin/players" component={AdminDashboardPage} />
-      <AdminProtectedRoute path="/admin/promotions" component={AdminDashboardPage} />
-      <AdminProtectedRoute path="/admin/affiliates" component={AdminDashboardPage} />
-      <AdminProtectedRoute path="/admin/settings" component={AdminDashboardPage} />
+      <AdminProtectedRoute path="/admin/reports" component={ReportsPage} />
+      <AdminProtectedRoute path="/admin/players" component={PlayersPage} />
+      <AdminProtectedRoute path="/admin/promotions" component={PromotionsPage} />
+      <AdminProtectedRoute path="/admin/affiliates" component={AffiliatesPage} />
+      <AdminProtectedRoute path="/admin/settings" component={SettingsPage} />
       
       {/* 404 fallback */}
       <Route component={NotFound} />
