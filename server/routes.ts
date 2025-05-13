@@ -1150,6 +1150,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // If a promotion was selected, activate it
+      // Variable to track promotion data
+      let depositWithPromotion;
+      
       if (promotionId) {
         try {
           console.log('Attempting to activate promotion ID:', promotionId);
@@ -1269,12 +1272,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               amount: bonusAmount
             });
             
-            updatedBalance = bonusBalanceUpdate; // Update the reference for the response
+            // Update the reference for the response with the latest balance
+            updatedBalance = bonusBalanceUpdate;
             console.log('Applied bonus to balance:', bonusAmount);
           }
           
           // Include the activated promotion in the response
-          const depositWithPromotion = {
+          depositWithPromotion = {
             ...deposit,
             activatedPromotion: userPromotion
           };

@@ -423,7 +423,7 @@ const PromotionsPage: React.FC = () => {
             <div className="py-4">
               <p><strong>Promotion:</strong> {promotionToCancel.promotionName}</p>
               <p><strong>Bonus Amount:</strong> ${parseFloat(promotionToCancel.bonusAmount).toFixed(2)}</p>
-              <p><strong>Progress:</strong> {promotionToCancel.progress.toFixed(1)}% completed</p>
+              <p><strong>Progress:</strong> {calculateProgress(promotionToCancel).toFixed(1)}% completed</p>
             </div>
           )}
           
