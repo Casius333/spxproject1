@@ -80,7 +80,7 @@ const mockPromotions = [
     id: 1, 
     name: "Welcome Bonus", 
     description: "100% bonus on first deposit up to $500",
-    bonusType: "deposit_match",
+    bonusType: "bonus",
     bonusValue: "100",
     maxBonus: "500",
     minDeposit: "20",
@@ -88,23 +88,39 @@ const mockPromotions = [
     maxUsagePerDay: 1,
     daysOfWeek: [0, 1, 2, 3, 4, 5, 6], // Available every day
     timezone: "Australia/Sydney",
-    wagerRequirement: 35,
+    turnoverRequirement: 35,
     usageCount: 423,
     totalValue: 156750.00
   },
   { 
-    id: 3, 
-    name: "Reload Bonus", 
-    description: "50% bonus on deposits up to $200, available once per day on weekdays",
-    bonusType: "deposit_match",
-    bonusValue: "50",
+    id: 2, 
+    name: "Weekend Cashback", 
+    description: "15% cashback on losses during weekends",
+    bonusType: "cashback",
+    bonusValue: "15",
     maxBonus: "200",
-    minDeposit: "50",
+    minDeposit: "100",
     active: true,
     maxUsagePerDay: 1,
-    daysOfWeek: [1, 2, 3, 4, 5], // Monday to Friday
+    daysOfWeek: [5, 6], // Saturday and Sunday
     timezone: "Australia/Sydney",
-    wagerRequirement: 30,
+    turnoverRequirement: 10,
+    usageCount: 209,
+    totalValue: 28450.00
+  },
+  { 
+    id: 3, 
+    name: "Monday Free Spins", 
+    description: "10 free spins every Monday",
+    bonusType: "freespin",
+    bonusValue: "10",
+    maxBonus: "0",
+    minDeposit: "0",
+    active: true,
+    maxUsagePerDay: 1,
+    daysOfWeek: [1], // Monday only
+    timezone: "Australia/Sydney",
+    turnoverRequirement: 20,
     usageCount: 542,
     totalValue: 64350.00
   }
@@ -119,7 +135,7 @@ interface Promotion {
   bonusValue: string;
   maxBonus: string;
   minDeposit: string;
-  wagerRequirement: number | string;
+  turnoverRequirement: number | string;
   maxUsagePerDay: number;
   daysOfWeek: number[];
   timezone: string;
@@ -128,6 +144,7 @@ interface Promotion {
   totalValue?: number;
   createdAt?: string;
   updatedAt?: string;
+  imageUrl?: string;
 }
 
 // Define promotion form data type
@@ -138,11 +155,12 @@ interface PromotionFormData {
   bonusValue: string;
   maxBonus: string;
   minDeposit: string;
-  wagerRequirement: string;
+  wagerRequirement: string; // We'll keep this as wagerRequirement in the form but map to turnoverRequirement in the backend
   maxUsagePerDay: number;
   daysOfWeek: number[];
   timezone: string;
   active: boolean;
+  imageUrl?: string;
 }
 
 export default function PromotionsPage() {
@@ -339,11 +357,12 @@ export default function PromotionsPage() {
       bonusValue: promotion.bonusValue,
       maxBonus: promotion.maxBonus || "",
       minDeposit: promotion.minDeposit || "",
-      wagerRequirement: String(promotion.wagerRequirement) || "",
+      wagerRequirement: String(promotion.turnoverRequirement) || "",
       maxUsagePerDay: promotion.maxUsagePerDay,
       daysOfWeek: promotion.daysOfWeek,
       timezone: promotion.timezone || "Australia/Sydney",
-      active: promotion.active
+      active: promotion.active,
+      imageUrl: promotion.imageUrl
     });
     setShowEditPromotionDialog(true);
   };
@@ -353,15 +372,39 @@ export default function PromotionsPage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Mutation for creating new promotions
+  const createMutation = useMutation({
+    mutationFn: async (data: PromotionFormData) => {
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : undefined;
+      const response = await apiRequest('POST', '/api/admin/promotions', data, headers);
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate the promotions query to refetch the updated data
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/promotions'] });
+      // Close the dialog
+      setShowNewPromotionDialog(false);
+      toast({
+        title: "Promotion created",
+        description: `Promotion "${formData.name}" has been created successfully.`,
+      });
+      // Reset form
+    },
+    onError: (error) => {
+      console.error('Failed to create promotion:', error);
+      toast({
+        title: "Creation failed",
+        description: "Failed to create promotion. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Handle form submission for new promotion
   const handleSubmitPromotion = () => {
-    // In a real implementation, we would send this data to the API
-    toast({
-      title: "Promotion created",
-      description: `Promotion "${formData.name}" has been created successfully.`,
-    });
-    setShowNewPromotionDialog(false);
-    // Reset form
+    // Send the form data to the API
+    createMutation.mutate(formData);
+    // The form will be reset in the onSuccess callback
     setFormData({
       name: "",
       description: "",
