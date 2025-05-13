@@ -70,7 +70,7 @@ export function SidebarNav({ className }: SidebarNavProps) {
       (href !== "/" && location.startsWith(href));
   };
 
-  // Handle special sidebar item clicks
+  // Handle sidebar item clicks
   const handleNavItemClick = (href: string, e: React.MouseEvent<HTMLDivElement>) => {
     if (href === '/logout') {
       e.preventDefault();
@@ -85,6 +85,9 @@ export function SidebarNav({ className }: SidebarNavProps) {
       toggleSidebar();
       return;
     }
+    
+    // For regular navigation links, close the sidebar
+    toggleSidebar();
   };
 
   // Only show sidebar for logged-in users
