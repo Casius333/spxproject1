@@ -84,7 +84,7 @@ interface AdminUser {
   email: string;
   role: string;
   lastLogin: string;
-  isActive: boolean;
+  active: boolean;
 }
 
 // Mock admin users for the user management tab
@@ -95,7 +95,7 @@ const mockAdminUsers: AdminUser[] = [
     email: "admin@luckypunt.com",
     role: "admin",
     lastLogin: "2025-05-12T08:45:00Z",
-    isActive: true
+    active: true
   },
   {
     id: 2,
@@ -103,7 +103,7 @@ const mockAdminUsers: AdminUser[] = [
     email: "moderator@luckypunt.com",
     role: "moderator",
     lastLogin: "2025-05-10T14:30:00Z",
-    isActive: true
+    active: true
   },
   {
     id: 3,

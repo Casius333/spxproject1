@@ -123,7 +123,7 @@ export const adminUsers = pgTable("admin_users", {
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   role: text("role").notNull().default("admin"), // admin, super_admin
-  isActive: boolean("is_active").default(true).notNull(),
+  active: boolean("active").default(true).notNull(),
   lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
