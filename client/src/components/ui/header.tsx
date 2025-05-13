@@ -51,14 +51,48 @@ export function Header() {
                   <ChevronDown className="ml-1 w-4 h-4 text-muted-foreground" />
                 </div>
                 
-                <div className={`absolute right-0 mt-2 w-56 bg-dark-card rounded-lg shadow-xl border border-primary/30 transition-all duration-200 glass-effect ${
+                <div className={`absolute right-0 mt-2 w-72 bg-dark-card rounded-lg shadow-xl border border-primary/30 transition-all duration-200 glass-effect ${
                   isBalanceHovered ? 'opacity-100 visible transform scale-100' : 'opacity-0 invisible transform scale-95'
                 }`}>
                   <div className="p-4">
-                    <div className="flex justify-between mb-3">
-                      <span className="text-muted-foreground">Available Balance:</span>
+                    {/* Total Balance */}
+                    <div className="flex justify-between mb-3 pb-2 border-b border-primary/20">
+                      <span className="text-muted-foreground">Total Balance:</span>
                       <span className="font-bold text-white">{formatCurrency(balance)}</span>
                     </div>
+                    
+                    {/* Only show bonus info if there's a bonus */}
+                    {bonusBalance > 0 && (
+                      <>
+                        <div className="flex justify-between mb-1 text-sm">
+                          <span className="text-muted-foreground">Real Money:</span>
+                          <span className="text-white">{formatCurrency(realBalance)}</span>
+                        </div>
+                        <div className="flex justify-between mb-3 text-sm">
+                          <span className="text-muted-foreground">Bonus Funds:</span>
+                          <span className="text-amber-400">{formatCurrency(bonusBalance)}</span>
+                        </div>
+                      </>
+                    )}
+                    
+                    {/* Withdrawal Info */}
+                    <div className="flex justify-between mb-3 text-sm">
+                      <span className="text-muted-foreground">Available for Withdrawal:</span>
+                      <span className="text-white">{formatCurrency(availableForWithdrawal)}</span>
+                    </div>
+                    
+                    {/* Active Bonus Message */}
+                    {hasActiveBonus && (
+                      <div className="mb-3 p-2 bg-primary/10 rounded text-xs">
+                        <p className="text-white">
+                          You have an active bonus. Real money will be used first, then bonus funds.
+                          <Link to="/promotions" className="text-primary hover:underline ml-1">
+                            View Details
+                          </Link>
+                        </p>
+                      </div>
+                    )}
+                    
                     <button 
                       onClick={() => setIsDepositDialogOpen(true)}
                       className="w-full bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary text-white rounded-md py-2 text-sm font-bold transition-all duration-300 hover:shadow-lg hover:shadow-primary/30"

@@ -3,10 +3,15 @@ import { useBalance } from '@/hooks/use-balance';
 
 interface BalanceContextValue {
   balance: number;
+  realBalance: number;
+  bonusBalance: number;
+  availableForWithdrawal: number;
+  hasActiveBonus: boolean;
   updateBalance: (amount: number) => void;
   placeBet: (amount: number) => Promise<boolean>;
   addWin: (amount: number) => Promise<void>;
   isLoading: boolean;
+  refreshBalance: () => Promise<void>;
 }
 
 const BalanceContext = createContext<BalanceContextValue | undefined>(undefined);
@@ -17,10 +22,34 @@ interface BalanceProviderProps {
 }
 
 export function BalanceProvider({ children, initialBalance = 1000 }: BalanceProviderProps) {
-  const balanceHook = useBalance({ initialBalance });
+  const {
+    balance,
+    realBalance,
+    bonusBalance,
+    availableForWithdrawal,
+    hasActiveBonus,
+    updateBalance,
+    placeBet,
+    addWin,
+    isLoading,
+    refreshBalance
+  } = useBalance({ initialBalance });
+  
+  const balanceContextValue: BalanceContextValue = {
+    balance,
+    realBalance,
+    bonusBalance,
+    availableForWithdrawal,
+    hasActiveBonus,
+    updateBalance,
+    placeBet,
+    addWin,
+    isLoading,
+    refreshBalance
+  };
   
   return (
-    <BalanceContext.Provider value={balanceHook}>
+    <BalanceContext.Provider value={balanceContextValue}>
       {children}
     </BalanceContext.Provider>
   );

@@ -734,12 +734,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'Invalid token' });
       }
       
-      // Get the user promotion
+      // Get the user promotion with its associated promotion details
       const userPromotion = await db.query.userPromotions.findFirst({
         where: and(
           eq(userPromotions.id, userPromotionId),
           eq(userPromotions.userId, user.id)
-        )
+        ),
+        with: {
+          promotion: true
+        }
       });
       
       if (!userPromotion) {
@@ -751,11 +754,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: `Promotion is already ${userPromotion.status}` });
       }
       
+      // Get all transactions since the promotion was activated
+      // These would be wins that need to be forfeited
+      const promotionWins = await db.select()
+        .from(transactions)
+        .where(
+          and(
+            eq(transactions.userId, user.id.toString()),
+            eq(transactions.type, 'win'),
+            gte(transactions.createdAt, userPromotion.createdAt)
+          )
+        );
+      
+      // Calculate total winnings during the bonus period
+      let totalWinnings = 0;
+      for (const win of promotionWins) {
+        totalWinnings += parseFloat(win.amount.toString());
+      }
+      
+      // Get bonus amount from the user promotion
+      const bonusAmount = parseFloat(userPromotion.bonusAmount);
+      
+      // Calculate total amount to deduct (bonus + winnings)
+      const amountToDeduct = bonusAmount + totalWinnings;
+      console.log('Cancelling promotion:', { 
+        bonusAmount, 
+        totalWinnings, 
+        amountToDeduct
+      });
+      
       // Update the promotion status to cancelled
       const updatedPromotion = await db.update(userPromotions)
         .set({ 
           status: 'cancelled',
-          cancelledAt: new Date() 
+          completedAt: new Date()
         })
         .where(eq(userPromotions.id, userPromotionId))
         .returning();
@@ -764,9 +796,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: 'Failed to cancel promotion' });
       }
       
+      // Deduct bonus amount and any winnings from user's balance
+      if (amountToDeduct > 0) {
+        // Import balance controller to deduct funds
+        const { balanceController } = await import('./controllers/balance');
+        
+        // Deduct the bonus amount and winnings (negative amount reduces balance)
+        await balanceController.updateUserBalance(user.id, -amountToDeduct, 'bonus');
+        
+        // Record a transaction for this deduction
+        await db.insert(transactions)
+          .values({
+            userId: user.id.toString(),
+            type: 'bonus',
+            amount: (-amountToDeduct).toString(),
+            balanceBefore: '0', // This will be calculated in updateUserBalance
+            balanceAfter: '0',  // This will be calculated in updateUserBalance
+            createdAt: new Date()
+          });
+      }
+      
+      // Notify the client about the cancellation
+      // Send current socket broadcast to update balance in real-time
+      const io = req.app.get('socketio');
+      if (io) {
+        // Get updated balance
+        const { getUserBalance } = await import('./storage');
+        const userBalance = await getUserBalance();
+        const totalBalance = userBalance ? parseFloat(userBalance.balance.toString()) : 0;
+        
+        // Get breakdown of balance components
+        const balanceBreakdown = await balanceController.getBalanceBreakdown(user.id, totalBalance);
+        
+        // Broadcast balance update to connected clients
+        io.emit('balance_changed', {
+          balance: totalBalance,
+          ...balanceBreakdown
+        });
+      }
+      
       res.status(200).json({
-        message: 'Promotion cancelled successfully',
-        userPromotion: updatedPromotion[0]
+        message: 'Promotion cancelled successfully. Bonus funds and associated winnings have been deducted.',
+        userPromotion: updatedPromotion[0],
+        deductedAmount: amountToDeduct
       });
     } catch (error: any) {
       console.error('Error cancelling promotion:', error);

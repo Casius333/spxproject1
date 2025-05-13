@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import * as storage from "../storage";
 import { z } from "zod";
+import { db } from "../../db";
+import { userPromotions, transactions } from "../../shared/schema";
+import { eq, and } from "drizzle-orm";
 
 // Validation schema for balance update
 const updateBalanceSchema = z.object({
@@ -10,6 +13,84 @@ const updateBalanceSchema = z.object({
   }),
 });
 
+// Function to check if user has active promotions
+async function getUserActivePromotions(userId: number) {
+  try {
+    // Find active promotions for the user
+    const activePromotions = await db.select()
+      .from(userPromotions)
+      .where(
+        and(
+          eq(userPromotions.userId, userId),
+          eq(userPromotions.status, 'active')
+        )
+      );
+    
+    return activePromotions;
+  } catch (error) {
+    console.error("Error getting active promotions:", error);
+    return [];
+  }
+}
+
+// Function to calculate bonus and real money breakdown
+async function getBalanceBreakdown(userId: number, totalBalance: number) {
+  try {
+    // Get active promotions to determine bonus amount
+    const activePromotions = await getUserActivePromotions(userId);
+    
+    let bonusBalance = 0;
+    let hasActiveBonus = false;
+    
+    // Sum up all bonus amounts from active promotions
+    for (const promotion of activePromotions) {
+      bonusBalance += parseFloat(promotion.bonusAmount);
+      hasActiveBonus = true;
+    }
+    
+    // Cap bonus balance at total balance
+    bonusBalance = Math.min(bonusBalance, totalBalance);
+    
+    // Real money is the rest
+    const realBalance = totalBalance - bonusBalance;
+    
+    // When bonus is active, no funds are available for withdrawal
+    const availableForWithdrawal = hasActiveBonus ? 0 : realBalance;
+    
+    return {
+      bonusBalance,
+      realBalance,
+      availableForWithdrawal,
+      hasActiveBonus
+    };
+  } catch (error) {
+    console.error("Error calculating balance breakdown:", error);
+    
+    // Default to all real money if there's an error
+    return {
+      bonusBalance: 0,
+      realBalance: totalBalance,
+      availableForWithdrawal: totalBalance,
+      hasActiveBonus: false
+    };
+  }
+}
+
+// Function to calculate bonus and real money amounts for betting
+// For bets, we use real money first, then bonus money
+async function calculateBetBreakdown(userId: number, betAmount: number, totalBalance: number) {
+  const { bonusBalance, realBalance } = await getBalanceBreakdown(userId, totalBalance);
+  
+  // Use real balance first, then bonus
+  const realMoneyUsed = Math.min(betAmount, realBalance);
+  const bonusMoneyUsed = Math.max(0, betAmount - realMoneyUsed);
+  
+  return {
+    realMoneyUsed,
+    bonusMoneyUsed
+  };
+}
+
 export const balanceController = {
   // Get user balance
   getBalance: async (req: Request, res: Response) => {
@@ -18,11 +99,24 @@ export const balanceController = {
       
       // If no balance record exists yet, return default
       if (!userBalance) {
-        return res.status(200).json({ balance: 1000 });
+        return res.status(200).json({ 
+          balance: 1000,
+          bonusBalance: 0,
+          realBalance: 1000,
+          availableForWithdrawal: 1000,
+          hasActiveBonus: false
+        });
       }
       
+      const totalBalance = parseFloat(userBalance.balance.toString());
+      const userId = 12; // This should come from auth
+      
+      // Get bonus balance and other details
+      const balanceDetails = await getBalanceBreakdown(userId, totalBalance);
+      
       return res.status(200).json({ 
-        balance: parseFloat(userBalance.balance.toString())
+        balance: totalBalance,
+        ...balanceDetails
       });
     } catch (error) {
       console.error("Error fetching balance:", error);
@@ -44,6 +138,7 @@ export const balanceController = {
       }
       
       const { amount, action } = validationResult.data;
+      const userId = 12; // This should come from auth
       
       // Ensure bet doesn't exceed balance
       if (action === "bet") {
@@ -58,9 +153,14 @@ export const balanceController = {
       
       // Update balance
       const updatedBalance = await storage.updateUserBalance(amount, action);
+      const totalBalance = parseFloat(updatedBalance.balance.toString());
+      
+      // Get bonus balance and other details
+      const balanceDetails = await getBalanceBreakdown(userId, totalBalance);
       
       return res.status(200).json({
-        balance: parseFloat(updatedBalance.balance.toString()),
+        balance: totalBalance,
+        ...balanceDetails,
         action,
         amount,
       });
@@ -87,4 +187,9 @@ export const balanceController = {
       return res.status(500).json({ message: "Failed to fetch transactions" });
     }
   },
+  
+  // Utility function for other controllers to use
+  updateUserBalance: async (userId: number, amount: number, type: 'bet' | 'win' | 'deposit' | 'bonus'): Promise<any> => {
+    return await storage.updateUserBalance(amount, type);
+  }
 };

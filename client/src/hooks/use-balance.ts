@@ -11,15 +11,24 @@ interface UseBalanceOptions {
 
 interface UseBalanceReturn {
   balance: number;
+  realBalance: number;
+  bonusBalance: number;
+  availableForWithdrawal: number;
+  hasActiveBonus: boolean;
   updateBalance: (amount: number) => void;
   placeBet: (amount: number) => Promise<boolean>;
   addWin: (amount: number) => Promise<void>;
   isLoading: boolean;
+  refreshBalance: () => Promise<void>;
 }
 
 export function useBalance(options: UseBalanceOptions = {}): UseBalanceReturn {
   const { initialBalance = 1000 } = options;
   const [balance, setBalance] = useState<number>(initialBalance);
+  const [realBalance, setRealBalance] = useState<number>(initialBalance);
+  const [bonusBalance, setBonusBalance] = useState<number>(0);
+  const [availableForWithdrawal, setAvailableForWithdrawal] = useState<number>(initialBalance);
+  const [hasActiveBonus, setHasActiveBonus] = useState<boolean>(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -30,20 +39,104 @@ export function useBalance(options: UseBalanceOptions = {}): UseBalanceReturn {
     autoAuthenticate: true
   });
   
+  // Function to refresh balance data
+  const refreshBalance = useCallback(async () => {
+    try {
+      const res = await apiRequest('GET', '/api/balance');
+      const data = await res.json();
+      
+      if (data) {
+        // Set total balance
+        if (data.balance !== undefined) {
+          setBalance(data.balance);
+        }
+        
+        // Set bonus balance if available
+        if (data.bonusBalance !== undefined) {
+          setBonusBalance(data.bonusBalance);
+          setRealBalance(data.balance - data.bonusBalance);
+        } else {
+          // If no bonus info, assume all is real money
+          setRealBalance(data.balance);
+          setBonusBalance(0);
+        }
+        
+        // Set available for withdrawal
+        if (data.availableForWithdrawal !== undefined) {
+          setAvailableForWithdrawal(data.availableForWithdrawal);
+        } else {
+          // If no withdrawal info, assume same as real balance
+          setAvailableForWithdrawal(data.bonusBalance !== undefined ? data.balance - data.bonusBalance : data.balance);
+        }
+        
+        // Set active bonus flag
+        setHasActiveBonus(data.hasActiveBonus === true || data.bonusBalance > 0);
+      }
+    } catch (err) {
+      console.error('Failed to fetch balance details:', err);
+    }
+  }, []);
+  
   // Listen for balance updates via Socket.IO
   useEffect(() => {
     // Handler for balance change events
-    const handleBalanceChange = (data: { balance: number }) => {
+    const handleBalanceChange = (data: { 
+      balance: number,
+      bonusBalance?: number,
+      availableForWithdrawal?: number,
+      hasActiveBonus?: boolean
+    }) => {
       if (data.balance !== undefined) {
         setBalance(data.balance);
+        
+        // Update bonus balance if provided
+        if (data.bonusBalance !== undefined) {
+          setBonusBalance(data.bonusBalance);
+          setRealBalance(data.balance - data.bonusBalance);
+        }
+        
+        // Update available for withdrawal if provided
+        if (data.availableForWithdrawal !== undefined) {
+          setAvailableForWithdrawal(data.availableForWithdrawal);
+        }
+        
+        // Update active bonus flag if provided
+        if (data.hasActiveBonus !== undefined) {
+          setHasActiveBonus(data.hasActiveBonus);
+        }
+        
         queryClient.invalidateQueries({ queryKey: ['/api/balance'] });
       }
     };
     
     // Handler for deposit/withdrawal balance updates
-    const handleBalanceUpdate = (data: { balance: number, type: string, amount: number }) => {
+    const handleBalanceUpdate = (data: { 
+      balance: number, 
+      type: string, 
+      amount: number,
+      bonusBalance?: number,
+      availableForWithdrawal?: number,
+      hasActiveBonus?: boolean
+    }) => {
       if (data.balance !== undefined) {
         setBalance(data.balance);
+        
+        // Update bonus balance if provided
+        if (data.bonusBalance !== undefined) {
+          setBonusBalance(data.bonusBalance);
+          setRealBalance(data.balance - data.bonusBalance);
+        }
+        
+        // Update available for withdrawal if provided
+        if (data.availableForWithdrawal !== undefined) {
+          setAvailableForWithdrawal(data.availableForWithdrawal);
+        }
+        
+        // Update active bonus flag if provided
+        if (data.hasActiveBonus !== undefined) {
+          setHasActiveBonus(data.hasActiveBonus);
+        }
+        
         queryClient.invalidateQueries({ queryKey: ['/api/balance'] });
         
         // Show toast notification for deposit
@@ -66,18 +159,8 @@ export function useBalance(options: UseBalanceOptions = {}): UseBalanceReturn {
   
   // Fetch initial balance
   useEffect(() => {
-    apiRequest('GET', '/api/balance')
-      .then(res => res.json())
-      .then(data => {
-        if (data.balance !== undefined) {
-          setBalance(data.balance);
-        }
-      })
-      .catch(err => {
-        console.error('Failed to fetch balance:', err);
-        // Keep using initial balance in case of error
-      });
-  }, []);
+    refreshBalance();
+  }, [refreshBalance]);
 
   // Get the emit function from Socket.IO
   const { emit } = useSocketIO({
@@ -91,14 +174,35 @@ export function useBalance(options: UseBalanceOptions = {}): UseBalanceReturn {
       return data;
     },
     onSuccess: (data) => {
+      // Update total balance
       setBalance(data.balance);
+      
+      // Update bonus balance if provided
+      if (data.bonusBalance !== undefined) {
+        setBonusBalance(data.bonusBalance);
+        setRealBalance(data.balance - data.bonusBalance);
+      }
+      
+      // Update available for withdrawal if provided
+      if (data.availableForWithdrawal !== undefined) {
+        setAvailableForWithdrawal(data.availableForWithdrawal);
+      }
+      
+      // Update active bonus flag if provided
+      if (data.hasActiveBonus !== undefined) {
+        setHasActiveBonus(data.hasActiveBonus);
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['/api/balance'] });
       
       // Emit balance update event to sync across devices
       if (user) {
         emit('balance_update', { 
           userId: user.id,
-          balance: data.balance 
+          balance: data.balance,
+          bonusBalance: data.bonusBalance,
+          availableForWithdrawal: data.availableForWithdrawal,
+          hasActiveBonus: data.hasActiveBonus
         });
         
         // If this is a win, also emit a win notification
@@ -170,9 +274,14 @@ export function useBalance(options: UseBalanceOptions = {}): UseBalanceReturn {
 
   return {
     balance,
+    realBalance,
+    bonusBalance,
+    availableForWithdrawal,
+    hasActiveBonus,
     updateBalance,
     placeBet,
     addWin,
-    isLoading: balanceMutation.isPending
+    isLoading: balanceMutation.isPending,
+    refreshBalance
   };
 }
