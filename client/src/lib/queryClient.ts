@@ -26,16 +26,20 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
+  customHeaders?: Record<string, string> | undefined,
 ): Promise<Response> {
   // Prepare headers
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    ...customHeaders // Add any custom headers
   };
   
-  // Add authorization header if we have a token
-  const token = getAuthToken();
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  // Add authorization header if we have a token (and no custom Authorization was provided)
+  if (!customHeaders?.Authorization) {
+    const token = getAuthToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
   }
   
   const res = await fetch(url, {
