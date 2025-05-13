@@ -233,7 +233,14 @@ export default function PromotionsPage() {
   // Mutation for updating promotion details
   const updateMutation = useMutation({
     mutationFn: async (data: PromotionFormData & { id: number }) => {
-      const { id, ...updateData } = data;
+      const { id, ...formData } = data;
+      
+      // Map wagerRequirement to turnoverRequirement for API
+      const updateData = {
+        ...formData,
+        wagerRequirement: formData.wagerRequirement
+      };
+      
       const headers = token ? { 'Authorization': `Bearer ${token}` } : undefined;
       const response = await apiRequest('PATCH', `/api/admin/promotions/${id}`, updateData, headers);
       return response.json();
@@ -375,8 +382,15 @@ export default function PromotionsPage() {
   // Mutation for creating new promotions
   const createMutation = useMutation({
     mutationFn: async (data: PromotionFormData) => {
+      // Map wagerRequirement to turnoverRequirement for API
+      const apiData = {
+        ...data,
+        type: data.bonusType,
+        value: data.bonusValue,
+        wagerRequirement: data.wagerRequirement
+      };
       const headers = token ? { 'Authorization': `Bearer ${token}` } : undefined;
-      const response = await apiRequest('POST', '/api/admin/promotions', data, headers);
+      const response = await apiRequest('POST', '/api/admin/promotions', apiData, headers);
       return response.json();
     },
     onSuccess: () => {
@@ -597,7 +611,19 @@ export default function PromotionsPage() {
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-2">
+                {/* Image URL */}
+                <div className="grid gap-2 mt-4">
+                  <Label htmlFor="imageUrl">Promotion Image URL</Label>
+                  <Input
+                    id="imageUrl"
+                    value={formData.imageUrl || ""}
+                    onChange={(e) => handleInputChange("imageUrl", e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                  <p className="text-sm text-muted-foreground">Enter URL for promotion banner image</p>
+                </div>
+                
+                <div className="flex items-center space-x-2 mt-4">
                   <input
                     type="checkbox"
                     id="active"

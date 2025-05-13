@@ -692,6 +692,7 @@ export function registerAdminRoutes(app: Express) {
         daysOfWeek: req.body.daysOfWeek || [0,1,2,3,4,5,6], // Default to all days
         timezone: req.body.timezone || "Australia/Sydney",
         active: active !== undefined ? active : true,
+        imageUrl: req.body.imageUrl || null,
         createdAt: new Date(),
         updatedAt: new Date(),
         createdBy: req.user?.id || null
