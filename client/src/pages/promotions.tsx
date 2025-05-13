@@ -26,26 +26,36 @@ interface Promotion {
   turnoverRequirement: string;
   imageUrl?: string;
   isActive?: boolean; // From the frontend perspective
-  progress?: number;
-  wagered?: number;
-  activatedAt?: string | null;
 }
 
 interface ActivePromotion {
   id: number;
+  userId: number;
   promotionId: number;
-  wagered: number;
-  requiredTurnover: string;
+  depositId: number;
   bonusAmount: string;
-  progress: number;
+  turnoverRequirement: string;
+  wageringProgress: string;
   status: string;
-  activated: string;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
   promotionName: string;
   promotionDescription: string;
   promotionBonusType: string;
   promotionBonusValue: string;
   promotionImageUrl?: string;
 }
+
+// Helper function to calculate progress percentage
+const calculateProgress = (promotion: ActivePromotion): number => {
+  const wageringProgress = parseFloat(promotion.wageringProgress || '0');
+  const turnoverRequirement = parseFloat(promotion.turnoverRequirement || '0');
+  
+  if (turnoverRequirement <= 0) return 0;
+  
+  return Math.min(100, (wageringProgress / turnoverRequirement) * 100);
+};
 
 const PromotionsPage: React.FC = () => {
   const { user } = useAuth();
@@ -333,22 +343,22 @@ const PromotionsPage: React.FC = () => {
                       <div className="flex justify-between">
                         <span className="text-sm text-muted-foreground">Wagering Progress:</span>
                         <span className="font-medium">
-                          ${promotion.wagered.toFixed(2)} / ${parseFloat(promotion.requiredTurnover).toFixed(2)}
+                          ${parseFloat(promotion.wageringProgress || '0').toFixed(2)} / ${parseFloat(promotion.turnoverRequirement || '0').toFixed(2)}
                         </span>
                       </div>
                       
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
                           <span>Progress:</span>
-                          <span>{promotion.progress.toFixed(1)}%</span>
+                          <span>{calculateProgress(promotion).toFixed(1)}%</span>
                         </div>
-                        <Progress value={promotion.progress} className="h-2" />
+                        <Progress value={calculateProgress(promotion)} className="h-2" />
                       </div>
                       
                       <div className="flex justify-between">
                         <span className="text-sm text-muted-foreground">Activated:</span>
                         <span className="font-medium">
-                          {new Date(promotion.activated).toLocaleDateString()}
+                          {new Date(promotion.createdAt).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
