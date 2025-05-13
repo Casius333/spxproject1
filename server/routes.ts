@@ -1109,7 +1109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
         
       // Update user balance
-      const { updateUserBalance } = await import('./controllers/balance');
+      const { updateUserBalance } = await import('./storage');
       await updateUserBalance(parseFloat(amount), 'deposit');
       
       // If a promotion was selected, activate it
