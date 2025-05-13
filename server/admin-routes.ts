@@ -687,7 +687,7 @@ export function registerAdminRoutes(app: Express) {
         bonusValue: value.toString(),
         maxBonus: req.body.maxBonus?.toString() || "0",
         minDeposit: req.body.minDeposit?.toString() || "0",
-        wagerRequirement: parseInt(req.body.wagerRequirement?.toString() || "0"),
+        turnoverRequirement: parseFloat(req.body.wagerRequirement?.toString() || "0"),
         maxUsagePerDay: req.body.maxUsagePerDay || 1,
         daysOfWeek: req.body.daysOfWeek || [0,1,2,3,4,5,6], // Default to all days
         timezone: req.body.timezone || "Australia/Sydney",
@@ -788,7 +788,7 @@ export function registerAdminRoutes(app: Express) {
       if (bonusValue !== undefined) updateData.bonusValue = bonusValue.toString();
       if (maxBonus !== undefined) updateData.maxBonus = maxBonus.toString();
       if (minDeposit !== undefined) updateData.minDeposit = minDeposit.toString();
-      if (wagerRequirement !== undefined) updateData.wagerRequirement = parseInt(wagerRequirement.toString());
+      if (wagerRequirement !== undefined) updateData.turnoverRequirement = parseFloat(wagerRequirement.toString());
       if (maxUsagePerDay !== undefined) updateData.maxUsagePerDay = maxUsagePerDay;
       if (daysOfWeek !== undefined) updateData.daysOfWeek = daysOfWeek;
       if (timezone !== undefined) updateData.timezone = timezone;
