@@ -3,6 +3,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +28,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   
   // Create form
   const form = useForm<LoginFormValues>({
@@ -66,8 +68,8 @@ export default function AdminLoginPage() {
         description: "Welcome to the admin dashboard",
       });
       
-      // Redirect to admin dashboard
-      window.location.href = "/admin";
+      // Redirect to admin dashboard using wouter navigation
+      setLocation("/admin");
     },
     onError: (error: Error) => {
       toast({

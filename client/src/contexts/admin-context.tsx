@@ -49,6 +49,9 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
   
+  // Get wouter's navigation function
+  const [, setLocation] = useLocation();
+
   // Check if current location is an admin page and redirect if needed
   useEffect(() => {
     if (!isLoading) {
@@ -57,13 +60,13 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       
       if (isAdminPage && !isAdminLoginPage && !token) {
         // Not authenticated, redirect to login
-        window.location.href = '/admin/login';
+        setLocation('/admin/login');
       } else if (isAdminLoginPage && token) {
         // Already authenticated, redirect to admin dashboard
-        window.location.href = '/admin';
+        setLocation('/admin');
       }
     }
-  }, [isLoading, location, token]);
+  }, [isLoading, location, token, setLocation]);
   
   // Login function
   const login = (newToken: string, user: AdminUser) => {
@@ -83,7 +86,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       title: 'Logged out',
       description: 'You have been logged out of the admin dashboard',
     });
-    window.location.href = '/admin/login';
+    setLocation('/admin/login');
   };
   
   return (
