@@ -1151,7 +1151,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // If a promotion was selected, activate it
       // Variable to track promotion data
-      let depositWithPromotion;
+      interface DepositWithPromotion {
+        id: number;
+        userId: number;
+        amount: string;
+        method: string;
+        status: string;
+        transactionId: string | null;
+        promotionId: number | null;
+        bonusAmount: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        userPromotion: any;
+      }
+      
+      let depositWithPromotion: DepositWithPromotion | undefined;
       
       if (promotionId) {
         try {
@@ -1278,9 +1292,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Include the activated promotion in the response
+          // Create a new object with the deposit and promotion info
           depositWithPromotion = {
-            ...deposit,
-            activatedPromotion: userPromotion
+            id: deposit.id,
+            userId: deposit.userId,
+            amount: deposit.amount,
+            method: deposit.method,
+            status: deposit.status,
+            transactionId: deposit.transactionId,
+            promotionId: deposit.promotionId,
+            bonusAmount: deposit.bonusAmount,
+            createdAt: deposit.createdAt,
+            updatedAt: deposit.updatedAt,
+            userPromotion: userPromotion
           };
           
         } catch (promoError: any) {
@@ -1294,6 +1318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (promotionId && typeof depositWithPromotion !== 'undefined') {
         responseDeposit = depositWithPromotion;
+        console.log('Using deposit with promotion in response');
       }
       
       res.status(201).json({

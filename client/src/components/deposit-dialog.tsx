@@ -344,7 +344,7 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
                             Loading promotions...
                           </SelectItem>
                         ) : availablePromotions && availablePromotions.length > 0 ? (
-                          availablePromotions.map((promo) => (
+                          availablePromotions.map((promo: Promotion) => (
                             <SelectItem key={promo.id} value={String(promo.id)}>
                               {promo.name} - {promo.bonusValue}%
                             </SelectItem>
@@ -365,7 +365,7 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
               <div className="rounded-lg border p-3 mt-2 bg-muted/30">
                 {(() => {
                   const selectedPromoId = form.watch("promotionId");
-                  const promo = availablePromotions.find(p => String(p.id) === selectedPromoId);
+                  const promo = availablePromotions.find((p: Promotion) => String(p.id) === selectedPromoId);
                   
                   if (!promo) return null;
                   

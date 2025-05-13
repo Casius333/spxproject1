@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { apiRequest } from '@/lib/queryClient';
-import DepositDialog from '@/components/deposit-dialog';
+import DepositDialog from '../components/deposit-dialog';
 
 // Types for promotions
 interface Promotion {
