@@ -747,6 +747,69 @@ export function registerAdminRoutes(app: Express) {
     }
   });
   
+  // Update entire promotion
+  app.patch(`${adminApiPrefix}/promotions/:id`, adminAuth, requireRole(['admin', 'super_admin']), async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { 
+        name, 
+        description, 
+        bonusType, 
+        bonusValue, 
+        maxBonus, 
+        minDeposit, 
+        wagerRequirement,
+        maxUsagePerDay, 
+        daysOfWeek, 
+        timezone, 
+        active 
+      } = req.body;
+      
+      if (!id || isNaN(parseInt(id, 10))) {
+        return res.status(400).json({ message: 'Invalid promotion ID' });
+      }
+      
+      // Check if promotion exists
+      const promotion = await db.select().from(promotions).where(eq(promotions.id, parseInt(id, 10))).limit(1);
+      
+      if (!promotion.length) {
+        return res.status(404).json({ message: 'Promotion not found' });
+      }
+      
+      // Prepare update data
+      const updateData: Record<string, any> = {
+        updatedAt: new Date()
+      };
+      
+      // Only update fields that are provided
+      if (name !== undefined) updateData.name = name;
+      if (description !== undefined) updateData.description = description;
+      if (bonusType !== undefined) updateData.bonusType = bonusType;
+      if (bonusValue !== undefined) updateData.bonusValue = bonusValue.toString();
+      if (maxBonus !== undefined) updateData.maxBonus = maxBonus.toString();
+      if (minDeposit !== undefined) updateData.minDeposit = minDeposit.toString();
+      if (wagerRequirement !== undefined) updateData.wagerRequirement = parseInt(wagerRequirement.toString());
+      if (maxUsagePerDay !== undefined) updateData.maxUsagePerDay = maxUsagePerDay;
+      if (daysOfWeek !== undefined) updateData.daysOfWeek = daysOfWeek;
+      if (timezone !== undefined) updateData.timezone = timezone;
+      if (active !== undefined) updateData.active = active;
+      
+      // Update promotion
+      const updatedPromotion = await db.update(promotions)
+        .set(updateData)
+        .where(eq(promotions.id, parseInt(id, 10)))
+        .returning();
+      
+      return res.status(200).json({
+        message: 'Promotion updated successfully',
+        promotion: updatedPromotion[0]
+      });
+    } catch (error: any) {
+      console.error('Update promotion error:', error);
+      return res.status(500).json({ message: error?.message || 'Internal server error' });
+    }
+  });
+  
   // Get affiliates
   app.get(`${adminApiPrefix}/affiliates`, adminAuth, async (_req: Request, res: Response) => {
     try {

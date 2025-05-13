@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useAdmin } from "@/contexts/admin-context";
 import {
   Card,
   CardContent,
@@ -146,6 +147,7 @@ interface PromotionFormData {
 
 export default function PromotionsPage() {
   const { toast } = useToast();
+  const { token } = useAdmin();  // Get the admin token for API calls
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showNewPromotionDialog, setShowNewPromotionDialog] = useState(false);
@@ -175,7 +177,9 @@ export default function PromotionsPage() {
     queryKey: ['/api/admin/promotions'],
     queryFn: async () => {
       try {
-        const response = await apiRequest('GET', '/api/admin/promotions');
+        // Include the admin token in the authorization header
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : undefined;
+        const response = await apiRequest('GET', '/api/admin/promotions', undefined, headers);
         return response.json();
       } catch (error) {
         console.error('Failed to fetch promotions:', error);
@@ -183,12 +187,15 @@ export default function PromotionsPage() {
         return mockPromotions;
       }
     },
+    // Only fetch if we have a token
+    enabled: !!token,
   });
   
   // Mutation for updating promotion status
   const statusMutation = useMutation({
     mutationFn: async ({ id, active }: { id: number, active: boolean }) => {
-      const response = await apiRequest('PATCH', `/api/admin/promotions/${id}/status`, { active });
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : undefined;
+      const response = await apiRequest('PATCH', `/api/admin/promotions/${id}/status`, { active }, headers);
       return response.json();
     },
     onSuccess: () => {
@@ -209,7 +216,8 @@ export default function PromotionsPage() {
   const updateMutation = useMutation({
     mutationFn: async (data: PromotionFormData & { id: number }) => {
       const { id, ...updateData } = data;
-      const response = await apiRequest('PATCH', `/api/admin/promotions/${id}`, updateData);
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : undefined;
+      const response = await apiRequest('PATCH', `/api/admin/promotions/${id}`, updateData, headers);
       return response.json();
     },
     onSuccess: () => {
