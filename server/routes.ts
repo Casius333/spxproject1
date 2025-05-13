@@ -1110,7 +1110,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
       // Update user balance
       const { updateUserBalance } = await import('./storage');
-      await updateUserBalance(parseFloat(amount), 'deposit');
+      const updatedBalance = await updateUserBalance(parseFloat(amount), 'deposit');
+      
+      // Broadcast balance update to all connected clients
+      io.emit('balance_update', { 
+        balance: parseFloat(updatedBalance.balance.toString()),
+        type: 'deposit',
+        amount: parseFloat(amount)
+      });
       
       // If a promotion was selected, activate it
       if (promotionId) {

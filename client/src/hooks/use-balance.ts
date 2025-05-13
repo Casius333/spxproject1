@@ -40,11 +40,29 @@ export function useBalance(options: UseBalanceOptions = {}): UseBalanceReturn {
       }
     };
     
+    // Handler for deposit/withdrawal balance updates
+    const handleBalanceUpdate = (data: { balance: number, type: string, amount: number }) => {
+      if (data.balance !== undefined) {
+        setBalance(data.balance);
+        queryClient.invalidateQueries({ queryKey: ['/api/balance'] });
+        
+        // Show toast notification for deposit
+        if (data.type === 'deposit') {
+          toast({
+            title: 'Deposit Successful',
+            description: `$${data.amount.toFixed(2)} has been added to your account.`,
+            variant: 'default',
+          });
+        }
+      }
+    };
+    
     // Subscribe to balance change events
     on('balance_changed', handleBalanceChange);
+    on('balance_update', handleBalanceUpdate);
     
     // Cleanup is handled by useSocketIO hook
-  }, [on, queryClient]);
+  }, [on, queryClient, toast]);
   
   // Fetch initial balance
   useEffect(() => {
