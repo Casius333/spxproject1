@@ -312,7 +312,7 @@ export default function AffiliatesPage() {
                     ? "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/25" 
                     : "bg-red-500/20 text-red-400 hover:bg-red-500/25"
                 }`}>
-                  {selectedAffiliate?.status.charAt(0).toUpperCase() + selectedAffiliate?.status.slice(1)}
+                  {selectedAffiliate && selectedAffiliate.status ? selectedAffiliate.status.charAt(0).toUpperCase() + selectedAffiliate.status.slice(1) : ''}
                 </Badge>
               </div>
               
@@ -541,12 +541,12 @@ export default function AffiliatesPage() {
                               <TableCell>{formatCurrency(transaction.amount)}</TableCell>
                               <TableCell className="capitalize">{transaction.type}</TableCell>
                               <TableCell>
-                                <Badge variant={
+                                <Badge className={
                                   transaction.status === "completed" 
-                                    ? "success" 
+                                    ? "bg-green-500/20 text-green-400 hover:bg-green-500/25" 
                                     : transaction.status === "pending" 
-                                    ? "warning" 
-                                    : "destructive"
+                                    ? "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/25" 
+                                    : "bg-red-500/20 text-red-400 hover:bg-red-500/25"
                                 }>
                                   {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
                                 </Badge>
@@ -713,12 +713,12 @@ export default function AffiliatesPage() {
                           <TableCell>{affiliate.commission}%</TableCell>
                           <TableCell>
                             <Badge
-                              variant={
+                              className={
                                 affiliate.status === "active" 
-                                  ? "success" 
+                                  ? "bg-green-500/20 text-green-400 hover:bg-green-500/25" 
                                   : affiliate.status === "pending" 
-                                  ? "warning" 
-                                  : "destructive"
+                                  ? "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/25" 
+                                  : "bg-red-500/20 text-red-400 hover:bg-red-500/25"
                               }
                             >
                               {affiliate.status.charAt(0).toUpperCase() + affiliate.status.slice(1)}

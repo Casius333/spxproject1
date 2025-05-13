@@ -38,7 +38,8 @@ import {
   ShieldCheck,
   Globe,
   Mail,
-  Database
+  Database,
+  Copy
 } from "lucide-react";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { useToast } from "@/hooks/use-toast";
