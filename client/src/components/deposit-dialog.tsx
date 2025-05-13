@@ -182,14 +182,10 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs defaultValue="card" onValueChange={setDepositMethod}>
-              <TabsList className="grid grid-cols-3 mb-4">
+              <TabsList className="grid grid-cols-2 mb-4">
                 <TabsTrigger value="card">
                   <CreditCard className="mr-2 h-4 w-4" />
                   Card
-                </TabsTrigger>
-                <TabsTrigger value="bank">
-                  <Landmark className="mr-2 h-4 w-4" />
-                  Bank
                 </TabsTrigger>
                 <TabsTrigger value="crypto">
                   <Bitcoin className="mr-2 h-4 w-4" />
@@ -248,66 +244,6 @@ const DepositDialog = ({ isOpen, onClose, selectedPromotion }: DepositDialogProp
                             <SelectItem value="visa">Visa</SelectItem>
                             <SelectItem value="mastercard">Mastercard</SelectItem>
                             <SelectItem value="amex">American Express</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="bank">
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <FormField
-                      control={form.control}
-                      name="amount"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Amount</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                              <Input
-                                placeholder="Enter amount"
-                                {...field}
-                                className="pl-9"
-                              />
-                            </div>
-                          </FormControl>
-                          {selectedPromotion && (
-                            <FormDescription>
-                              Minimum deposit: ${parseFloat(selectedPromotion.minDeposit).toFixed(2)}
-                            </FormDescription>
-                          )}
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="method"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Bank Transfer Method</FormLabel>
-                        <Select
-                          defaultValue={field.value}
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                          }}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select transfer method" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                            <SelectItem value="wire">Wire Transfer</SelectItem>
-                            <SelectItem value="instant_transfer">Instant Transfer</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
