@@ -26,28 +26,22 @@ import {
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { useAdmin } from "@/contexts/admin-context";
 
-// Mock data for charts - this would come from API in a real implementation
-const financialOverviewData = {
-  currentMonth: {
-    deposits: { total: "187250.00", count: 420 },
-    withdrawals: { total: "134820.00", count: 210 },
-    bets: { total: "523450.00", count: 8721 },
-    wins: { total: "463290.00", count: 2145 },
-    ggr: "60160.00"
-  },
-  previousMonth: {
-    deposits: { total: "165430.00", count: 380 },
-    withdrawals: { total: "110560.00", count: 175 },
-    bets: { total: "490870.00", count: 7930 },
-    wins: { total: "432150.00", count: 1950 },
-    ggr: "58720.00"
-  }
+// Helper function to format currency
+const formatCurrency = (amount: string | number) => {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(num);
 };
 
-const userRegistrationData = {
-  currentMonth: { count: 210 },
-  previousMonth: { count: 175 },
-  dailyData: [
+// Helper function to calculate percentage change
+const calculatePercentageChange = (current: number, previous: number) => {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return ((current - previous) / previous) * 100;
+};
+
+const dailyDataFallback = [
     { date: "2025-05-01", count: 12 },
     { date: "2025-05-02", count: 8 },
     { date: "2025-05-03", count: 15 },
@@ -55,8 +49,7 @@ const userRegistrationData = {
     { date: "2025-05-05", count: 9 },
     { date: "2025-05-06", count: 11 },
     { date: "2025-05-07", count: 7 }
-  ]
-};
+  ];
 
 const recentDeposits = [
   { id: 1, username: "user123", amount: "250.00", method: "credit_card", date: "2025-05-12T08:30:00Z" },
@@ -78,15 +71,13 @@ export default function AdminDashboardPage() {
   const { admin } = useAdmin();
   const [activeTab, setActiveTab] = useState("overview");
 
-  // In a real implementation, we would fetch this data from the API
+  // Fetch real data from API endpoints
   const { data: financialData, isLoading: isFinancialLoading } = useQuery({
     queryKey: ['/api/admin/reports/financial-overview'],
-    queryFn: () => Promise.resolve(financialOverviewData),
   });
 
   const { data: registrationData, isLoading: isRegistrationLoading } = useQuery({
     queryKey: ['/api/admin/reports/user-registrations'],
-    queryFn: () => Promise.resolve(userRegistrationData),
   });
 
   // Calculate the percent change for metrics
@@ -142,23 +133,15 @@ export default function AdminDashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {!isFinancialLoading && formatCurrency(financialData?.currentMonth.deposits.total || "0")}
+                    {isFinancialLoading ? "Loading..." : formatCurrency(financialData?.currentPeriod?.deposits?.total || "0")}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {!isFinancialLoading && (
+                    {!isFinancialLoading && financialData?.currentPeriod?.deposits && (
                       <>
-                        <span className={
-                          calculateChange(
-                            parseFloat(financialData?.currentMonth.deposits.total || "0"),
-                            parseFloat(financialData?.previousMonth.deposits.total || "0")
-                          ) >= 0 ? "text-green-500" : "text-red-500"
-                        }>
-                          {calculateChange(
-                            parseFloat(financialData?.currentMonth.deposits.total || "0"),
-                            parseFloat(financialData?.previousMonth.deposits.total || "0")
-                          ).toFixed(1)}%
+                        <span className="text-green-500">
+                          {financialData.currentPeriod.deposits.count || 0} transactions
                         </span>
-                        {" from last month"}
+                        {" this month"}
                       </>
                     )}
                   </p>
