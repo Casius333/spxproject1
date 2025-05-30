@@ -145,7 +145,7 @@ export default function PlayersPage() {
         </div>
 
         {/* Players table */}
-        <Card>
+        <Card className="w-full overflow-hidden">
           <CardHeader>
             <CardTitle>Players</CardTitle>
             <CardDescription>
@@ -153,8 +153,8 @@ export default function PlayersPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="overflow-x-auto border rounded-md">
-              <Table className="min-w-[1200px]">
+            <div className="overflow-x-auto border rounded-md max-w-full">
+              <Table className="min-w-[1200px] w-full">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-16">ID</TableHead>
