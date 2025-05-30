@@ -1,0 +1,65 @@
+Financial Metrics Upgrade for Admin Dashboard
+Goal: Enhance the existing admin dashboard to improve visibility into casino financial health and liability exposure, particularly with respect to player funds and promotional bonus states.
+
+Instructions:
+
+Update "Total Vault Balance" to reflect:
+
+Total Player Balances (Gross):
+The total of all funds in user wallets, including funds that are currently under bonus conditions.
+
+Add a tooltip or small subtitle (e.g., "Includes bonus-locked funds") for clarity.
+
+Add a new card:
+
+Available Player Balances (Net Liability):
+This card should display only the sum of player balances that are fully withdrawable, i.e., not tied to active bonuses or unmet turnover conditions.
+💡 Label example: "Available for Withdrawal"
+Optional subtitle: “Excludes funds locked in bonuses”
+
+Add a new card:
+
+Bonus-Encumbered Balances:
+This displays the total amount of funds currently locked in active bonus states, where the user must meet playthrough requirements to unlock them for withdrawal.
+💡 Label example: "Bonus-Locked Funds"
+Optional subtitle: “Pending turnover requirements”
+
+Add or modify a card for:
+
+Available Surplus (or "Net System Funds"):
+Calculated as:
+
+java
+Copy
+Edit
+Available Surplus = System Wallet Balance - Available Player Balances
+This is your real operational margin or system cushion.
+
+Use a green check or red warning icon if the value is positive/negative, respectively.
+
+Keep existing cards but make minor naming tweaks if useful for clarity:
+
+Monthly Deposits: OK as is.
+
+Monthly Revenue: Ensure this is calculating net gaming revenue (wagers - wins).
+
+Pending Withdrawals and Monthly Withdrawals: Keep, but ensure they relate only to withdrawable funds (i.e., not including bonus-locked).
+
+Design guidance (to stay consistent):
+
+Match new card style/size with "Total Vault Balance" and other existing cards.
+
+Use a similar layout (2 rows of 4 or 3 cards).
+
+Include small, grey subtitle text for context, as already used in "Monthly Revenue" and "Monthly Withdrawals".
+
+Back-end Logic Requirements:
+
+You’ll need to query user balances and categorize them based on:
+
+is_withdrawable = true (Available Player Balances)
+
+is_bonus_locked = true (Bonus-Encumbered)
+
+Ensure these values update in real time or on regular polling.
+

@@ -62,28 +62,105 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        {/* Key Metrics Grid */}
+        {/* Key Metrics Grid - Enhanced Financial Visibility */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {/* Total Vault Balance */}
+          {/* Total Player Balances (Gross) */}
           <Card className="bg-gray-800 border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-200">
-                Total Vault Balance
+                Total Player Balances
               </CardTitle>
-              <Vault className="h-4 w-4 text-green-400" />
+              <Vault className="h-4 w-4 text-blue-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">
+                {isMetricsLoading ? "Loading..." : formatCurrency(dashboardMetrics?.totalPlayerBalances || "0")}
+              </div>
+              <p className="text-xs text-gray-400">
+                Includes bonus-locked funds
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Available Player Balances (Net Liability) */}
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-200">
+                Available for Withdrawal
+              </CardTitle>
+              <CreditCard className="h-4 w-4 text-green-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">
+                {isMetricsLoading ? "Loading..." : formatCurrency(dashboardMetrics?.availablePlayerBalances || "0")}
+              </div>
+              <p className="text-xs text-gray-400">
+                Excludes funds locked in bonuses
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Bonus-Encumbered Balances */}
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-200">
+                Bonus-Locked Funds
+              </CardTitle>
+              <Clock className="h-4 w-4 text-orange-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">
+                {isMetricsLoading ? "Loading..." : formatCurrency(dashboardMetrics?.bonusLockedBalances || "0")}
+              </div>
+              <p className="text-xs text-gray-400">
+                Pending turnover requirements
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Available Surplus (Net System Funds) */}
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-200">
+                Available Surplus
+              </CardTitle>
+              {dashboardMetrics && parseFloat(dashboardMetrics.availableSurplus || "0") >= 0 ? (
+                <TrendingUp className="h-4 w-4 text-green-400" />
+              ) : (
+                <TrendingUp className="h-4 w-4 text-red-400" />
+              )}
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${
+                dashboardMetrics && parseFloat(dashboardMetrics.availableSurplus || "0") >= 0 
+                  ? "text-green-400" 
+                  : "text-red-400"
+              }`}>
+                {isMetricsLoading ? "Loading..." : formatCurrency(dashboardMetrics?.availableSurplus || "0")}
+              </div>
+              <p className="text-xs text-gray-400">
+                Net operational margin
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* System Overview Grid */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* System Vault Balance */}
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-200">
+                System Vault Balance
+              </CardTitle>
+              <Vault className="h-4 w-4 text-purple-400" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white">
                 {isMetricsLoading ? "Loading..." : formatCurrency(dashboardMetrics?.totalVaultBalance || "0")}
               </div>
               <p className="text-xs text-gray-400">
-                {!isMetricsLoading && (
-                  <>
-                    <span className="text-green-400">
-                      {dashboardMetrics?.totalUsers || 0} active players
-                    </span>
-                  </>
-                )}
+                Total system funds from operations
               </p>
             </CardContent>
           </Card>

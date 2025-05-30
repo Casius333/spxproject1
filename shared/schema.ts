@@ -55,6 +55,9 @@ export const userBalance = pgTable("user_balance", {
   id: serial("id").primaryKey(),
   userId: text("user_id").notNull().unique(),
   balance: decimal("balance", { precision: 12, scale: 2 }).notNull().default("1000"),
+  realBalance: decimal("real_balance", { precision: 12, scale: 2 }).notNull().default("1000"),
+  bonusBalance: decimal("bonus_balance", { precision: 12, scale: 2 }).notNull().default("0"),
+  lockedBalance: decimal("locked_balance", { precision: 12, scale: 2 }).notNull().default("0"),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
