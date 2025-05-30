@@ -651,6 +651,73 @@ export function registerAdminRoutes(app: Express) {
       return res.status(500).json({ message: error?.message || 'Internal server error' });
     }
   });
+
+  // Delete player account completely
+  app.delete(`${adminApiPrefix}/players/:id/delete`, adminAuth, requireRole(['admin', 'super_admin']), async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const adminId = req.user?.id;
+      
+      if (!id || isNaN(parseInt(id, 10))) {
+        return res.status(400).json({ message: 'Invalid player ID' });
+      }
+      
+      const playerId = parseInt(id, 10);
+      
+      // Check if player exists
+      const player = await db.select().from(users).where(eq(users.id, playerId)).limit(1);
+      
+      if (!player.length) {
+        return res.status(404).json({ message: 'Player not found' });
+      }
+      
+      // Log admin action
+      await db.insert(adminActionLogs).values({
+        adminId: adminId!,
+        action: 'delete_player_account',
+        targetType: 'user',
+        targetId: playerId.toString(),
+        details: `Deleted player account: ${player[0].username} (${player[0].email})`,
+        ipAddress: req.ip || 'unknown'
+      });
+      
+      // Delete all user data from related tables
+      // Order matters due to foreign key constraints
+      
+      // Delete user promotions
+      await db.delete(userPromotions).where(eq(userPromotions.userId, playerId));
+      
+      // Delete player activity
+      await db.delete(playerActivity).where(eq(playerActivity.userId, playerId));
+      
+      // Delete deposits
+      await db.delete(deposits).where(eq(deposits.userId, playerId));
+      
+      // Delete withdrawals
+      await db.delete(withdrawals).where(eq(withdrawals.userId, playerId));
+      
+      // Delete transactions
+      await db.delete(transactions).where(eq(transactions.userId, playerId.toString()));
+      
+      // Delete user balance
+      await db.delete(userBalance).where(eq(userBalance.userId, playerId));
+      
+      // Finally, delete the user account
+      await db.delete(users).where(eq(users.id, playerId));
+      
+      return res.status(200).json({
+        message: `Player account deleted successfully`,
+        deletedPlayer: {
+          id: playerId,
+          username: player[0].username,
+          email: player[0].email
+        }
+      });
+    } catch (error: any) {
+      console.error('Delete player account error:', error);
+      return res.status(500).json({ message: error?.message || 'Internal server error' });
+    }
+  });
   
   // Get promotions
   app.get(`${adminApiPrefix}/promotions`, adminAuth, async (req: Request, res: Response) => {

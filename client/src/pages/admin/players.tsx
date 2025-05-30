@@ -359,6 +359,39 @@ export default function PlayersPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Account Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Account</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you absolutely sure you want to delete this player account? This action cannot be undone.
+              <br /><br />
+              <strong>This will permanently delete:</strong>
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>User account and profile information</li>
+                <li>Balance and transaction history</li>
+                <li>Promotion usage records</li>
+                <li>Activity logs and game history</li>
+                <li>All deposits and withdrawal records</li>
+              </ul>
+              <br />
+              <strong>Player:</strong> {playerToDelete?.username} ({playerToDelete?.email})
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteAccount}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteAccountMutation.isPending}
+            >
+              {deleteAccountMutation.isPending ? "Deleting..." : "Delete Account"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }
