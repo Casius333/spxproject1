@@ -146,19 +146,11 @@ export function registerAdminRoutes(app: Express) {
         total: sql<string>`COALESCE(SUM(CAST(balance AS DECIMAL)), 0)::text`
       }).from(userBalance);
 
-      // Get available player balances (withdrawable funds)
-      // For now, we'll assume 85% of balance is withdrawable (15% locked in bonuses)
-      // This provides meaningful metrics until schema update completes
+      // Calculate player balance breakdowns
+      // For demonstration, we'll assume 85% of balance is withdrawable (15% locked in bonuses)
       const totalPlayerAmount = parseFloat(totalPlayerBalances[0]?.total || "0");
       const availablePlayerAmount = totalPlayerAmount * 0.85; // 85% withdrawable
-      const availablePlayerBalances = [{
-        total: availablePlayerAmount.toFixed(2)
-      }];
-
-      // Calculate bonus-locked balances (difference between total and available)
-      const totalPlayerAmount = parseFloat(totalPlayerBalances[0]?.total || "0");
-      const availablePlayerAmount = parseFloat(availablePlayerBalances[0]?.total || "0");
-      const bonusLockedBalances = (totalPlayerAmount - availablePlayerAmount).toFixed(2);
+      const bonusLockedAmount = totalPlayerAmount * 0.15; // 15% bonus locked
 
       // Calculate available surplus (system funds minus player liability)
       const systemAmount = parseFloat(systemVaultBalance[0]?.total || "0");
@@ -176,8 +168,8 @@ export function registerAdminRoutes(app: Express) {
       res.json({
         totalVaultBalance: systemVaultBalance[0]?.total || "0",
         totalPlayerBalances: totalPlayerBalances[0]?.total || "0",
-        availablePlayerBalances: availablePlayerBalances[0]?.total || "0",
-        bonusLockedBalances: bonusLockedBalances,
+        availablePlayerBalances: availablePlayerAmount.toFixed(2),
+        bonusLockedBalances: bonusLockedAmount.toFixed(2),
         availableSurplus: availableSurplus,
         totalUsers: totalUsers[0]?.count || 0,
         activeUsers7d,
