@@ -177,8 +177,8 @@ export default function PlayersPage() {
                           <div className="text-sm text-gray-500">{player.email}</div>
                         </div>
                       </TableCell>
-                      <TableCell>{formatDate(player.registrationDate)}</TableCell>
-                      <TableCell>{formatDate(player.lastLogin)}</TableCell>
+                      <TableCell>{formatDate(player.createdAt)}</TableCell>
+                      <TableCell>-</TableCell>
                       <TableCell>{formatCurrency(player.balance)}</TableCell>
                       <TableCell>{formatCurrency(player.totalDeposits)}</TableCell>
                       <TableCell>

@@ -384,12 +384,20 @@ export function registerAdminRoutes(app: Express) {
         email: users.email,
         phoneNumber: users.phoneNumber,
         createdAt: users.createdAt,
+
         balance: sql<string>`COALESCE(
           (SELECT SUM(CASE 
             WHEN transactions.type = 'deposit' OR transactions.type = 'win' THEN transactions.amount::numeric
             WHEN transactions.type = 'bet' OR transactions.type = 'withdrawal' THEN -transactions.amount::numeric
             ELSE 0
           END) FROM transactions WHERE transactions.user_id = users.id::text),
+          0
+        )::text`,
+        totalDeposits: sql<string>`COALESCE(
+          (SELECT SUM(transactions.amount::numeric) 
+           FROM transactions 
+           WHERE transactions.user_id = users.id::text 
+           AND transactions.type = 'deposit'),
           0
         )::text`
       })
