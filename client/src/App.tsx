@@ -19,7 +19,8 @@ import TransactionHistoryPage from "@/pages/transaction-history";
 import PromotionsPage from "@/pages/promotions";
 import NotFound from "@/pages/not-found";
 import AdminLoginPage from "@/pages/admin/login";
-import AdminDashboardPage from "@/pages/admin/index";
+import AdminDashboardPage from "@/pages/admin/dashboard";
+import AdminTransactionsPage from "@/pages/admin/transactions";
 import PlayersPage from "@/pages/admin/players";
 import ReportsPage from "@/pages/admin/reports";
 import AdminPromotionsPage from "@/pages/admin/promotions";
@@ -57,10 +58,10 @@ function Router() {
       
       {/* Admin dashboard and sub-routes */}
       <AdminProtectedRoute path="/admin" component={AdminDashboardPage} />
-      <AdminProtectedRoute path="/admin/reports" component={ReportsPage} />
+      <AdminProtectedRoute path="/admin/transactions" component={AdminTransactionsPage} />
       <AdminProtectedRoute path="/admin/players" component={PlayersPage} />
+      <AdminProtectedRoute path="/admin/reports" component={ReportsPage} />
       <AdminProtectedRoute path="/admin/promotions" component={AdminPromotionsPage} />
-      <AdminProtectedRoute path="/admin/affiliates" component={AffiliatesPage} />
       <AdminProtectedRoute path="/admin/settings" component={SettingsPage} />
       
       {/* 404 fallback */}
