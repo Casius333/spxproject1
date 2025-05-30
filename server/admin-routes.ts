@@ -389,7 +389,7 @@ export function registerAdminRoutes(app: Express) {
             WHEN transactions.type = 'deposit' OR transactions.type = 'win' THEN transactions.amount::numeric
             WHEN transactions.type = 'bet' OR transactions.type = 'withdrawal' THEN -transactions.amount::numeric
             ELSE 0
-          END) FROM transactions WHERE transactions.user_id = users.id),
+          END) FROM transactions WHERE transactions.user_id = users.id::text),
           0
         )::text`
       })
