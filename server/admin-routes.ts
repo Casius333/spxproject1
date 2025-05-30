@@ -75,177 +75,51 @@ export function registerAdminRoutes(app: Express) {
   // Financial overview
   app.get(`${adminApiPrefix}/reports/financial-overview`, adminAuth, async (req: Request, res: Response) => {
     try {
-      // Get date range parameters
-      const { startDate, endDate } = req.query;
-      
-      // Default to current month if no dates provided
+      // Get current month data
       const currentDate = new Date();
       const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
       const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
       
-      const start = startDate ? new Date(startDate as string) : firstDayOfMonth;
-      const end = endDate ? new Date(endDate as string) : lastDayOfMonth;
-      
-      // Previous period for comparison
-      const previousPeriodStart = new Date(start);
-      previousPeriodStart.setMonth(previousPeriodStart.getMonth() - 1);
-      const previousPeriodEnd = new Date(end);
-      previousPeriodEnd.setMonth(previousPeriodEnd.getMonth() - 1);
-      
-      // Get current period data
-      const depositsQuery = db.select({
+      // Count total deposits this month
+      const currentDeposits = await db.select({
         total: sql<string>`COALESCE(SUM(amount::numeric), 0)::text`,
-        count: sql<number>`COUNT(*)`,
+        count: sql<number>`COUNT(*)`
       })
       .from(transactions)
       .where(
         and(
           eq(transactions.type, 'deposit'),
-          gt(transactions.createdAt, start),
-          lt(transactions.createdAt, end)
-        ) || undefined
+          sql`${transactions.createdAt} >= ${firstDayOfMonth.toISOString()}`,
+          sql`${transactions.createdAt} <= ${lastDayOfMonth.toISOString()}`
+        )
       );
       
-      const withdrawalsQuery = db.select({
+      // Count total withdrawals this month
+      const currentWithdrawals = await db.select({
         total: sql<string>`COALESCE(SUM(amount::numeric), 0)::text`,
-        count: sql<number>`COUNT(*)`,
+        count: sql<number>`COUNT(*)`
       })
       .from(transactions)
       .where(
         and(
           eq(transactions.type, 'withdrawal'),
-          gt(transactions.createdAt, start),
-          lt(transactions.createdAt, end)
+          sql`${transactions.createdAt} >= ${firstDayOfMonth.toISOString()}`,
+          sql`${transactions.createdAt} <= ${lastDayOfMonth.toISOString()}`
         )
       );
-      
-      const betsQuery = db.select({
-        total: sql<string>`COALESCE(SUM(amount::numeric), 0)::text`,
-        count: sql<number>`COUNT(*)`,
-      })
-      .from(transactions)
-      .where(
-        and(
-          eq(transactions.type, 'bet'),
-          gt(transactions.createdAt, start),
-          lt(transactions.createdAt, end)
-        )
-      );
-      
-      const winsQuery = db.select({
-        total: sql<string>`COALESCE(SUM(amount::numeric), 0)::text`,
-        count: sql<number>`COUNT(*)`,
-      })
-      .from(transactions)
-      .where(
-        and(
-          eq(transactions.type, 'win'),
-          gt(transactions.createdAt, start),
-          lt(transactions.createdAt, end)
-        )
-      );
-      
-      // Get previous period data
-      const previousDepositsQuery = db.select({
-        total: sql<string>`COALESCE(SUM(amount::numeric), 0)::text`,
-        count: sql<number>`COUNT(*)`,
-      })
-      .from(transactions)
-      .where(
-        and(
-          eq(transactions.type, 'deposit'),
-          gt(transactions.createdAt, previousPeriodStart),
-          lt(transactions.createdAt, previousPeriodEnd)
-        )
-      );
-      
-      const previousWithdrawalsQuery = db.select({
-        total: sql<string>`COALESCE(SUM(amount::numeric), 0)::text`,
-        count: sql<number>`COUNT(*)`,
-      })
-      .from(transactions)
-      .where(
-        and(
-          eq(transactions.type, 'withdrawal'),
-          gt(transactions.createdAt, previousPeriodStart),
-          lt(transactions.createdAt, previousPeriodEnd)
-        )
-      );
-      
-      const previousBetsQuery = db.select({
-        total: sql<string>`COALESCE(SUM(amount::numeric), 0)::text`,
-        count: sql<number>`COUNT(*)`,
-      })
-      .from(transactions)
-      .where(
-        and(
-          eq(transactions.type, 'bet'),
-          gt(transactions.createdAt, previousPeriodStart),
-          lt(transactions.createdAt, previousPeriodEnd)
-        )
-      );
-      
-      const previousWinsQuery = db.select({
-        total: sql<string>`COALESCE(SUM(amount::numeric), 0)::text`,
-        count: sql<number>`COUNT(*)`,
-      })
-      .from(transactions)
-      .where(
-        and(
-          eq(transactions.type, 'win'),
-          gt(transactions.createdAt, previousPeriodStart),
-          lt(transactions.createdAt, previousPeriodEnd)
-        )
-      );
-      
-      // Execute all queries in parallel
-      const [
-        currentDeposits,
-        currentWithdrawals,
-        currentBets,
-        currentWins,
-        previousDeposits,
-        previousWithdrawals,
-        previousBets,
-        previousWins
-      ] = await Promise.all([
-        db.select().from(depositsQuery.as('deposits')),
-        db.select().from(withdrawalsQuery.as('withdrawals')),
-        db.select().from(betsQuery.as('bets')),
-        db.select().from(winsQuery.as('wins')),
-        db.select().from(previousDepositsQuery.as('prev_deposits')),
-        db.select().from(previousWithdrawalsQuery.as('prev_withdrawals')),
-        db.select().from(previousBetsQuery.as('prev_bets')),
-        db.select().from(previousWinsQuery.as('prev_wins'))
-      ]);
-      
-      // Calculate GGR (Gross Gaming Revenue)
-      const currentBetsTotal = parseFloat(currentBets[0].total || '0');
-      const currentWinsTotal = parseFloat(currentWins[0].total || '0');
-      const currentGGR = (currentBetsTotal - currentWinsTotal).toFixed(2);
-      
-      const previousBetsTotal = parseFloat(previousBets[0].total || '0');
-      const previousWinsTotal = parseFloat(previousWins[0].total || '0');
-      const previousGGR = (previousBetsTotal - previousWinsTotal).toFixed(2);
       
       return res.status(200).json({
         currentPeriod: {
-          startDate: start.toISOString(),
-          endDate: end.toISOString(),
-          deposits: currentDeposits[0],
-          withdrawals: currentWithdrawals[0],
-          bets: currentBets[0],
-          wins: currentWins[0],
-          ggr: currentGGR
-        },
-        previousPeriod: {
-          startDate: previousPeriodStart.toISOString(),
-          endDate: previousPeriodEnd.toISOString(),
-          deposits: previousDeposits[0],
-          withdrawals: previousWithdrawals[0],
-          bets: previousBets[0],
-          wins: previousWins[0],
-          ggr: previousGGR
+          startDate: firstDayOfMonth.toISOString(),
+          endDate: lastDayOfMonth.toISOString(),
+          deposits: {
+            total: currentDeposits[0]?.total || '0',
+            count: currentDeposits[0]?.count || 0
+          },
+          withdrawals: {
+            total: currentWithdrawals[0]?.total || '0',
+            count: currentWithdrawals[0]?.count || 0
+          }
         }
       });
     } catch (error: any) {
@@ -257,81 +131,50 @@ export function registerAdminRoutes(app: Express) {
   // User registrations report
   app.get(`${adminApiPrefix}/reports/user-registrations`, adminAuth, async (req: Request, res: Response) => {
     try {
-      // Get date range parameters
-      const { startDate, endDate } = req.query;
-      
-      // Default to current month if no dates provided
+      // Get current month data
       const currentDate = new Date();
       const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
       const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
       
-      const start = startDate ? new Date(startDate as string) : firstDayOfMonth;
-      const end = endDate ? new Date(endDate as string) : lastDayOfMonth;
+      // Previous month
+      const previousFirstDay = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+      const previousLastDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
       
-      // Previous period for comparison
-      const previousPeriodStart = new Date(start);
-      previousPeriodStart.setMonth(previousPeriodStart.getMonth() - 1);
-      const previousPeriodEnd = new Date(end);
-      previousPeriodEnd.setMonth(previousPeriodEnd.getMonth() - 1);
-      
-      // Get total registrations for current period
-      const currentRegistrationsQuery = db.select({
-        count: sql<number>`COUNT(*)`,
+      // Count users registered this month
+      const currentMonthUsers = await db.select({
+        count: sql<number>`COUNT(*)`
       })
       .from(users)
       .where(
         and(
-          gt(users.createdAt, start),
-          lt(users.createdAt, end)
+          sql`${users.createdAt} >= ${firstDayOfMonth.toISOString()}`,
+          sql`${users.createdAt} <= ${lastDayOfMonth.toISOString()}`
         )
       );
       
-      // Get total registrations for previous period
-      const previousRegistrationsQuery = db.select({
-        count: sql<number>`COUNT(*)`,
+      // Count users registered last month
+      const previousMonthUsers = await db.select({
+        count: sql<number>`COUNT(*)`
       })
       .from(users)
       .where(
         and(
-          gt(users.createdAt, previousPeriodStart),
-          lt(users.createdAt, previousPeriodEnd)
+          sql`${users.createdAt} >= ${previousFirstDay.toISOString()}`,
+          sql`${users.createdAt} <= ${previousLastDay.toISOString()}`
         )
       );
-      
-      // Get daily registrations for the current period
-      const dailyRegistrationsQuery = db.select({
-        date: sql<string>`DATE(created_at)::text`,
-        count: sql<number>`COUNT(*)`,
-      })
-      .from(users)
-      .where(
-        and(
-          gt(users.createdAt, start),
-          lt(users.createdAt, end)
-        )
-      )
-      .groupBy(sql`DATE(created_at)`)
-      .orderBy(sql`DATE(created_at)`);
-      
-      // Execute all queries in parallel
-      const [currentRegistrations, previousRegistrations, dailyRegistrations] = await Promise.all([
-        db.select().from(currentRegistrationsQuery.as('current_registrations')),
-        db.select().from(previousRegistrationsQuery.as('previous_registrations')),
-        db.select().from(dailyRegistrationsQuery.as('daily_registrations'))
-      ]);
       
       return res.status(200).json({
-        currentPeriod: {
-          startDate: start.toISOString(),
-          endDate: end.toISOString(),
-          count: currentRegistrations[0].count
+        currentMonth: {
+          count: currentMonthUsers[0]?.count || 0,
+          startDate: firstDayOfMonth.toISOString(),
+          endDate: lastDayOfMonth.toISOString()
         },
-        previousPeriod: {
-          startDate: previousPeriodStart.toISOString(),
-          endDate: previousPeriodEnd.toISOString(),
-          count: previousRegistrations[0].count
-        },
-        dailyData: dailyRegistrations
+        previousMonth: {
+          count: previousMonthUsers[0]?.count || 0,
+          startDate: previousFirstDay.toISOString(),
+          endDate: previousLastDay.toISOString()
+        }
       });
     } catch (error: any) {
       console.error('User registrations report error:', error);
