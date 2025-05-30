@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -22,12 +22,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
   Search, 
   Filter, 
-  RefreshCw, 
+  RefreshCw,
+  Trash2, 
   ChevronLeft, 
   ChevronRight, 
   MoreHorizontal,
@@ -50,10 +61,13 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function PlayersPage() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all_statuses");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [playerToDelete, setPlayerToDelete] = useState<any>(null);
 
   // Fetch actual player data from the API
   const { data: playersData, isLoading } = useQuery({
@@ -61,6 +75,39 @@ export default function PlayersPage() {
   });
 
   const players = playersData?.players || [];
+
+  // Delete account mutation
+  const deleteAccountMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const res = await fetch(`/api/admin/players/${userId}/delete`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        },
+      });
+      if (!res.ok) {
+        throw new Error('Failed to delete account');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Account Deleted",
+        description: "The player account has been permanently deleted.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/players'] });
+      setDeleteDialogOpen(false);
+      setPlayerToDelete(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Delete Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Filter players based on search query and status
   const filteredPlayers = players ? players.filter(player => {
@@ -104,6 +151,18 @@ export default function PlayersPage() {
       title: "Balance adjusted",
       description: `${operation === 'add' ? 'Added' : 'Subtracted'} ${formatCurrency(amount)} ${operation === 'add' ? 'to' : 'from'} player #${playerId}`,
     });
+  };
+
+  // Handle delete account
+  const handleDeleteAccount = (player: any) => {
+    setPlayerToDelete(player);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteAccount = () => {
+    if (playerToDelete) {
+      deleteAccountMutation.mutate(playerToDelete.id);
+    }
   };
 
   return (
@@ -250,6 +309,14 @@ export default function PlayersPage() {
                               >
                                 <Ban className="mr-2 h-4 w-4" /> 
                                 Ban Account
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => handleDeleteAccount(player)}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" /> 
+                                Delete Account
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
