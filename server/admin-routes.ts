@@ -276,17 +276,33 @@ export function registerAdminRoutes(app: Express) {
         )
       );
       
+      // Count users registered today
+      const todayUsers = await db.select({
+        count: sql<number>`COUNT(*)`
+      })
+      .from(users)
+      .where(sql`DATE(${users.createdAt}) = CURRENT_DATE`);
+
+      // Count users registered this week
+      const weekUsers = await db.select({
+        count: sql<number>`COUNT(*)`
+      })
+      .from(users)
+      .where(sql`${users.createdAt} >= CURRENT_DATE - INTERVAL '7 days'`);
+
       return res.status(200).json({
-        currentMonth: {
+        currentPeriod: {
           count: currentMonthUsers[0]?.count || 0,
           startDate: firstDayOfMonth.toISOString(),
           endDate: lastDayOfMonth.toISOString()
         },
-        previousMonth: {
+        previousPeriod: {
           count: previousMonthUsers[0]?.count || 0,
           startDate: previousFirstDay.toISOString(),
           endDate: previousLastDay.toISOString()
-        }
+        },
+        todayCount: todayUsers[0]?.count || 0,
+        weekCount: weekUsers[0]?.count || 0
       });
     } catch (error: any) {
       console.error('User registrations report error:', error);
