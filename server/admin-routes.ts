@@ -399,7 +399,15 @@ export function registerAdminRoutes(app: Express) {
            WHERE transactions.user_id = users.id::text 
            AND transactions.type = 'deposit'),
           0
-        )::text`
+        )::text`,
+        totalWithdrawals: sql<string>`COALESCE(
+          (SELECT SUM(transactions.amount::numeric) 
+           FROM transactions 
+           WHERE transactions.user_id = users.id::text 
+           AND transactions.type = 'withdrawal'),
+          0
+        )::text`,
+        phoneVerified: sql<boolean>`CASE WHEN users.phone_number IS NOT NULL AND users.phone_number != '' THEN true ELSE false END`
       })
       .from(users);
       

@@ -153,34 +153,43 @@ export default function PlayersPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Registration Date</TableHead>
-                  <TableHead>Last Login</TableHead>
-                  <TableHead>Balance</TableHead>
-                  <TableHead>Total Deposits</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {!isLoading && filteredPlayers.length > 0 ? (
-                  filteredPlayers.map((player) => (
-                    <TableRow key={player.id}>
-                      <TableCell>{player.id}</TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{player.username}</div>
-                          <div className="text-sm text-gray-500">{player.email}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{formatDate(player.createdAt)}</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell>{formatCurrency(player.balance)}</TableCell>
-                      <TableCell>{formatCurrency(player.totalDeposits)}</TableCell>
+            <div className="overflow-x-auto">
+              <Table className="min-w-[1200px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-16">ID</TableHead>
+                    <TableHead className="w-48">User</TableHead>
+                    <TableHead className="w-32">Reg. Date</TableHead>
+                    <TableHead className="w-24">Phone</TableHead>
+                    <TableHead className="w-28">Balance</TableHead>
+                    <TableHead className="w-28">Deposits</TableHead>
+                    <TableHead className="w-28">Withdrawals</TableHead>
+                    <TableHead className="w-20">Status</TableHead>
+                    <TableHead className="w-24 text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {!isLoading && filteredPlayers.length > 0 ? (
+                    filteredPlayers.map((player) => (
+                      <TableRow key={player.id}>
+                        <TableCell className="font-mono text-xs">{player.id}</TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium text-sm">{player.username}</div>
+                            <div className="text-xs text-gray-500 truncate max-w-[180px]">{player.email}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs">{formatDate(player.createdAt)}</TableCell>
+                        <TableCell className="text-center">
+                          {player.phoneVerified ? (
+                            <span className="text-green-400 text-xs">✓</span>
+                          ) : (
+                            <span className="text-gray-500 text-xs">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">{formatCurrency(player.balance)}</TableCell>
+                        <TableCell className="font-mono text-xs">{formatCurrency(player.totalDeposits)}</TableCell>
+                        <TableCell className="font-mono text-xs">{formatCurrency(player.totalWithdrawals)}</TableCell>
                       <TableCell>
                         <Badge
                           className={
@@ -249,13 +258,14 @@ export default function PlayersPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-4">
+                    <TableCell colSpan={9} className="text-center py-4">
                       {isLoading ? "Loading..." : "No players found"}
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
+            </div>
 
             {/* Pagination */}
             <div className="flex items-center justify-end space-x-2 mt-4">
