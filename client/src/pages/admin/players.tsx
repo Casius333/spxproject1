@@ -46,69 +46,7 @@ import { Badge } from "@/components/ui/badge";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock data for players - would be fetched from API in real implementation
-const mockPlayers = [
-  { 
-    id: 1, 
-    username: "user123", 
-    email: "user123@example.com", 
-    registrationDate: "2025-01-15T12:30:00Z",
-    lastLogin: "2025-05-12T14:25:00Z",
-    balance: 350.75,
-    totalDeposits: 1250.00,
-    totalWithdrawals: 750.00,
-    netDeposits: 500.00,
-    status: "active"
-  },
-  { 
-    id: 2, 
-    username: "gambler777", 
-    email: "gambler777@example.com", 
-    registrationDate: "2025-02-20T09:15:00Z",
-    lastLogin: "2025-05-11T20:10:00Z",
-    balance: 1200.50,
-    totalDeposits: 3000.00,
-    totalWithdrawals: 1200.00,
-    netDeposits: 1800.00,
-    status: "active"
-  },
-  { 
-    id: 3, 
-    username: "luckySpin", 
-    email: "luckyspin@example.com", 
-    registrationDate: "2025-03-05T18:45:00Z",
-    lastLogin: "2025-05-10T22:30:00Z",
-    balance: 75.25,
-    totalDeposits: 500.00,
-    totalWithdrawals: 400.00,
-    netDeposits: 100.00,
-    status: "active"
-  },
-  { 
-    id: 4, 
-    username: "highRoller", 
-    email: "highroller@example.com", 
-    registrationDate: "2025-03-12T14:20:00Z", 
-    lastLogin: "2025-05-12T10:15:00Z",
-    balance: 5750.00,
-    totalDeposits: 10000.00,
-    totalWithdrawals: 3500.00,
-    netDeposits: 6500.00,
-    status: "active"
-  },
-  { 
-    id: 5, 
-    username: "slotFan22", 
-    email: "slotfan22@example.com", 
-    registrationDate: "2025-04-18T11:05:00Z",
-    lastLogin: "2025-05-09T19:40:00Z",
-    balance: 0.00,
-    totalDeposits: 800.00,
-    totalWithdrawals: 800.00,
-    netDeposits: 0.00,
-    status: "suspended"
-  }
-];
+
 
 export default function PlayersPage() {
   const { toast } = useToast();
@@ -117,11 +55,12 @@ export default function PlayersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
-  // In a real implementation, we would fetch this data from the API
-  const { data: players, isLoading } = useQuery({
-    queryKey: ['/api/admin/players', statusFilter, currentPage],
-    queryFn: () => Promise.resolve(mockPlayers),
+  // Fetch actual player data from the API
+  const { data: playersData, isLoading } = useQuery({
+    queryKey: ['/api/admin/players', statusFilter, currentPage, searchQuery],
   });
+
+  const players = playersData?.players || [];
 
   // Filter players based on search query and status
   const filteredPlayers = players ? players.filter(player => {

@@ -743,6 +743,89 @@ export function registerAdminRoutes(app: Express) {
     }
   });
   
+  // Transaction analytics for deposits/withdrawals
+  app.get(`${adminApiPrefix}/transactions/deposits`, adminAuth, async (req: Request, res: Response) => {
+    try {
+      const depositsList = await db.select({
+        id: deposits.id,
+        amount: deposits.amount,
+        method: deposits.method,
+        status: deposits.status,
+        createdAt: deposits.createdAt,
+        username: users.username
+      })
+      .from(deposits)
+      .innerJoin(users, eq(deposits.userId, users.id))
+      .orderBy(desc(deposits.createdAt))
+      .limit(50);
+
+      res.json({ transactions: depositsList });
+    } catch (error) {
+      console.error('Error fetching deposits:', error);
+      res.status(500).json({ message: 'Error fetching deposit transactions' });
+    }
+  });
+
+  app.get(`${adminApiPrefix}/transactions/withdrawals`, adminAuth, async (req: Request, res: Response) => {
+    try {
+      const withdrawalsList = await db.select({
+        id: withdrawals.id,
+        amount: withdrawals.amount,
+        method: withdrawals.method,
+        status: withdrawals.status,
+        createdAt: withdrawals.createdAt,
+        username: users.username
+      })
+      .from(withdrawals)
+      .innerJoin(users, eq(withdrawals.userId, users.id))
+      .orderBy(desc(withdrawals.createdAt))
+      .limit(50);
+
+      res.json({ transactions: withdrawalsList });
+    } catch (error) {
+      console.error('Error fetching withdrawals:', error);
+      res.status(500).json({ message: 'Error fetching withdrawal transactions' });
+    }
+  });
+
+  app.get(`${adminApiPrefix}/transactions/analytics`, adminAuth, async (req: Request, res: Response) => {
+    try {
+      // Get total transaction volume
+      const totalVolume = await db.select({
+        total: sql<string>`COALESCE(SUM(CAST(amount AS DECIMAL)), 0)::text`
+      }).from(transactions);
+
+      // Get transaction count
+      const totalTransactions = await db.select({
+        count: sql<number>`COUNT(*)`
+      }).from(transactions);
+
+      // Calculate average transaction size
+      const avgSize = parseFloat(totalVolume[0]?.total || "0") / (totalTransactions[0]?.count || 1);
+
+      // Get success rate from actual data
+      const failedCount = await db.select({
+        count: sql<number>`COUNT(*)`
+      }).from(transactions).where(eq(transactions.type, 'failed'));
+
+      const successRate = totalTransactions[0]?.count > 0 
+        ? ((totalTransactions[0].count - (failedCount[0]?.count || 0)) / totalTransactions[0].count * 100)
+        : 100;
+
+      res.json({
+        totalVolume: totalVolume[0]?.total || "0",
+        totalTransactions: totalTransactions[0]?.count || 0,
+        avgTransactionSize: avgSize.toFixed(2),
+        successRate: successRate.toFixed(1),
+        failedTransactions: failedCount[0]?.count || 0,
+        pendingReview: 0 // Can be calculated from actual pending transactions
+      });
+    } catch (error) {
+      console.error('Error fetching transaction analytics:', error);
+      res.status(500).json({ message: 'Error fetching transaction analytics' });
+    }
+  });
+
   // Get affiliates
   app.get(`${adminApiPrefix}/affiliates`, adminAuth, async (_req: Request, res: Response) => {
     try {
