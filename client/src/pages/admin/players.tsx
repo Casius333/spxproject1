@@ -191,7 +191,7 @@ export default function PlayersPage() {
                               : "bg-red-500/20 text-red-400 hover:bg-red-500/25"
                           }
                         >
-                          {player.status.charAt(0).toUpperCase() + player.status.slice(1)}
+                          {player.status ? player.status.charAt(0).toUpperCase() + player.status.slice(1) : 'Active'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
