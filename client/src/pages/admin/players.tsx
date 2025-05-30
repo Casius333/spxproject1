@@ -365,20 +365,23 @@ export default function PlayersPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Account</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="space-y-4">
               <div>
                 Are you absolutely sure you want to delete this player account? This action cannot be undone.
-                <br /><br />
+              </div>
+              <div>
                 <strong>This will permanently delete:</strong>
               </div>
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>User account and profile information</li>
-                <li>Balance and transaction history</li>
-                <li>Promotion usage records</li>
-                <li>Activity logs and game history</li>
-                <li>All deposits and withdrawal records</li>
-              </ul>
-              <div className="mt-4">
+              <div>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>User account and profile information</li>
+                  <li>Balance and transaction history</li>
+                  <li>Promotion usage records</li>
+                  <li>Activity logs and game history</li>
+                  <li>All deposits and withdrawal records</li>
+                </ul>
+              </div>
+              <div>
                 <strong>Player:</strong> {playerToDelete?.username} ({playerToDelete?.email})
               </div>
             </AlertDialogDescription>
