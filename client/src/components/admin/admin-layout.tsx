@@ -1,164 +1,124 @@
-import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { ReactNode } from 'react';
+import { Link, useLocation } from 'wouter';
+import { useAdmin } from '@/contexts/admin-context';
+import { Button } from '@/components/ui/button';
 import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Home, 
+  LayoutDashboard, 
+  CreditCard, 
   Users, 
-  BarChart4, 
+  BarChart3, 
   Gift, 
-  RefreshCw, 
-  Settings, 
-  LogOut 
-} from "lucide-react";
-import { useAdmin } from "@/contexts/admin-context";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+  Settings,
+  LogOut,
+  Menu
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface AdminLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const { admin, logout } = useAdmin();
   const [location] = useLocation();
-  const [expanded, setExpanded] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const navItems = [
-    { href: "/admin", icon: Home, label: "Dashboard" },
-    { href: "/admin/reports", icon: BarChart4, label: "Reports" },
-    { href: "/admin/players", icon: Users, label: "Players" },
-    { href: "/admin/promotions", icon: Gift, label: "Promotions" },
-    { href: "/admin/affiliates", icon: RefreshCw, label: "Affiliates" },
-    { href: "/admin/settings", icon: Settings, label: "Settings" },
+  const navigation = [
+    { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+    { name: 'Transactions', href: '/admin/transactions', icon: CreditCard },
+    { name: 'Players', href: '/admin/players', icon: Users },
+    { name: 'Reports', href: '/admin/reports', icon: BarChart3 },
+    { name: 'Promotions', href: '/admin/promotions', icon: Gift },
+    { name: 'Settings', href: '/admin/settings', icon: Settings },
   ];
 
   return (
-    <div className="flex h-screen bg-gray-900 text-white">
-      {/* Sidebar */}
-      <div
-        className={cn(
-          "h-full flex flex-col bg-gray-800 border-r border-gray-700 transition-all duration-300",
-          expanded ? "w-64" : "w-16"
-        )}
-      >
-        {/* Logo area */}
-        <div className="p-4 flex items-center justify-between border-b border-gray-700">
-          {expanded && (
-            <div className="text-xl font-bold">
-              LuckyPunt <span className="text-primary">Admin</span>
-            </div>
-          )}
-          
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Mobile menu button */}
+      <div className="lg:hidden">
+        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+          <h1 className="text-xl font-bold">Admin Dashboard</h1>
           <Button
             variant="ghost"
             size="sm"
-            className="p-1 text-gray-400 hover:text-white"
-            onClick={() => setExpanded(!expanded)}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
           >
-            {expanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+            <Menu className="h-6 w-6" />
           </Button>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 pt-4 pb-4">
-          <ul className="space-y-1">
-            {navItems.map((item) => (
-              <li key={item.href}>
-                <TooltipProvider delayDuration={100}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link 
-                        href={item.href}
-                        className={cn(
-                          "flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg mx-2",
-                          location === item.href && "bg-gray-700 text-white"
-                        )}
-                      >
-                        <item.icon size={20} />
-                        {expanded && <span className="ml-4">{item.label}</span>}
-                      </Link>
-                    </TooltipTrigger>
-                    {!expanded && (
-                      <TooltipContent side="right">
-                        {item.label}
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        {/* User profile */}
-        <div className="border-t border-gray-700 p-4">
-          <div className="flex items-center">
-            <div
-              className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-medium"
-            >
-              {admin?.username.charAt(0).toUpperCase()}
-            </div>
-            
-            {expanded && (
-              <div className="ml-2">
-                <div className="text-sm font-medium">{admin?.username}</div>
-                <div className="text-xs text-gray-400 capitalize">{admin?.role}</div>
-              </div>
-            )}
-          </div>
-          
-          <TooltipProvider delayDuration={100}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "text-gray-300 hover:text-white",
-                    expanded ? "w-full mt-2 justify-start" : "mt-4 p-2"
-                  )}
-                  onClick={logout}
-                >
-                  <LogOut size={16} />
-                  {expanded && <span className="ml-2">Logout</span>}
-                </Button>
-              </TooltipTrigger>
-              {!expanded && (
-                <TooltipContent side="right">
-                  Logout
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="h-16 border-b border-gray-700 bg-gray-800 flex items-center px-6 justify-between">
-          <h1 className="text-xl font-semibold">
-            {location === "/admin" && "Dashboard"}
-            {location === "/admin/reports" && "Reports"}
-            {location === "/admin/players" && "Players"}
-            {location === "/admin/promotions" && "Promotions"}
-            {location === "/admin/affiliates" && "Affiliates"}
-            {location === "/admin/settings" && "Settings"}
-          </h1>
-          
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-400">
-              {new Date().toLocaleDateString()}
-            </span>
+      <div className="flex">
+        {/* Sidebar */}
+        <div className={`
+          fixed inset-y-0 left-0 z-50 w-64 bg-gray-800 transform transition-transform duration-300 ease-in-out
+          lg:translate-x-0 lg:static lg:inset-0
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}>
+          <div className="flex flex-col h-full">
+            {/* Logo */}
+            <div className="flex items-center h-16 px-6 border-b border-gray-700">
+              <h1 className="text-xl font-bold text-white">LuckyPunt Admin</h1>
+            </div>
+
+            {/* Navigation */}
+            <nav className="flex-1 px-4 py-6 space-y-2">
+              {navigation.map((item) => {
+                const isActive = location === item.href || 
+                  (item.href !== '/admin' && location.startsWith(item.href));
+                
+                return (
+                  <Link key={item.name} href={item.href}>
+                    <div className={`
+                      flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                      ${isActive 
+                        ? 'bg-blue-600 text-white' 
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                      }
+                    `}>
+                      <item.icon className="mr-3 h-5 w-5" />
+                      {item.name}
+                    </div>
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* User info and logout */}
+            <div className="border-t border-gray-700 p-4">
+              <div className="flex items-center mb-3">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-white">{admin?.username}</p>
+                  <p className="text-xs text-gray-400">{admin?.role}</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={logout}
+                className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700"
+              >
+                <LogOut className="mr-3 h-4 w-4" />
+                Logout
+              </Button>
+            </div>
           </div>
-        </header>
-        
-        {/* Content */}
-        <main className="flex-1 overflow-auto p-6">
-          {children}
-        </main>
+        </div>
+
+        {/* Overlay for mobile */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Main content */}
+        <div className="flex-1 lg:ml-0">
+          <main className="p-6">
+            {children}
+          </main>
+        </div>
       </div>
     </div>
   );

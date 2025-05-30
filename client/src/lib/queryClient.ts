@@ -12,6 +12,11 @@ export function getAuthToken(): string | null {
   return localStorage.getItem('auth_token');
 }
 
+// Get the admin token from localStorage
+export function getAdminToken(): string | null {
+  return localStorage.getItem('adminToken');
+}
+
 // Save auth token to localStorage
 export function setAuthToken(token: string): void {
   localStorage.setItem('auth_token', token);
@@ -36,7 +41,9 @@ export async function apiRequest(
   
   // Add authorization header if we have a token (and no custom Authorization was provided)
   if (!customHeaders?.Authorization) {
-    const token = getAuthToken();
+    // Check if this is an admin API call
+    const isAdminCall = url.includes('/api/admin');
+    const token = isAdminCall ? getAdminToken() : getAuthToken();
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -60,7 +67,9 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     // Prepare headers with auth token if available
     const headers: Record<string, string> = {};
-    const token = getAuthToken();
+    // Check if this is an admin API call
+    const isAdminCall = (queryKey[0] as string).includes('/api/admin');
+    const token = isAdminCall ? getAdminToken() : getAuthToken();
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
