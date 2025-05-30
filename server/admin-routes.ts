@@ -420,7 +420,7 @@ export function registerAdminRoutes(app: Express) {
       // Execute queries
       const [playersResult, countResult] = await Promise.all([
         query.limit(limitNumber).offset(offset).orderBy(users.createdAt, 'desc'),
-        db.select().from(countQuery.as('count'))
+        countQuery
       ]);
       
       return res.status(200).json({
