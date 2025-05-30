@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useAdmin } from "@/contexts/admin-context";
 
 // Login form schema
 const loginSchema = z.object({
@@ -29,6 +30,7 @@ export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { login } = useAdmin();
   
   // Create form
   const form = useForm<LoginFormValues>({
@@ -58,9 +60,8 @@ export default function AdminLoginPage() {
       return response.json();
     },
     onSuccess: (data) => {
-      // Store admin data and token in localStorage
-      localStorage.setItem('adminToken', data.token);
-      localStorage.setItem('adminUser', JSON.stringify(data.admin));
+      // Use the AdminContext login function to properly update state
+      login(data.token, data.admin);
       
       // Show success toast
       toast({
