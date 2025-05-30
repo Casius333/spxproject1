@@ -152,8 +152,8 @@ export default function PlayersPage() {
               Manage player accounts, view activity, and adjust balances.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
+          <CardContent className="space-y-4">
+            <div className="overflow-x-auto border rounded-md">
               <Table className="min-w-[1200px]">
                 <TableHeader>
                   <TableRow>
@@ -190,85 +190,85 @@ export default function PlayersPage() {
                         <TableCell className="font-mono text-xs">{formatCurrency(player.balance)}</TableCell>
                         <TableCell className="font-mono text-xs">{formatCurrency(player.totalDeposits)}</TableCell>
                         <TableCell className="font-mono text-xs">{formatCurrency(player.totalWithdrawals)}</TableCell>
-                      <TableCell>
-                        <Badge
-                          className={
-                            player.status === "active" 
-                              ? "bg-green-500/20 text-green-400 hover:bg-green-500/25" 
-                              : player.status === "suspended" 
-                              ? "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/25" 
-                              : "bg-red-500/20 text-red-400 hover:bg-red-500/25"
-                          }
-                        >
-                          {player.status ? player.status.charAt(0).toUpperCase() + player.status.slice(1) : 'Active'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal size={16} />
-                              <span className="sr-only">Open menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem 
-                              onClick={() => handleBalanceAdjustment(player.id, 100, 'add')}
-                            >
-                              <CircleDollarSign className="mr-2 h-4 w-4" /> 
-                              Add Credit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => handleBalanceAdjustment(player.id, 100, 'subtract')}
-                              disabled={player.balance <= 0}
-                            >
-                              <CircleDollarSign className="mr-2 h-4 w-4" /> 
-                              Remove Credit
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {player.status === "active" ? (
+                        <TableCell>
+                          <Badge
+                            className={
+                              player.status === "active" 
+                                ? "bg-green-500/20 text-green-400 hover:bg-green-500/25 text-xs" 
+                                : player.status === "suspended" 
+                                ? "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/25 text-xs" 
+                                : "bg-red-500/20 text-red-400 hover:bg-red-500/25 text-xs"
+                            }
+                          >
+                            {player.status ? player.status.charAt(0).toUpperCase() + player.status.slice(1) : 'Active'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal size={16} />
+                                <span className="sr-only">Open menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
                               <DropdownMenuItem 
-                                onClick={() => handleStatusChange(player.id, "suspended")}
-                                className="text-amber-500"
+                                onClick={() => handleBalanceAdjustment(player.id, 100, 'add')}
+                              >
+                                <CircleDollarSign className="mr-2 h-4 w-4" /> 
+                                Add Credit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleBalanceAdjustment(player.id, 100, 'subtract')}
+                                disabled={player.balance <= 0}
+                              >
+                                <CircleDollarSign className="mr-2 h-4 w-4" /> 
+                                Remove Credit
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              {player.status === "active" ? (
+                                <DropdownMenuItem 
+                                  onClick={() => handleStatusChange(player.id, "suspended")}
+                                  className="text-amber-500"
+                                >
+                                  <Ban className="mr-2 h-4 w-4" /> 
+                                  Suspend Account
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem 
+                                  onClick={() => handleStatusChange(player.id, "active")}
+                                  className="text-green-500"
+                                >
+                                  <RefreshCw className="mr-2 h-4 w-4" /> 
+                                  Reactivate Account
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem 
+                                onClick={() => handleStatusChange(player.id, "banned")}
+                                className="text-red-500"
                               >
                                 <Ban className="mr-2 h-4 w-4" /> 
-                                Suspend Account
+                                Ban Account
                               </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem 
-                                onClick={() => handleStatusChange(player.id, "active")}
-                                className="text-green-500"
-                              >
-                                <RefreshCw className="mr-2 h-4 w-4" /> 
-                                Reactivate Account
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem 
-                              onClick={() => handleStatusChange(player.id, "banned")}
-                              className="text-red-500"
-                            >
-                              <Ban className="mr-2 h-4 w-4" /> 
-                              Ban Account
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-4">
+                        {isLoading ? "Loading..." : "No players found"}
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={9} className="text-center py-4">
-                      {isLoading ? "Loading..." : "No players found"}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-end space-x-2 mt-4">
+            <div className="flex items-center justify-end space-x-2">
               <Button
                 variant="outline"
                 size="sm"
