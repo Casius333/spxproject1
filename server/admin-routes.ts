@@ -220,14 +220,27 @@ export function registerAdminRoutes(app: Express) {
       .where(sql`DATE(${users.createdAt}) = CURRENT_DATE`)
       .limit(5);
 
-      // Calculate active players (based on actual data)
-      const totalUsers = await db.select({ count: sql<number>`COUNT(*)` }).from(users);
-      const activePlayers = Math.floor((totalUsers[0]?.count || 0) * 0.1) + Math.floor(Math.random() * 10);
-      const playersLast24h = Math.floor((totalUsers[0]?.count || 0) * 0.4) + Math.floor(Math.random() * 20);
+      // Get actual active players from session data or recent activity
+      const playersLast24h = await db.select({
+        count: sql<number>`COUNT(DISTINCT ${users.id})`
+      })
+      .from(users)
+      .leftJoin(transactions, eq(users.id, sql`${transactions.userId}::integer`))
+      .where(sql`${transactions.createdAt} >= NOW() - INTERVAL '24 hours'`);
+
+      // For current live players, we'll use a more conservative estimate based on recent activity
+      const recentActivity = await db.select({
+        count: sql<number>`COUNT(DISTINCT ${users.id})`
+      })
+      .from(users)
+      .leftJoin(transactions, eq(users.id, sql`${transactions.userId}::integer`))
+      .where(sql`${transactions.createdAt} >= NOW() - INTERVAL '1 hour'`);
+
+      const activePlayers = recentActivity[0]?.count || 0;
 
       res.json({
         activePlayers,
-        playersLast24h,
+        playersLast24h: playersLast24h[0]?.count || 0,
         recentLargeTransactions: transactionsWithUsers,
         newPlayersToday: newPlayersToday.map(player => ({
           ...player,

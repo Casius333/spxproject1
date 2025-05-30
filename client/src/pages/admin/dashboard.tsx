@@ -194,19 +194,19 @@ export default function AdminDashboard() {
           <Card className="bg-gray-800 border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-200">
-                New Registrations
+                New Registrations Today
               </CardTitle>
               <Users className="h-4 w-4 text-purple-400" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white">
-                {isRegistrationLoading ? "Loading..." : (registrationData?.currentPeriod?.count || 0)}
+                {isRegistrationLoading ? "Loading..." : (registrationData?.todayCount || 0)}
               </div>
               <p className="text-xs text-gray-400">
                 {!isRegistrationLoading && (
                   <>
                     <span className="text-purple-400">
-                      {registrationData?.todayCount || 0} today
+                      {registrationData?.currentPeriod?.count || 0} this month
                     </span>
                     {", "}{registrationData?.weekCount || 0}{" this week"}
                   </>
@@ -215,11 +215,11 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          {/* Live Players */}
+          {/* Active Players */}
           <Card className="bg-gray-800 border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-200">
-                Live Players
+                Active Players
               </CardTitle>
               <UserCheck className="h-4 w-4 text-yellow-400" />
             </CardHeader>
@@ -231,7 +231,7 @@ export default function AdminDashboard() {
                 {!isActivityLoading && (
                   <>
                     <span className="text-yellow-400">
-                      {liveActivity?.playersLast24h || 0} in 24h
+                      {liveActivity?.playersLast24h || 0} active in 24h
                     </span>
                   </>
                 )}
