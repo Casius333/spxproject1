@@ -131,10 +131,15 @@ export function registerAdminRoutes(app: Express) {
   // Dashboard metrics endpoint
   app.get(`${adminApiPrefix}/dashboard-metrics`, adminAuth, async (req: Request, res: Response) => {
     try {
-      // Get total vault balance (sum of all user balances)
+      // Get total vault balance (deposits minus withdrawals and bets)
       const vaultBalance = await db.select({
-        total: sql<string>`COALESCE(SUM(CAST(balance AS DECIMAL)), 0)::text`
-      }).from(transactions).where(eq(transactions.type, 'deposit'));
+        total: sql<string>`COALESCE(
+          SUM(CASE 
+            WHEN type = 'deposit' OR type = 'win' THEN CAST(amount AS DECIMAL)
+            WHEN type = 'bet' OR type = 'withdrawal' THEN -CAST(amount AS DECIMAL)
+            ELSE 0 
+          END), 0)::text`
+      }).from(transactions);
 
       // Get total users count
       const totalUsers = await db.select({

@@ -108,7 +108,14 @@ export function adminAuth(req: Request, res: Response, next: NextFunction) {
   // Get the token from the request headers
   const authHeader = req.headers.authorization;
   
+  console.log('Admin auth check:', {
+    path: req.path,
+    authHeader: authHeader ? 'Bearer ***' : 'missing',
+    hasToken: !!authHeader
+  });
+  
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('Admin auth failed: No Bearer token');
     return res.status(401).json({ message: 'Authentication required' });
   }
   
@@ -118,8 +125,11 @@ export function adminAuth(req: Request, res: Response, next: NextFunction) {
   const decoded = verifyToken(token);
   
   if (!decoded) {
+    console.log('Admin auth failed: Token verification failed');
     return res.status(401).json({ message: 'Invalid or expired token' });
   }
+  
+  console.log('Admin auth success:', { adminId: decoded.id, role: decoded.role });
   
   // Add the admin to the request object
   (req as any).admin = decoded;
