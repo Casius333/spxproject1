@@ -366,9 +366,11 @@ export default function PlayersPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Account</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you absolutely sure you want to delete this player account? This action cannot be undone.
-              <br /><br />
-              <strong>This will permanently delete:</strong>
+              <div>
+                Are you absolutely sure you want to delete this player account? This action cannot be undone.
+                <br /><br />
+                <strong>This will permanently delete:</strong>
+              </div>
               <ul className="list-disc list-inside mt-2 space-y-1">
                 <li>User account and profile information</li>
                 <li>Balance and transaction history</li>
@@ -376,8 +378,9 @@ export default function PlayersPage() {
                 <li>Activity logs and game history</li>
                 <li>All deposits and withdrawal records</li>
               </ul>
-              <br />
-              <strong>Player:</strong> {playerToDelete?.username} ({playerToDelete?.email})
+              <div className="mt-4">
+                <strong>Player:</strong> {playerToDelete?.username} ({playerToDelete?.email})
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

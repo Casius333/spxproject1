@@ -1,7 +1,7 @@
 import { Express, Request, Response, NextFunction } from 'express';
 import { createHash } from 'crypto';
 import { db } from '../db';
-import { adminUsers, users, transactions, games, promotions, affiliates, userBalance } from '@shared/schema';
+import { adminUsers, users, transactions, games, promotions, affiliates, userBalance, adminActionLogs, userPromotions, playerActivity, deposits, withdrawals } from '@shared/schema';
 import { eq, sql, desc, and, gt, lt, count } from 'drizzle-orm';
 import { loginAdmin, adminAuth, requireRole, getAdminById } from './admin-auth-service';
 
