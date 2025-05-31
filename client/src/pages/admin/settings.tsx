@@ -33,6 +33,7 @@ import {
   RefreshCw,
   FileText,
   User,
+  UserPlus,
   Users,
   Key,
   ShieldCheck,
@@ -159,6 +160,70 @@ export default function SettingsPage() {
       title: "Settings saved",
       description: `${section.charAt(0).toUpperCase() + section.slice(1)} settings have been updated successfully.`,
     });
+  };
+
+  // Handle new admin user creation
+  const handleCreateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newAdminForm.username || !newAdminForm.email || !newAdminForm.password) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCreatingAdmin(true);
+    
+    try {
+      const token = localStorage.getItem('admin_token');
+      if (!token) {
+        throw new Error('No admin token found');
+      }
+      
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newAdminForm)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create admin user');
+      }
+      
+      const result = await response.json();
+      
+      toast({
+        title: "Success",
+        description: result.message || "Admin user created successfully.",
+      });
+      
+      // Reset form
+      setNewAdminForm({
+        username: "",
+        email: "",
+        password: "",
+        role: "support"
+      });
+      
+      // Refetch admin users data to show the new user
+      window.location.reload();
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create admin user.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingAdmin(false);
+    }
   };
 
   // Send invite - would actually send to API in real implementation
@@ -605,44 +670,79 @@ export default function SettingsPage() {
                 <Separator />
                 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Invite New Admin</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="md:col-span-2">
-                      <Label htmlFor="inviteEmail" className="sr-only">Email Address</Label>
-                      <Input
-                        id="inviteEmail"
-                        type="email"
-                        placeholder="Email address"
-                        value={inviteEmail}
-                        onChange={(e) => setInviteEmail(e.target.value)}
-                      />
+                  <h3 className="text-lg font-medium">Create New Admin User</h3>
+                  <form onSubmit={handleCreateAdmin} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="newUsername">Username</Label>
+                        <Input
+                          id="newUsername"
+                          type="text"
+                          placeholder="Enter username"
+                          value={newAdminForm.username}
+                          onChange={(e) => setNewAdminForm(prev => ({ ...prev, username: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="newEmail">Email Address</Label>
+                        <Input
+                          id="newEmail"
+                          type="email"
+                          placeholder="Enter email address"
+                          value={newAdminForm.email}
+                          onChange={(e) => setNewAdminForm(prev => ({ ...prev, email: e.target.value }))}
+                          required
+                        />
+                      </div>
                     </div>
-                    
-                    <div>
-                      <Label htmlFor="inviteRole" className="sr-only">Role</Label>
-                      <Select
-                        value={inviteRole}
-                        onValueChange={setInviteRole}
-                      >
-                        <SelectTrigger id="inviteRole">
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="moderator">Moderator</SelectItem>
-                          <SelectItem value="support">Support</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="newPassword">Password</Label>
+                        <Input
+                          id="newPassword"
+                          type="password"
+                          placeholder="Enter password"
+                          value={newAdminForm.password}
+                          onChange={(e) => setNewAdminForm(prev => ({ ...prev, password: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="newRole">Role</Label>
+                        <Select 
+                          value={newAdminForm.role} 
+                          onValueChange={(value) => setNewAdminForm(prev => ({ ...prev, role: value }))}
+                        >
+                          <SelectTrigger id="newRole">
+                            <SelectValue placeholder="Select role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="support">Support</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="super_admin">Super Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <Button 
-                    className="gap-2"
-                    onClick={handleSendInvite}
-                  >
-                    <Mail size={16} />
-                    <span>Send Invitation</span>
-                  </Button>
+                    <Button 
+                      type="submit"
+                      className="gap-2"
+                      disabled={isCreatingAdmin}
+                    >
+                      {isCreatingAdmin ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>Creating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus size={16} />
+                          <span>Create Admin User</span>
+                        </>
+                      )}
+                    </Button>
+                  </form>
                 </div>
               </CardContent>
             </Card>
