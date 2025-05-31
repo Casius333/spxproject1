@@ -87,37 +87,37 @@ interface AdminUser {
   active: boolean;
 }
 
-// Mock admin users for the user management tab
-const mockAdminUsers: AdminUser[] = [
-  {
-    id: 1,
-    username: "admin",
-    email: "admin@luckypunt.com",
-    role: "admin",
-    lastLogin: "2025-05-12T08:45:00Z",
-    active: true
-  },
-  {
-    id: 2,
-    username: "moderator",
-    email: "moderator@luckypunt.com",
-    role: "moderator",
-    lastLogin: "2025-05-10T14:30:00Z",
-    active: true
-  },
-  {
-    id: 3,
-    username: "support",
-    email: "support@luckypunt.com",
-    role: "support",
-    lastLogin: "2025-05-11T09:15:00Z",
-    active: true
-  }
-];
+
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const { admin } = useAdmin();
+
+  // Fetch admin users from API
+  const { data: adminUsersResponse, isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['/api/admin/users'],
+    queryFn: async () => {
+      const token = localStorage.getItem('admin_token');
+      if (!token) {
+        throw new Error('No admin token found');
+      }
+      
+      const response = await fetch('/api/admin/users', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch admin users');
+      }
+      
+      return response.json();
+    }
+  });
+
+  const adminUsers = adminUsersResponse?.adminUsers || [];
   const [activeTab, setActiveTab] = useState("general");
   
   // Form state for each settings section
@@ -127,11 +127,7 @@ export default function SettingsPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("support");
   
-  // In a real implementation, we would fetch these from the API
-  const { data: adminUsers, isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['/api/admin/users'],
-    queryFn: () => Promise.resolve(mockAdminUsers),
-  });
+
 
   // Handle form input change for general settings
   const handleGeneralChange = (field: keyof typeof generalSettings, value: any) => {

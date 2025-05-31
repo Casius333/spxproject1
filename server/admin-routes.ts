@@ -71,6 +71,28 @@ export function registerAdminRoutes(app: Express) {
       return res.status(500).json({ message: error?.message || 'Internal server error' });
     }
   });
+
+  // Get all admin users
+  app.get(`${adminApiPrefix}/users`, adminAuth, async (req: Request, res: Response) => {
+    try {
+      const allAdminUsers = await db.query.adminUsers.findMany({
+        columns: {
+          id: true,
+          username: true,
+          email: true,
+          role: true,
+          active: true,
+          lastLogin: true,
+          createdAt: true
+        }
+      });
+      
+      return res.status(200).json({ adminUsers: allAdminUsers });
+    } catch (error: any) {
+      console.error('Get admin users error:', error);
+      return res.status(500).json({ message: error?.message || 'Internal server error' });
+    }
+  });
   
   // Financial overview
   app.get(`${adminApiPrefix}/reports/financial-overview`, adminAuth, async (req: Request, res: Response) => {
