@@ -695,60 +695,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 
-                <Separator />
-                
-                <div>
-                  <h3 className="text-md font-medium mb-2">API Integration</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="apiKey">API Key</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="apiKey"
-                          type="password"
-                          value="••••••••••••••••••••••••••••••••"
-                          disabled
-                        />
-                        <Button 
-                          variant="outline" 
-                          className="shrink-0"
-                          onClick={() => {
-                            toast({
-                              title: "API key copied",
-                              description: "The API key has been copied to your clipboard.",
-                            });
-                          }}
-                        >
-                          <Copy size={16} />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-end gap-2">
-                      <Button 
-                        variant="outline" 
-                        className="gap-1"
-                        onClick={() => {
-                          toast({
-                            title: "API key regenerated",
-                            description: "A new API key has been generated.",
-                          });
-                        }}
-                      >
-                        <Key size={16} />
-                        <span>Regenerate Key</span>
-                      </Button>
-                      
-                      <Button 
-                        variant="outline" 
-                        className="gap-1"
-                      >
-                        <Globe size={16} />
-                        <span>API Docs</span>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+
               </CardContent>
             </Card>
           </TabsContent>
