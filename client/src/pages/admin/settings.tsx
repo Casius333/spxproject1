@@ -126,6 +126,15 @@ export default function SettingsPage() {
   const [formGame, setFormGame] = useState(gameSettings);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("support");
+
+  // New admin user form state
+  const [newAdminForm, setNewAdminForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+    role: "support"
+  });
+  const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
   
 
 

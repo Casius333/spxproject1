@@ -45,6 +45,7 @@ export async function createAdmin(admin: {
   email: string;
   password: string;
   role?: string;
+  active?: boolean;
 }): Promise<AdminUser> {
   const hashedPassword = hashPassword(admin.password);
   
@@ -52,7 +53,8 @@ export async function createAdmin(admin: {
     username: admin.username,
     email: admin.email,
     password: hashedPassword,
-    role: admin.role || 'admin'
+    role: admin.role || 'admin',
+    active: admin.active !== undefined ? admin.active : true
   }).returning();
   
   return result[0];

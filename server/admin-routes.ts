@@ -3,7 +3,7 @@ import { createHash } from 'crypto';
 import { db } from '../db';
 import { adminUsers, users, transactions, games, promotions, affiliates, userBalance, adminActionLogs, userPromotions, playerActivity, deposits, withdrawals } from '@shared/schema';
 import { eq, sql, desc, and, gt, lt, count } from 'drizzle-orm';
-import { loginAdmin, adminAuth, requireRole, getAdminById } from './admin-auth-service';
+import { loginAdmin, adminAuth, requireRole, getAdminById, createAdmin } from './admin-auth-service';
 
 const adminApiPrefix = '/api/admin';
 
@@ -90,6 +90,47 @@ export function registerAdminRoutes(app: Express) {
       return res.status(200).json({ adminUsers: allAdminUsers });
     } catch (error: any) {
       console.error('Get admin users error:', error);
+      return res.status(500).json({ message: error?.message || 'Internal server error' });
+    }
+  });
+
+  // Create new admin user
+  app.post(`${adminApiPrefix}/users`, adminAuth, requireRole(['admin', 'super_admin']), async (req: Request, res: Response) => {
+    try {
+      const { username, email, role, password } = req.body;
+      
+      if (!username || !email || !role || !password) {
+        return res.status(400).json({ message: 'Username, email, role, and password are required' });
+      }
+      
+      // Check if username or email already exists
+      const existingUser = await db.query.adminUsers.findFirst({
+        where: (adminUsers, { or, eq }) => 
+          or(eq(adminUsers.username, username), eq(adminUsers.email, email))
+      });
+      
+      if (existingUser) {
+        return res.status(400).json({ message: 'Username or email already exists' });
+      }
+      
+      // Create new admin user
+      const newAdminUser = await createAdmin({
+        username,
+        email,
+        role,
+        password,
+        active: true
+      });
+      
+      // Remove password from response
+      const { password: _, ...adminUserResponse } = newAdminUser;
+      
+      return res.status(201).json({ 
+        message: 'Admin user created successfully',
+        adminUser: adminUserResponse 
+      });
+    } catch (error: any) {
+      console.error('Create admin user error:', error);
       return res.status(500).json({ message: error?.message || 'Internal server error' });
     }
   });
