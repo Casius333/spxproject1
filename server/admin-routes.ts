@@ -134,6 +134,84 @@ export function registerAdminRoutes(app: Express) {
       return res.status(500).json({ message: error?.message || 'Internal server error' });
     }
   });
+
+  // Update admin user
+  app.patch(`${adminApiPrefix}/users/:id`, adminAuth, requireRole(['admin', 'super_admin']), async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { username, email, role } = req.body;
+      
+      if (!username || !email || !role) {
+        return res.status(400).json({ message: 'Username, email, and role are required' });
+      }
+      
+      // Check if username or email already exists for other users
+      const existingUser = await db.query.adminUsers.findFirst({
+        where: (adminUsers, { and, or, eq, ne }) => 
+          and(
+            ne(adminUsers.id, userId),
+            or(eq(adminUsers.username, username), eq(adminUsers.email, email))
+          )
+      });
+      
+      if (existingUser) {
+        return res.status(400).json({ message: 'Username or email already exists' });
+      }
+      
+      // Update admin user
+      const [updatedUser] = await db.update(adminUsers)
+        .set({ username, email, role })
+        .where(eq(adminUsers.id, userId))
+        .returning();
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'Admin user not found' });
+      }
+      
+      // Remove password from response
+      const { password: _, ...adminUserResponse } = updatedUser;
+      
+      return res.status(200).json({ 
+        message: 'Admin user updated successfully',
+        adminUser: adminUserResponse 
+      });
+    } catch (error: any) {
+      console.error('Update admin user error:', error);
+      return res.status(500).json({ message: error?.message || 'Internal server error' });
+    }
+  });
+
+  // Delete admin user
+  app.delete(`${adminApiPrefix}/users/:id`, adminAuth, requireRole(['admin', 'super_admin']), async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Check if user exists
+      const userToDelete = await db.query.adminUsers.findFirst({
+        where: eq(adminUsers.id, userId)
+      });
+      
+      if (!userToDelete) {
+        return res.status(404).json({ message: 'Admin user not found' });
+      }
+      
+      // Prevent deletion of own account
+      if (req.admin && req.admin.id === userId) {
+        return res.status(403).json({ message: 'Cannot delete your own account' });
+      }
+      
+      // Delete admin user
+      await db.delete(adminUsers)
+        .where(eq(adminUsers.id, userId));
+      
+      return res.status(200).json({ 
+        message: 'Admin user deleted successfully'
+      });
+    } catch (error: any) {
+      console.error('Delete admin user error:', error);
+      return res.status(500).json({ message: error?.message || 'Internal server error' });
+    }
+  });
   
   // Financial overview
   app.get(`${adminApiPrefix}/reports/financial-overview`, adminAuth, async (req: Request, res: Response) => {
