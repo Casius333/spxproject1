@@ -98,7 +98,7 @@ export default function SettingsPage() {
   const { data: adminUsersResponse, isLoading: isLoadingUsers, error: adminUsersError } = useQuery({
     queryKey: ['/api/admin/users'],
     queryFn: async () => {
-      const token = localStorage.getItem('admin_token');
+      const token = localStorage.getItem('adminToken');
       console.log('Admin token found:', !!token);
       if (!token) {
         throw new Error('No admin token found');
@@ -188,7 +188,7 @@ export default function SettingsPage() {
     setIsCreatingAdmin(true);
     
     try {
-      const token = localStorage.getItem('admin_token');
+      const token = localStorage.getItem('adminToken');
       if (!token) {
         throw new Error('No admin token found');
       }
