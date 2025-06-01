@@ -2,6 +2,15 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import config from "../config";
+// Validate environment on startup
+try {
+  if (typeof validateConfig === 'function') {
+    validateConfig();
+    console.log('Environment configuration validated successfully');
+  }
+} catch (error) {
+  console.error('Environment configuration validation failed:', error);
+}
 
 const app = express();
 app.use(express.json());
@@ -41,11 +50,19 @@ app.use((req, res, next) => {
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    console.error('Error occurred:', err);
+    
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
+    
+    // Don't expose internal error details in production
+    const isDevelopment = app.get("env") === "development";
+    const responseMessage = status === 500 && !isDevelopment ? "Internal Server Error" : message;
+    
+    res.status(status).json({ 
+      message: responseMessage,
+      ...(isDevelopment && { stack: err.stack })
+    });
   });
 
   // importantly only setup vite in development and after
