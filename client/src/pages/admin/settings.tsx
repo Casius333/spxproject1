@@ -143,9 +143,23 @@ export default function SettingsPage() {
     username: "",
     email: "",
     password: "",
+    confirmPassword: "",
     role: "support"
   });
   const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
+
+  // Edit admin user state
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [editForm, setEditForm] = useState({
+    username: "",
+    email: "",
+    role: ""
+  });
+  const [isEditingAdmin, setIsEditingAdmin] = useState(false);
+
+  // Delete confirmation state
+  const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
+  const [isDeletingAdmin, setIsDeletingAdmin] = useState(false);
   
 
 
@@ -176,10 +190,19 @@ export default function SettingsPage() {
   const handleCreateAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newAdminForm.username || !newAdminForm.email || !newAdminForm.password) {
+    if (!newAdminForm.username || !newAdminForm.email || !newAdminForm.password || !newAdminForm.confirmPassword) {
       toast({
         title: "Error",
         description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newAdminForm.password !== newAdminForm.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match.",
         variant: "destructive",
       });
       return;
@@ -219,6 +242,7 @@ export default function SettingsPage() {
         username: "",
         email: "",
         password: "",
+        confirmPassword: "",
         role: "support"
       });
       
@@ -253,6 +277,111 @@ export default function SettingsPage() {
     });
     
     setInviteEmail("");
+  };
+
+  // Handle editing admin user
+  const handleEditUser = (user: AdminUser) => {
+    setEditingUser(user);
+    setEditForm({
+      username: user.username,
+      email: user.email,
+      role: user.role
+    });
+  };
+
+  // Handle updating admin user
+  const handleUpdateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+
+    setIsEditingAdmin(true);
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        throw new Error('No admin token found');
+      }
+      
+      const response = await fetch(`/api/admin/users/${editingUser.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(editForm)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update admin user');
+      }
+      
+      toast({
+        title: "Success",
+        description: "Admin user updated successfully.",
+      });
+      
+      setEditingUser(null);
+      window.location.reload();
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update admin user",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEditingAdmin(false);
+    }
+  };
+
+  // Handle delete confirmation
+  const handleDeleteUser = (user: AdminUser) => {
+    setUserToDelete(user);
+  };
+
+  // Handle actual deletion
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    setIsDeletingAdmin(true);
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        throw new Error('No admin token found');
+      }
+      
+      const response = await fetch(`/api/admin/users/${userToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete admin user');
+      }
+      
+      toast({
+        title: "Success",
+        description: "Admin user deleted successfully.",
+      });
+      
+      setUserToDelete(null);
+      window.location.reload();
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete admin user",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeletingAdmin(false);
+    }
   };
 
   // Format date for display
@@ -656,13 +785,25 @@ export default function SettingsPage() {
                               </span>
                             </td>
                             <td className="py-3 text-right">
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                disabled={user.id === admin?.id}
-                              >
-                                {user.active ? 'Deactivate' : 'Activate'}
-                              </Button>
+                              <div className="flex justify-end gap-2">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleEditUser(user)}
+                                  disabled={user.id === admin?.id}
+                                >
+                                  Edit
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleDeleteUser(user)}
+                                  disabled={user.id === admin?.id}
+                                  className="text-red-400 hover:text-red-300"
+                                >
+                                  Delete
+                                </Button>
+                              </div>
                             </td>
                           </tr>
                         ))
@@ -718,6 +859,19 @@ export default function SettingsPage() {
                           required
                         />
                       </div>
+                      <div>
+                        <Label htmlFor="confirmPassword">Confirm Password</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          placeholder="Confirm password"
+                          value={newAdminForm.confirmPassword}
+                          onChange={(e) => setNewAdminForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
                       <div>
                         <Label htmlFor="newRole">Role</Label>
                         <Select 
