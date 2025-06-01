@@ -95,10 +95,11 @@ export default function SettingsPage() {
   const { admin } = useAdmin();
 
   // Fetch admin users from API
-  const { data: adminUsersResponse, isLoading: isLoadingUsers } = useQuery({
+  const { data: adminUsersResponse, isLoading: isLoadingUsers, error: adminUsersError } = useQuery({
     queryKey: ['/api/admin/users'],
     queryFn: async () => {
       const token = localStorage.getItem('admin_token');
+      console.log('Admin token found:', !!token);
       if (!token) {
         throw new Error('No admin token found');
       }
@@ -110,13 +111,22 @@ export default function SettingsPage() {
         }
       });
       
+      console.log('Admin users response status:', response.status);
+      
       if (!response.ok) {
         throw new Error('Failed to fetch admin users');
       }
       
-      return response.json();
+      const data = await response.json();
+      console.log('Admin users data:', data);
+      return data;
     }
   });
+
+  // Debug logging
+  console.log('Admin users response:', adminUsersResponse);
+  console.log('Admin users error:', adminUsersError);
+  console.log('Is loading users:', isLoadingUsers);
 
   const adminUsers = adminUsersResponse?.adminUsers || [];
   const [activeTab, setActiveTab] = useState("general");
