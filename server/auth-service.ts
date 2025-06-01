@@ -3,20 +3,17 @@ import { db } from '../db';
 import { Request, Response, NextFunction } from 'express';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
-import * as crypto from 'crypto';
+import * as bcrypt from 'bcryptjs';
 
-// Function to generate a secure password hash
+// Function to generate a secure password hash using bcrypt
 export function hashPassword(password: string): string {
-  const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto.createHash('sha256').update(password + salt).digest('hex');
-  return `${hash}.${salt}`;
+  const saltRounds = 12;
+  return bcrypt.hashSync(password, saltRounds);
 }
 
-// Function to verify a password against a hash
+// Function to verify a password against a bcrypt hash
 export function verifyPassword(plainPassword: string, hashedPassword: string): boolean {
-  const [hash, salt] = hashedPassword.split('.');
-  const calculatedHash = crypto.createHash('sha256').update(plainPassword + salt).digest('hex');
-  return hash === calculatedHash;
+  return bcrypt.compareSync(plainPassword, hashedPassword);
 }
 
 // Create a user in our database
