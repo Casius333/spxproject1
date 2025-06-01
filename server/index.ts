@@ -1,20 +1,61 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import config from "../config";
-// Validate environment on startup
-try {
-  if (typeof validateConfig === 'function') {
-    validateConfig();
-    console.log('Environment configuration validated successfully');
-  }
-} catch (error) {
-  console.error('Environment configuration validation failed:', error);
-}
+import { registerAdminRoutes } from './admin-routes';
+import { setupAuth } from './auth';
+import { config } from './config';
+import { logger, morganStream } from './utils/logger';
+import { 
+  corsMiddleware, 
+  helmetMiddleware, 
+  generalLimiter, 
+  securityHeaders, 
+  ipLogger 
+} from './middleware/security';
+import { 
+  errorHandler, 
+  notFoundHandler, 
+  handleUncaughtException, 
+  handleUnhandledRejection 
+} from './middleware/errorHandler';
+import { sanitizeInput } from './middleware/validation';
+import morgan from 'morgan';
+
+// Set up global error handlers
+process.on('uncaughtException', handleUncaughtException);
+process.on('unhandledRejection', handleUnhandledRejection);
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
+// Security middleware (applied first)
+app.use(helmetMiddleware);
+app.use(corsMiddleware);
+app.use(securityHeaders);
+app.use(ipLogger);
+
+// Rate limiting
+app.use(generalLimiter);
+
+// Body parsing with limits
+app.use(express.json({ 
+  limit: '10mb',
+  verify: (req, res, buf) => {
+    if (buf.length > 10 * 1024 * 1024) {
+      throw new Error('Payload too large');
+    }
+  }
+}));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Input sanitization
+app.use(sanitizeInput);
+
+// HTTP request logging
+if (config.SERVER.IS_PRODUCTION) {
+  app.use(morgan('combined', { stream: morganStream }));
+} else {
+  app.use(morgan('dev', { stream: morganStream }));
+}
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -47,41 +88,35 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Set up authentication
+  setupAuth(app);
+  
+  // Register routes
   const server = await registerRoutes(app);
+  registerAdminRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    console.error('Error occurred:', err);
-    
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    
-    // Don't expose internal error details in production
-    const isDevelopment = app.get("env") === "development";
-    const responseMessage = status === 500 && !isDevelopment ? "Internal Server Error" : message;
-    
-    res.status(status).json({ 
-      message: responseMessage,
-      ...(isDevelopment && { stack: err.stack })
-    });
-  });
+  // 404 handler (before error handler)
+  app.use(notFoundHandler);
+
+  // Global error handling middleware (must be last)
+  app.use(errorHandler);
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
+  if (config.SERVER.IS_DEVELOPMENT) {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
-  // Use the port from our config (defaults to 5000)
-  // This serves both the API and the client
-  const port = parseInt(config.PORT, 10);
+  // Use the port from our config
+  const port = config.SERVER.PORT;
   server.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    logger.info(`Server running on port ${port} in ${config.SERVER.IS_PRODUCTION ? 'production' : 'development'} mode`);
   });
 })();
