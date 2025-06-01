@@ -6,11 +6,10 @@ import { db } from '../db';
 import { adminUsers, type AdminUser } from '../shared/schema';
 import { Request, Response, NextFunction } from 'express';
 
-// Environment variable validation with secure fallback
-const JWT_SECRET = process.env.ADMIN_JWT_SECRET || (() => {
-  console.warn('ADMIN_JWT_SECRET not set, generating secure random key for this session');
-  return crypto.randomBytes(64).toString('hex');
-})();
+import { config } from './config/environment';
+
+// Use validated environment configuration
+const JWT_SECRET = config.ADMIN_JWT_SECRET;
 
 const JWT_EXPIRES_IN = '8h'; // Reduced from 24h for better security
 const SALT_ROUNDS = 12;
