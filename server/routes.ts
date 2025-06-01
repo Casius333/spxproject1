@@ -5,6 +5,8 @@ import { gamesController } from "./controllers/games";
 import { balanceController } from "./controllers/balance";
 import { registerUser, loginUser, logoutUser, getUserByToken, authenticate, verifyOtp } from "./auth-service";
 import { registerAdminRoutes } from "./admin-routes";
+import { authLimiter, generalLimiter } from './middleware/rateLimiting';
+import { body, validationResult } from 'express-validator';
 import { db } from "../db";
 import { and, desc, eq, gt, gte, lt, lte, or, sql, asc } from "drizzle-orm";
 import { promotions, userPromotions, users, deposits, transactions, type Promotion, type UserPromotion, userPromotionsInsertSchema } from "../shared/schema";
@@ -104,8 +106,37 @@ async function hasUserUsedPromotionToday(userId: number, promotionId: number): P
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup JWT authentication routes
   
-  // Register endpoint - Supabase auth approach
-  app.post('/api/register', async (req: Request, res: Response) => {
+  // Input validation middleware
+  const registerValidation = [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+      .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
+  ];
+
+  const loginValidation = [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('password').notEmpty().withMessage('Password is required')
+  ];
+
+  // Validation error handler
+  const handleValidationErrors = (req: Request, res: Response, next: any) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: errors.array() 
+      });
+    }
+    next();
+  };
+
+  // Register endpoint - Supabase auth approach with security enhancements
+  app.post('/api/register', 
+    authLimiter, 
+    registerValidation, 
+    handleValidationErrors, 
+    async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
       
