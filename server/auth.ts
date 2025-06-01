@@ -16,6 +16,7 @@ import {
   handleValidationErrors 
 } from './middleware/validation';
 import { AppError, asyncHandler } from './middleware/errorHandler';
+import { progressiveRateLimit, resetLoginStrikes } from './middleware/progressiveRateLimit';
 
 // Extend Express.User interface
 declare global {
@@ -122,7 +123,7 @@ export function setupAuth(app: Express) {
 
   // Registration endpoint
   app.post("/api/register", 
-    authLimiter,
+    progressiveRateLimit,
     registerValidation,
     handleValidationErrors,
     async (req: Request, res: Response) => {

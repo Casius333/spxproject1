@@ -79,16 +79,46 @@ export const withdrawalLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// CSRF protection (disabled for now due to dependency issues)
-// Will be enabled once csurf alternative is implemented
+// Real CSRF protection implementation
+import { randomBytes } from 'crypto';
+
 export const csrfProtection = (req: Request, res: Response, next: NextFunction) => {
-  // Placeholder for CSRF protection
+  if (req.method === 'GET') {
+    const token = randomBytes(32).toString('hex');
+    res.cookie('XSRF-TOKEN', token, {
+      httpOnly: false,
+      secure: config.SERVER.IS_PRODUCTION,
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    });
+    return next();
+  }
+
+  const token = req.cookies['XSRF-TOKEN'];
+  const headerToken = req.headers['x-xsrf-token'] as string;
+
+  if (!token || !headerToken || token !== headerToken) {
+    return res.status(403).json({
+      error: {
+        message: 'Invalid CSRF token',
+        code: 'INVALID_CSRF_TOKEN'
+      }
+    });
+  }
+
   next();
 };
 
-// CSRF token endpoint (placeholder)
+// CSRF token endpoint
 export const csrfTokenHandler = (req: Request, res: Response) => {
-  res.json({ csrfToken: 'placeholder-token' });
+  const token = randomBytes(32).toString('hex');
+  res.cookie('XSRF-TOKEN', token, {
+    httpOnly: false,
+    secure: config.SERVER.IS_PRODUCTION,
+    sameSite: 'strict',
+    maxAge: 24 * 60 * 60 * 1000,
+  });
+  res.json({ csrfToken: token });
 };
 
 // Security headers middleware
