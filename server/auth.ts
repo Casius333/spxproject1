@@ -8,7 +8,14 @@ import { users } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
 import { pool } from "@db";
-import { generalLimiter, authLimiter } from './middleware/rateLimiting';
+import { config } from './config';
+import { authLimiter } from './middleware/security';
+import { 
+  registerValidation, 
+  loginValidation, 
+  handleValidationErrors 
+} from './middleware/validation';
+import { AppError, asyncHandler } from './middleware/errorHandler';
 
 // Extend Express.User interface
 declare global {
@@ -114,7 +121,11 @@ export function setupAuth(app: Express) {
   });
 
   // Registration endpoint
-  app.post("/api/register", async (req: Request, res: Response) => {
+  app.post("/api/register", 
+    authLimiter,
+    registerValidation,
+    handleValidationErrors,
+    async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
 

@@ -1,6 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { config } from '../config';
-import { logger } from '../utils/logger';
+// Temporarily use console.log until logger is properly configured
+// import { logger } from '../utils/logger';
+const logger = {
+  warn: console.warn,
+  error: console.error,
+  info: console.log
+};
 
 export interface ApiError {
   message: string;

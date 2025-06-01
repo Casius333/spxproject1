@@ -4,7 +4,9 @@ import { setupVite, serveStatic, log } from "./vite";
 import { registerAdminRoutes } from './admin-routes';
 import { setupAuth } from './auth';
 import { config } from './config';
-import { logger, morganStream } from './utils/logger';
+// Temporarily use console logging
+const logger = { info: console.log, error: console.error, warn: console.warn };
+const morganStream = { write: (message: string) => console.log(message.trim()) };
 import { 
   corsMiddleware, 
   helmetMiddleware, 
