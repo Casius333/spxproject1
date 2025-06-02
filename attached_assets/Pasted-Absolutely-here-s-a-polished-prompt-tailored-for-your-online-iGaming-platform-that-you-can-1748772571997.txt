@@ -1,0 +1,153 @@
+Absolutely — here’s a **polished prompt** tailored for your **online iGaming platform** that you can **copy and paste directly into Replit** (e.g., when requesting help from Ghostwriter or a Replit dev collaborator). It includes all the high-priority items from the Cursor analysis, structured clearly and customized for your domain:
+
+---
+
+### 🎯 Replit Prompt: Finalize Security & Stability Improvements for Online iGaming Platform
+
+> We’ve made good progress on the `CursorCheck` branch after the first round of refactoring (password hashing, SQL safety, etc.).
+>
+> Based on a second AI security audit (via Cursor), please implement the following improvements to **harden the project against real-world threats**, especially given the high-risk nature of online gaming (money, bonuses, fraud vectors).
+
+---
+
+### ✅ **Critical Security Improvements (Must Implement)**
+
+#### 🔐 1. **Authentication & Session Security**
+
+* Add CSRF protection via `csurf` (cookie-based).
+* Apply rate limiting (`express-rate-limit`) on login, registration, and withdrawal request routes.
+* Use `helmet()` to apply common HTTP security headers.
+* Secure session configuration:
+
+  * Set `httpOnly`, `secure`, and `sameSite` flags.
+  * Move secret keys to `config.ts`, sourced from `.env`.
+  * Store session config in `config.SESSION`.
+
+#### 🌍 2. **CORS Policy**
+
+* Replace wildcard CORS (`*`) with:
+
+  ```ts
+  origin: process.env.CORS_ORIGIN?.split(',') || [],
+  credentials: true
+  ```
+* Allow only safe methods (`GET, POST, PATCH, DELETE`).
+
+---
+
+### 🧼 **Input & File Validation (High Priority)**
+
+#### ✍️ 3. **Request Validation Middleware**
+
+* Use `express-validator` to validate and sanitize:
+
+  * Email, password (min length), numeric bet amounts, etc.
+* Create reusable `validation.ts` middleware module.
+* Ensure this is applied to:
+
+  * Registration/login
+  * Bonus redemption
+  * Bet placement
+  * Withdrawal requests
+
+#### 📁 4. **File Uploads (If Supported)**
+
+* Validate file types, max size, and reject executables.
+* Sanitize filenames.
+* (Optional later: integrate virus scanner if storing uploads)
+
+---
+
+### 🚨 **Error Handling Improvements**
+
+#### ⚠️ 5. **Centralized Error Middleware**
+
+* Create `middleware/errorHandler.ts`:
+
+  * Log all internal errors.
+  * Return user-friendly error responses in production:
+
+    ```ts
+    {
+      error: {
+        message: 'Internal Server Error',
+        code: 'INTERNAL_ERROR'
+      }
+    }
+    ```
+
+---
+
+### ⚙️ **Configuration Improvements**
+
+#### 🔐 6. **.env Validation and Security**
+
+* Add validation for required `.env` variables using `zod`, `envsafe`, or a custom schema.
+* Do **not** log `DATABASE_URL`, tokens, or secrets under any conditions.
+
+#### 🧭 7. **Config Organization**
+
+* Move all hardcoded settings (timezone, bonus multipliers, token TTL, etc.) to `config.ts` with types.
+
+---
+
+### 🗄 **Database & Backend Hardening**
+
+#### 🧩 8. **Connection Pooling**
+
+* Switch to `pg.Pool`:
+
+  ```ts
+  ssl: { rejectUnauthorized: true }, // only in production
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000
+  ```
+
+#### 🔁 9. **Transaction Handling**
+
+* Wrap critical operations in DB transactions:
+
+  * Bonus application
+  * Wallet updates
+  * Bet resolution
+  * Withdrawal processing
+
+---
+
+### 📊 **Logging & Monitoring (Optional, Recommended)**
+
+#### 🪵 10. **Logging Setup**
+
+* Create `utils/logger.ts` with `winston` or `pino`:
+
+  * Log in JSON format
+  * Include timestamps, user IDs, IPs (for fraud tracing)
+
+#### 🧠 11. **Future Add-ons**
+
+* Sentry for production error tracking
+* Prometheus/Grafana for metrics (optional)
+
+---
+
+### 📁 Suggested File Additions
+
+```text
+server/
+├── middleware/
+│   ├── security.ts         <-- Helmet, CSRF, Rate Limiting
+│   ├── errorHandler.ts     <-- Central error handler
+│   └── validation.ts       <-- Express-validator rules
+├── utils/
+│   └── logger.ts           <-- Winston logger
+├── config.ts               <-- Central settings
+```
+
+---
+
+Let me know if you need scaffolding/stubs for any of these new files or test cases for the validation logic.
+
+---
+
+Would you like me to generate actual file templates for any of the new middleware (e.g. `security.ts`, `validation.ts`)?

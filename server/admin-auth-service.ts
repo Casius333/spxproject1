@@ -1,23 +1,32 @@
-import { createHash, timingSafeEqual } from 'crypto';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { adminUsers, type AdminUser } from '../shared/schema';
 import { Request, Response, NextFunction } from 'express';
 
-// JWT secret key - would normally be in environment variables
-const JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'admin-secret-key-for-development';
-const JWT_EXPIRES_IN = '24h';
+import { config } from './config/environment';
 
-// Hash a password using the same method as in seed.ts
-export function hashPassword(password: string): string {
-  return createHash('sha256').update(password).digest('hex');
+// Use validated environment configuration
+const JWT_SECRET = config.ADMIN_JWT_SECRET;
+
+const JWT_EXPIRES_IN = '8h'; // Reduced from 24h for better security
+const SALT_ROUNDS = 12;
+
+// Hash a password using bcrypt (secure)
+export async function hashPassword(password: string): Promise<string> {
+  return await bcrypt.hash(password, SALT_ROUNDS);
 }
 
-// Verify a password
-export function comparePasswords(plainPassword: string, hashedPassword: string): boolean {
-  const hashedInput = createHash('sha256').update(plainPassword).digest('hex');
-  return hashedInput === hashedPassword;
+// Verify a password using bcrypt
+export async function comparePasswords(plainPassword: string, hashedPassword: string): Promise<boolean> {
+  try {
+    return await bcrypt.compare(plainPassword, hashedPassword);
+  } catch (error) {
+    console.error('Password comparison error:', error);
+    return false;
+  }
 }
 
 // Get admin by ID
@@ -47,7 +56,7 @@ export async function createAdmin(admin: {
   role?: string;
   active?: boolean;
 }): Promise<AdminUser> {
-  const hashedPassword = hashPassword(admin.password);
+  const hashedPassword = await hashPassword(admin.password);
   
   const result = await db.insert(adminUsers).values({
     username: admin.username,
@@ -66,17 +75,27 @@ export function generateToken(admin: AdminUser): string {
     id: admin.id,
     username: admin.username,
     email: admin.email,
-    role: admin.role
+    role: admin.role,
+    iat: Math.floor(Date.now() / 1000), // Issued at time
+    jti: crypto.randomUUID() // Unique token ID for revocation capability
   };
   
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, JWT_SECRET, { 
+    expiresIn: JWT_EXPIRES_IN,
+    issuer: 'luckypunt-admin',
+    audience: 'luckypunt-admin-panel'
+  });
 }
 
 // Verify a JWT token
 export function verifyToken(token: string): any {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, JWT_SECRET, {
+      issuer: 'luckypunt-admin',
+      audience: 'luckypunt-admin-panel'
+    });
   } catch (error) {
+    console.error('Token verification failed:', error instanceof Error ? error.message : 'Unknown error');
     return null;
   }
 }
@@ -89,7 +108,7 @@ export async function loginAdmin(username: string, password: string): Promise<{ 
     return null;
   }
   
-  const isPasswordValid = comparePasswords(password, admin.password);
+  const isPasswordValid = await comparePasswords(password, admin.password);
   
   if (!isPasswordValid) {
     return null;

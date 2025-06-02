@@ -4,6 +4,9 @@ import { db } from '../db';
 import { adminUsers, users, transactions, games, promotions, affiliates, userBalance, adminActionLogs, userPromotions, playerActivity, deposits, withdrawals } from '@shared/schema';
 import { eq, sql, desc, and, gt, lt, count } from 'drizzle-orm';
 import { loginAdmin, adminAuth, requireRole, getAdminById, createAdmin } from './admin-auth-service';
+import { createAdminValidation, updateAdminValidation, deleteAdminValidation, sanitizeInput, adminLoginValidation } from './middleware/validation';
+import { authLimiter, adminLimiter, sensitiveLimiter } from './middleware/rateLimiting';
+import { asyncHandler, OperationalError } from './middleware/errorHandler';
 
 const adminApiPrefix = '/api/admin';
 

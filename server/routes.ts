@@ -5,6 +5,8 @@ import { gamesController } from "./controllers/games";
 import { balanceController } from "./controllers/balance";
 import { registerUser, loginUser, logoutUser, getUserByToken, authenticate, verifyOtp } from "./auth-service";
 import { registerAdminRoutes } from "./admin-routes";
+import { authLimiter, generalLimiter } from './middleware/rateLimiting';
+import { body, validationResult } from 'express-validator';
 import { db } from "../db";
 import { and, desc, eq, gt, gte, lt, lte, or, sql, asc } from "drizzle-orm";
 import { promotions, userPromotions, users, deposits, transactions, type Promotion, type UserPromotion, userPromotionsInsertSchema } from "../shared/schema";
@@ -104,8 +106,37 @@ async function hasUserUsedPromotionToday(userId: number, promotionId: number): P
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup JWT authentication routes
   
-  // Register endpoint - Supabase auth approach
-  app.post('/api/register', async (req: Request, res: Response) => {
+  // Input validation middleware
+  const registerValidation = [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+      .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
+  ];
+
+  const loginValidation = [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('password').notEmpty().withMessage('Password is required')
+  ];
+
+  // Validation error handler
+  const handleValidationErrors = (req: Request, res: Response, next: any) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: errors.array() 
+      });
+    }
+    next();
+  };
+
+  // Register endpoint - Supabase auth approach with security enhancements
+  app.post('/api/register', 
+    authLimiter, 
+    registerValidation, 
+    handleValidationErrors, 
+    async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
       
@@ -123,14 +154,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Login endpoint - Supabase auth approach
-  app.post('/api/login', async (req: Request, res: Response) => {
+  // Login endpoint - Supabase auth approach with security enhancements
+  app.post('/api/login', 
+    authLimiter, 
+    loginValidation, 
+    handleValidationErrors, 
+    async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
-      
-      if (!email || !password) {
-        return res.status(400).json({ message: 'Email and password are required' });
-      }
       
       // Authenticate with Supabase and get user info
       const data = await loginUser(email, password);
@@ -142,8 +173,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Logout endpoint
-  app.post('/api/logout', async (req: Request, res: Response) => {
+  // Logout endpoint with rate limiting
+  app.post('/api/logout', 
+    generalLimiter, 
+    async (req: Request, res: Response) => {
     try {
       const token = req.headers.authorization?.split(' ')[1] || '';
       await logoutUser(token);
@@ -154,8 +187,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Get current user endpoint
-  app.get('/api/user', async (req: Request, res: Response) => {
+  // Get current user endpoint with rate limiting
+  app.get('/api/user', 
+    generalLimiter, 
+    async (req: Request, res: Response) => {
     const token = req.headers.authorization?.split(' ')[1] || '';
     
     if (!token) {
@@ -246,8 +281,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Change user password
-  app.post('/api/user/change-password', async (req: Request, res: Response) => {
+  // Additional validation rules
+  const passwordChangeValidation = [
+    body('currentPassword').notEmpty().withMessage('Current password is required'),
+    body('newPassword').isLength({ min: 8 }).withMessage('New password must be at least 8 characters long')
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+      .withMessage('New password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
+  ];
+
+  const profileUpdateValidation = [
+    body('phoneNumber').optional().isMobilePhone('any').withMessage('Valid phone number is required')
+  ];
+
+  // Change user password with security enhancements
+  app.post('/api/user/change-password', 
+    authLimiter, 
+    passwordChangeValidation, 
+    handleValidationErrors, 
+    async (req: Request, res: Response) => {
     const token = req.headers.authorization?.split(' ')[1] || '';
     const { currentPassword, newPassword } = req.body;
     
@@ -499,8 +550,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/popular', gamesController.getPopularGames);
   app.get('/api/new', gamesController.getNewGames);
   
-  // Update user mobile number
-  app.post('/api/user/mobile', async (req: Request, res: Response) => {
+  // Mobile number validation
+  const mobileUpdateValidation = [
+    body('mobileNumber').isMobilePhone('any').withMessage('Valid mobile number is required')
+  ];
+
+  // Update user mobile number with security enhancements
+  app.post('/api/user/mobile', 
+    generalLimiter, 
+    mobileUpdateValidation, 
+    handleValidationErrors, 
+    async (req: Request, res: Response) => {
     const token = req.headers.authorization?.split(' ')[1] || '';
     const { mobileNumber } = req.body;
     
@@ -513,10 +573,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await getUserByToken(token);
       if (!user) {
         return res.status(401).json({ message: 'Invalid token' });
-      }
-      
-      if (!mobileNumber || typeof mobileNumber !== 'string') {
-        return res.status(400).json({ message: 'Valid mobile number is required' });
       }
       
       // Import db and users from the schema
@@ -546,8 +602,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/balance', balanceController.updateBalance);
   app.get('/api/transactions', balanceController.getTransactions);
   
-  // Promotions routes for users
-  app.get('/api/promotions', async (req: Request, res: Response) => {
+  // Promotions routes for users with rate limiting
+  app.get('/api/promotions', 
+    generalLimiter, 
+    async (req: Request, res: Response) => {
     const token = req.headers.authorization?.split(' ')[1] || '';
     let userId: number | null = null;
     

@@ -1,0 +1,113 @@
+Perfect — here’s a **ready-to-go prompt** you can paste directly into Replit to request the remaining security enhancements. It’s tailored for your **online iGaming platform** and references exactly what needs to be implemented based on Cursor’s latest analysis.
+
+---
+
+### ✅ Replit Prompt: Final Security Hardening Tasks for iGaming Platform
+
+> We've completed most major improvements to the `CursorCheck` branch, but there are a few **important security items remaining**. These relate to CSRF protection, session management, and smarter rate limiting — all critical for an online gaming platform handling money and player accounts.
+
+---
+
+### 🔐 1. **Implement Real CSRF Protection**
+
+Replace the current placeholder in `security.ts` with a working implementation:
+
+```ts
+// server/middleware/security.ts
+import { randomBytes } from 'crypto';
+import { Request, Response, NextFunction } from 'express';
+import config from '../config';
+import AppError from '../utils/AppError'; // or your custom error class
+
+export const csrfProtection = (req: Request, res: Response, next: NextFunction) => {
+  if (req.method === 'GET') {
+    const token = randomBytes(32).toString('hex');
+    res.cookie('XSRF-TOKEN', token, {
+      httpOnly: false,
+      secure: config.SERVER.IS_PRODUCTION,
+      sameSite: 'strict',
+    });
+    return next();
+  }
+
+  const token = req.cookies['XSRF-TOKEN'];
+  const headerToken = req.headers['x-xsrf-token'];
+
+  if (!token || !headerToken || token !== headerToken) {
+    return next(new AppError('Invalid CSRF token', 403, 'INVALID_CSRF_TOKEN'));
+  }
+
+  next();
+};
+```
+
+Also make sure to **send the `XSRF-TOKEN` cookie on each GET request** from the frontend, and include it as a header (`x-xsrf-token`) on all POST/PUT/DELETE actions.
+
+---
+
+### ⚙️ 2. **Enhance Session Security**
+
+Update your session config in `config.ts` or where sessions are initialized:
+
+```ts
+SESSION: {
+  ...config.SESSION,
+  rolling: true, // Extend session expiry on each activity
+  renewAfter: 60 * 60 * 1000, // Renew after 1 hour
+  absoluteTimeout: 24 * 60 * 60 * 1000, // Force expiry after 24h
+}
+```
+
+Also:
+
+* Invalidate all existing sessions **on password change** to prevent session reuse after credential reset.
+
+---
+
+### 🚫 3. **Add Progressive Rate Limiting**
+
+Replace or augment your current rate limiting middleware with this logic:
+
+```ts
+// Example: server/middleware/progressiveRateLimit.ts
+import rateLimit from 'express-rate-limit';
+
+export const progressiveRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: (req) => {
+    const strikes = req.session.loginStrikes || 0;
+    return Math.max(5 - strikes, 1);
+  },
+  handler: (req, res) => {
+    req.session.loginStrikes = (req.session.loginStrikes || 0) + 1;
+    res.status(429).json({
+      error: {
+        message: 'Too many login attempts, try again later',
+        code: 'RATE_LIMIT_EXCEEDED',
+        nextAttemptIn: '15 minutes'
+      }
+    });
+  }
+});
+```
+
+Apply this middleware to:
+
+* `/login`
+* `/register`
+* `/withdraw` (if automated or high-risk)
+
+---
+
+### 📌 Summary of Deliverables
+
+* [ ] Replace CSRF placeholder with token-based protection.
+* [ ] Add session rotation and force-expiry logic.
+* [ ] Invalidate sessions after password change.
+* [ ] Implement progressive rate limiting based on login failures.
+
+Let me know if you'd like test coverage or logging for any of these.
+
+---
+
+Would you like a version of this prompt that includes unit testing tasks for these middleware components?
