@@ -6,7 +6,7 @@ COPY ../package*.json ./
 RUN npm install
 
 # Copy server files
-COPY . .
+COPY . ./
 
 # Expose port the server listens on
 EXPOSE 5000
