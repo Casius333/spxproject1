@@ -1,9 +1,17 @@
 FROM node:18
 WORKDIR /app
 
-COPY package*.json ./
+# Copy root-level package files
+COPY ../package*.json ./
+
+# Install dependencies
 RUN npm install
 
-COPY server/. .
+# Copy the rest of the backend source
+COPY . .
+
+# Expose backend port
 EXPOSE 5000
+
+# Start the server
 CMD ["npm", "run", "dev"]
