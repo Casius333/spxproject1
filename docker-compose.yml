@@ -12,7 +12,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: dockerfile: Dockerfile.backend
+      dockerfile: Dockerfile.backend
     ports:
       - "4000:4000"
     environment:
