@@ -13,4 +13,7 @@ services:
       dockerfile: server/Dockerfile
     ports:
       - "4000:4000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:q7GnG556aZHYa@db.aerjravmccadudskvhel.supabase.net:5432/postgres
     restart: unless-stopped
