@@ -20,7 +20,7 @@ jobs:
 
       - name: Connect to VPS and deploy
         run: |
-          ssh -o StrictHostKeyChecking=no root@YOUR_SERVER_IP << 'EOF'
+          ssh -o StrictHostKeyChecking=no root@170.64.156.57 << 'EOF'
             cd /root/lucky-punt
             git pull origin main
             docker compose down
