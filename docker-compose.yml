@@ -9,10 +9,10 @@ services:
       - "3000:3000"
     restart: unless-stopped
 
-  backend:
+    backend:
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.backend
     ports:
       - "4000:4000"
     environment:
